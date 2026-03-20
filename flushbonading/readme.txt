@@ -1,0 +1,1 @@
+需要修改this/global_settings.h文件的WiFi名字密码为当前所用的WiFi

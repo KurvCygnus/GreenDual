@@ -1,0 +1,37 @@
+//编译
+/*
+python build.py BearPi-HM_Nano
+*/
+//开灯
+{
+	"CMD":"ON"
+}
+
+//关灯
+{
+	"CMD":"OFF"
+}
+
+//报告
+{
+	"CMD":"REPORT"
+}
+
+//设置属性
+{
+	"CMD":"SET"
+}
+
+{
+	"CMD":"SET",
+	"PORT":8848,
+	"IP":"182.123.123.34",
+	"ID":"CHWH2233333"
+}
+
+{
+	"CMD":"SET",
+	"PORT":8848,
+	"AUTO":1,
+	"BRIGHTNESS":1
+}

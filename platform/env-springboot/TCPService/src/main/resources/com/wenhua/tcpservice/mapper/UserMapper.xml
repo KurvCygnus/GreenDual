@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wenhua.tcpservice.mapper.UserMapper">
+
+    <!-- 查询用户 -->
+    <select id="selectUsers" resultType="com.wenhua.tcpservice.pojo.User">
+        SELECT
+        *
+        FROM
+        /* 从日志表 */
+        user
+        WHERE
+        1=1
+
+        /* 指定查询条件(对应字段必须包含相关字符串) */
+        <if test="match != null and match != ''">
+            AND (
+            userId LIKE CONCAT('%', #{match}, '%')
+            OR username LIKE CONCAT('%', #{match}, '%')
+            OR password LIKE CONCAT('%', #{match}, '%')
+            OR userPermission LIKE CONCAT('%', #{match}, '%')
+            )
+        </if>
+
+        /* 指定排序方式 */
+        ORDER BY
+        <choose>
+            <when test="sort == 'desc'">
+                -- 假设按id降序排序，根据实际情况选择字段
+                userId DESC
+            </when>
+            <otherwise>
+                -- 默认升序排序
+                userId ASC
+            </otherwise>
+        </choose>
+
+        /* 指定分页 */
+        LIMIT #{offset}, #{pageSize}
+    </select>
+
+    <!-- 查询用户数量 -->
+    <select id="selectUserCount" resultType="int">
+        SELECT
+        COUNT(*)
+        FROM
+        user
+        WHERE
+        1=1
+
+        <!-- 指定查询条件(对应字段必须包含相关字符串) -->
+        <if test="match != null and match != ''">
+            AND (
+            userId LIKE CONCAT('%', #{match}, '%')
+            OR username LIKE CONCAT('%', #{match}, '%')
+            OR -- 通常不建议在密码字段上进行 LIKE 查询，因为密码应该是加密的
+            password LIKE CONCAT('%', #{match}, '%')
+            OR userPermission LIKE CONCAT('%', #{match}, '%')
+            )
+        </if>
+    </select>
+
+</mapper>

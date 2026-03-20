@@ -1,0 +1,34 @@
+[路灯操纵工具]
+light为路灯操纵标签,对路灯进行操纵
+<light>
+
+    <id>指定操作路灯的id</id>
+    <id>一个light标签中可以有多个id标签</id>
+
+    <do>指定操作,具体参数有
+    open,(开启路灯)
+    close,(关闭路灯)
+    </do>
+
+</light>
+
+select为查询标签,用于查询路灯
+<select>
+    <id>指定查询路灯的id</id>
+    <id>一个select标签中可以有多个id标签</id>
+
+</select>
+
+在select标签中也可以不用id,使用查询参数
+<select>
+    <current-page>指定查询路灯的页码</current-page>
+    <page-size>指定查询路灯的页大小</page-size>
+    <sort>排序方式,abs为升序,desc为降序</sort>
+    <match>匹配字符串,用于模糊查询</match>
+</select>
+查询标签中,所有参数标签都不是必须的,所有标签都有默认参数,可以不指定
+current-page默认为1,
+page-size默认为10,
+sort默认为abs,
+match默认为空字符串;
+

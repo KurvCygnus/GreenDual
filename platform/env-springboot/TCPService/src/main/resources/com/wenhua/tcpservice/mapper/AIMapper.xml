@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wenhua.tcpservice.mapper.AIMapper">
+
+    <!-- 新增AI员工 -->
+    <insert id="addAI" parameterType="com.wenhua.tcpservice.pojo.ai.AiEmployee" useGeneratedKeys="true" keyProperty="aiId">
+        INSERT INTO ai_employee (
+            name,
+            job_description,
+            work_start_time,
+            work_end_time,
+            daily_summary,
+            user_id
+        ) VALUES (
+                     #{name},
+                     #{jobDescription},
+                     #{workStartTime},
+                     #{workEndTime},
+                     #{dailySummary},
+                     #{userId}
+                 )
+    </insert>
+
+    <!-- 删除AI员工 -->
+    <delete id="deleteAI" parameterType="String">
+        DELETE FROM ai_employee
+        WHERE ai_id = CAST(#{id} AS UNSIGNED)
+    </delete>
+
+    <!-- 更新AI员工 -->
+    <update id="updateAI" parameterType="com.wenhua.tcpservice.pojo.ai.AiEmployee">
+        UPDATE ai_employee
+        SET
+            name = #{name},
+            job_description = #{jobDescription},
+            work_start_time = #{workStartTime},
+            work_end_time = #{workEndTime},
+            daily_summary = #{dailySummary},
+            user_id = #{userId}
+        WHERE ai_id = #{aiId}
+    </update>
+
+    <!-- 在AIMapper.xml中添加 -->
+    <select id="selectAI" resultType="com.wenhua.tcpservice.pojo.ai.AiEmployee" parameterType="com.wenhua.tcpservice.pojo.QueryParameter">
+        SELECT * FROM ai_employee
+        <where>
+            <!-- 模糊搜索条件 -->
+            <if test="match != null and match != ''">
+                AND (name LIKE CONCAT('%', #{match}, '%')
+                OR job_description LIKE CONCAT('%', #{match}, '%'))
+            </if>
+
+            <!-- 状态筛选条件 -->
+            <choose>
+                <when test="query == @com.wenhua.tcpservice.pojo.QueryParameter@QUERY_ONLINE">
+                    AND online_status = 1  <!-- 假设存在在线状态字段 -->
+                </when>
+                <when test="query == @com.wenhua.tcpservice.pojo.QueryParameter@QUERY_OFFLINE">
+                    AND online_status = 0
+                </when>
+            </choose>
+        </where>
+        <!-- 排序处理 -->
+        ORDER BY ai_id
+        <choose>
+            <when test="sort == @com.wenhua.tcpservice.pojo.QueryParameter@DESC">
+                DESC
+            </when>
+            <otherwise>
+                ASC
+            </otherwise>
+        </choose>
+        <!-- 分页处理 -->
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+    <!-- 定义公共的 WHERE 条件片段 -->
+    <sql id="aiQueryConditions">
+        <where>
+            <!-- 模糊搜索条件 -->
+            <if test="match != null and match != ''">
+                AND (name LIKE CONCAT('%', #{match}, '%')
+                OR job_description LIKE CONCAT('%', #{match}, '%'))
+            </if>
+
+            <!-- 状态筛选条件 -->
+            <choose>
+                <when test="query == @com.wenhua.tcpservice.pojo.QueryParameter@QUERY_ONLINE">
+                    AND online_status = 1
+                </when>
+                <when test="query == @com.wenhua.tcpservice.pojo.QueryParameter@QUERY_OFFLINE">
+                    AND online_status = 0
+                </when>
+            </choose>
+        </where>
+    </sql>
+    <!-- 新增方法：查询符合要求的数量 -->
+    <select id="selectAICount" resultType="int" parameterType="com.wenhua.tcpservice.pojo.QueryParameter">
+        SELECT COUNT(*) FROM ai_employee
+        <include refid="aiQueryConditions" />  <!-- 复用相同条件 -->
+    </select>
+    <!-- 查询日志 -->
+    <select id="selectAILog" parameterType="com.wenhua.tcpservice.pojo.QueryParameter" resultType="com.wenhua.tcpservice.pojo.ai.AiActionLog">
+        SELECT
+        action_id AS actionId,
+        ai_id AS aiId,
+        action_description AS actionDescription,
+        action_time AS actionTime
+        FROM
+        ai_action_log
+        WHERE
+        1=1
+        <!-- 如果匹配字符串不为空，则模糊匹配 action_description -->
+        <if test="match != null and match != ''">
+            AND action_description LIKE CONCAT('%', #{match}, '%')
+        </if>
+        <!-- 如果 query 不为 QUERY_ALL，则根据条件过滤 -->
+        <if test="query != null">
+            <choose>
+                <when test="query == @com.wenhua.tcpservice.pojo.QueryParameter@QUERY_ONLINE">
+                    -- 在线查询条件（根据实际字段调整）
+                    AND 1=1
+                </when>
+                <when test="query == @com.wenhua.tcpservice.pojo.QueryParameter@QUERY_OFFLINE">
+                    -- 离线查询条件（根据实际字段调整）
+                    AND 1=0
+                </when>
+            </choose>
+        </if>
+        <!-- 排序 -->
+        <if test="sort != null and (sort == @com.wenhua.tcpservice.pojo.QueryParameter@ASC or sort == @com.wenhua.tcpservice.pojo.QueryParameter@DESC)">
+            ORDER BY action_time ${sort}
+        </if>
+        <!-- 分页 -->
+        LIMIT #{offset}, #{pageSize}
+    </select>
+
+    <!-- 查询符合要求的日志数量 -->
+    <select id="countAILog" parameterType="com.wenhua.tcpservice.pojo.QueryParameter" resultType="int">
+        SELECT
+        COUNT(*)
+        FROM
+        ai_action_log
+        WHERE
+        1=1
+        <if test="match != null and match != ''">
+            AND action_description LIKE CONCAT('%', #{match}, '%')
+        </if>
+        <if test="query != null">
+            <choose>
+                <when test="query == @com.wenhua.tcpservice.pojo.QueryParameter@QUERY_ONLINE">
+                    -- 在线查询条件（根据实际字段调整）
+                    AND 1=1
+                </when>
+                <when test="query == @com.wenhua.tcpservice.pojo.QueryParameter@QUERY_OFFLINE">
+                    -- 离线查询条件（根据实际字段调整）
+                    AND 1=0
+                </when>
+            </choose>
+        </if>
+    </select>
+
+    <!-- 删除AI日志 -->
+    <delete id="deleteAILog" parameterType="java.util.List">
+        DELETE FROM ai_action_log
+        WHERE action_id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

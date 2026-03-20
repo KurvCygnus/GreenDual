@@ -1,0 +1,9 @@
+
+//暂时没收do标签以下功能
+
+open-auto,(开启路灯自动感应开关)
+    close-auto,(关闭自动感应开关)
+    set-broken,(设置损坏)
+    set-unbroken
+
+        <id>id为all表示对所有路灯操作</id>

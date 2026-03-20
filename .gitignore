@@ -1,0 +1,98 @@
+# Dependencies
+node_modules/
+modules-js/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output
+
+# Dependency directories
+bower_components/
+jspm_packages/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional stylelint cache
+.stylelintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+
+# ==============================================
+# 1. 第三方SDK/源码（OpenHarmony 海思Hi3861相关，绝对不要提交）
+# ==============================================
+flushbonading/this/vendor/
+flushbonading/this/third_party/
+flushbonading/this/prebuilts/
+flushbonading/this/ohos_bundles/
+flushbonading/this/lib/
+flushbonading/this/build/
+flushbonading/this/out/
+
+# ==============================================
+# 2. 编码异常的乱码文件（仅忽略异常命名文件，不影响正常README）
+# ==============================================
+"*.md"
+"*.txt"
+"*.docx"
+"*.doc"
+
+# ==============================================
+# 3. 编译产物、日志、缓存、二进制文件
+# ==============================================
+*.log
+*.tmp
+*.cache
+*.obj
+*.exe
+*.bin
+*.elf
+*.hex
+*.img
+*.zip
+*.rar
+*.7z
+__pycache__/
+node_modules/
+build/
+out/
+
+# ==============================================
+# 4. IDE/系统/临时文件
+# ==============================================
+.idea/
+.vscode/
+Thumbs.db
+.DS_Store
+*.swp
+*.swo
+*~

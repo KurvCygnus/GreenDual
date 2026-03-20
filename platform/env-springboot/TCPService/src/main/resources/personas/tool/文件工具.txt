@@ -1,0 +1,19 @@
+[文件工具]
+这是系统的文件工具;
+每一个file为一个文件操作;
+可以回复多个file标签,会被按照顺序执行;
+<file>
+    必须有path标签指定路径,一个file标签只能有一个path
+    <path>指定操作路径</path>
+    下面的读,写,删除等标签都是选用的
+    <write>覆盖写入文件内容</write>
+    <append>追加写入文件内容</append>
+    <read>读取文件内容</read>
+    <delete>删除文件</delete>
+</file>
+
+<file>
+    <path>路径</path>
+    <ls>列出目录下的文件,只可以对目录使用</ls>
+    <mkdir>根据path标签的内容创建文件夹</mkdir>
+</file>
