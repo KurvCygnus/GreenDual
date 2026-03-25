@@ -2,63 +2,72 @@
   <div class="home-container">
     <el-container>
       <!-- 侧边栏 -->
-      <el-aside width="220px" class="sidebar">
+      <el-aside width="240px" class="sidebar">
         <div class="logo">
-          <el-icon size="28" color="#67C23A"><Monitor /></el-icon>
-          <span>环境监测系统</span>
+          <el-icon size="32" color="#409EFF"><Monitor /></el-icon>
+          <span>智绿云控平台</span>
         </div>
 
         <el-menu
           :default-active="activeIndex"
           class="el-menu-vertical"
-          background-color="#1a5f1a"
-          text-color="#fff"
-          active-text-color="#67C23A"
+          background-color="#0f172a"
+          text-color="#94a3b8"
+          active-text-color="#38bdf8"
           @select="handleSelect"
+          :collapse-transition="false"
         >
           <el-menu-item index="1">
-            <el-icon><Odometer /></el-icon>
+            <el-icon class="menu-icon"><Odometer /></el-icon>
             <span>环境监测</span>
           </el-menu-item>
 
           <el-menu-item index="2">
-            <el-icon><Document /></el-icon>
+            <el-icon class="menu-icon"><Document /></el-icon>
             <span>监测记录</span>
           </el-menu-item>
 
           <el-menu-item index="3">
-            <el-icon><User /></el-icon>
+            <el-icon class="menu-icon"><User /></el-icon>
             <span>用户管理</span>
           </el-menu-item>
 
           <el-menu-item index="4">
-            <el-icon><Cpu /></el-icon>
+            <el-icon class="menu-icon"><Cpu /></el-icon>
             <span>AI监测</span>
           </el-menu-item>
 
           <el-menu-item index="5">
-            <el-icon><Cpu /></el-icon>
+            <el-icon class="menu-icon"><Cpu /></el-icon>
             <span>设备管理</span>
           </el-menu-item>
 
           <el-menu-item index="7">
-            <el-icon><Sunny /></el-icon>
+            <el-icon class="menu-icon"><Sunny /></el-icon>
             <span>路灯管理</span>
           </el-menu-item>
 
           <el-menu-item index="6">
-            <el-icon><Cloudy /></el-icon>
+            <el-icon class="menu-icon"><Cloudy /></el-icon>
             <span>云平台</span>
           </el-menu-item>
         </el-menu>
 
         <div class="user-info">
-          <el-avatar :size="40" :icon="UserFilled" />
+          <el-avatar :size="48" :icon="UserFilled" class="user-avatar" />
           <div class="user-detail">
             <span class="username">{{ username }}</span>
-            <el-tag size="small" type="success">{{ roleText }}</el-tag>
+            <el-tag size="small" type="info" effect="light" class="role-tag">{{
+              roleText
+            }}</el-tag>
           </div>
-          <el-button type="danger" size="small" @click="logout" circle>
+          <el-button
+            type="primary"
+            size="small"
+            @click="logout"
+            circle
+            class="logout-btn"
+          >
             <el-icon><SwitchButton /></el-icon>
           </el-button>
         </div>
@@ -68,6 +77,9 @@
       <el-container>
         <el-header class="main-header">
           <div class="header-title">
+            <el-icon :size="24" color="#409EFF" class="title-icon"
+              ><Monitor
+            /></el-icon>
             <h2>{{ currentTitle }}</h2>
           </div>
 
@@ -77,12 +89,21 @@
               placeholder="搜索设备..."
               :prefix-icon="Search"
               clearable
-              style="width: 250px; margin-right: 10px"
+              style="width: 280px; margin-right: 16px"
+              class="search-input"
             />
-            <el-button type="success" :icon="Plus" @click="handleAdd"
+            <el-button
+              type="primary"
+              :icon="Plus"
+              @click="handleAdd"
+              class="add-btn"
               >添加设备</el-button
             >
-            <el-button type="primary" :icon="Refresh" @click="refreshData"
+            <el-button
+              type="info"
+              :icon="Refresh"
+              @click="refreshData"
+              class="refresh-btn"
               >刷新</el-button
             >
           </div>
@@ -143,7 +164,7 @@
               </el-row>
 
               <!-- 数据可视化 -->
-              <EnvironmentChart />
+              <EnvironmentChart :device-type="selectedDeviceType" />
 
               <!-- 设备列表 -->
               <el-card class="device-list-card" shadow="never">
@@ -340,9 +361,14 @@
             v-model="addForm.deviceType"
             placeholder="请选择设备类型"
             style="width: 100%"
+            @change="handleDeviceTypeChange"
           >
-            <el-option label="环境监测" value="环境监测" />
-            <el-option label="路灯" value="路灯" />
+            <el-option
+              v-for="type in deviceTypeList"
+              :key="type.id"
+              :label="type.name"
+              :value="type.name"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="IP地址" prop="ip">
@@ -453,8 +479,12 @@
             placeholder="请选择设备类型"
             style="width: 100%"
           >
-            <el-option label="环境监测" value="环境监测" />
-            <el-option label="路灯" value="路灯" />
+            <el-option
+              v-for="type in deviceTypeList"
+              :key="type.id"
+              :label="type.name"
+              :value="type.name"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="IP地址" prop="ip">
@@ -534,6 +564,7 @@ import {
   deleteDevice as deleteDeviceApi,
   addDevice as addDeviceApi,
   updateDevice as updateDeviceApi,
+  getDeviceTypeList,
 } from "../api/auth.js";
 
 const router = useRouter();
@@ -572,6 +603,9 @@ const avgLight = ref(0);
 // 设备列表
 const deviceList = ref([]);
 
+// 设备类型列表
+const deviceTypeList = ref([]);
+
 // 添加设备对话框
 const addDialogVisible = ref(false);
 const addLoading = ref(false);
@@ -579,7 +613,7 @@ const addFormRef = ref(null);
 const addForm = ref({
   id: "",
   name: "",
-  deviceType: "环境监测",
+  deviceType: "环境监测站",
   ip: "192.168.1.100",
   port: 8080,
   temperature: 25.0,
@@ -587,6 +621,9 @@ const addForm = ref({
   lightIntensity: 500,
   onLine: true,
 });
+
+// 当前选中的设备类型，用于图表交互
+const selectedDeviceType = ref("all");
 
 const addFormRules = {
   id: [
@@ -652,7 +689,7 @@ const handleAdd = () => {
   addForm.value = {
     id: "",
     name: "",
-    deviceType: "环境监测",
+    deviceType: "环境监测站",
     ip: "192.168.1.100",
     port: 8080,
     temperature: 25.0,
@@ -661,6 +698,16 @@ const handleAdd = () => {
     onLine: true,
   };
   addDialogVisible.value = true;
+};
+
+// 设备类型变化时的处理，实现与图表的动态交互
+const handleDeviceTypeChange = (type) => {
+  selectedDeviceType.value = type;
+  // 这里可以根据设备类型更新图表数据
+  // 例如：根据设备类型过滤数据，更新图表显示
+  console.log("设备类型变更为:", type);
+  // 实际项目中，这里可以调用API获取对应类型设备的数据
+  refreshData();
 };
 
 const submitAddDevice = async () => {
@@ -691,6 +738,18 @@ const submitAddDevice = async () => {
       }
     }
   });
+};
+
+// 获取设备类型列表
+const fetchDeviceTypes = async () => {
+  try {
+    const response = await getDeviceTypeList();
+    if (response.data.code === 1) {
+      deviceTypeList.value = response.data.data || [];
+    }
+  } catch (error) {
+    console.error("获取设备类型列表失败", error);
+  }
 };
 
 const refreshData = async () => {
@@ -791,6 +850,7 @@ const deleteDevice = async (device) => {
 };
 
 onMounted(async () => {
+  await fetchDeviceTypes();
   await refreshData();
 });
 </script>
@@ -798,38 +858,93 @@ onMounted(async () => {
 <style scoped>
 .home-container {
   min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%);
 }
 
 .sidebar {
-  background: #1a5f1a;
+  background: #0f172a;
   display: flex;
   flex-direction: column;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.sidebar:hover {
+  box-shadow: 2px 0 20px rgba(0, 0, 0, 0.15);
 }
 
 .logo {
-  height: 60px;
+  height: 70px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  color: #fff;
-  font-size: 18px;
-  font-weight: 600;
+  gap: 12px;
+  color: #f8fafc;
+  font-size: 20px;
+  font-weight: 700;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
 }
 
 .el-menu-vertical {
   flex: 1;
   border-right: none;
+  overflow-y: auto;
+}
+
+.el-menu-item {
+  height: 60px;
+  line-height: 60px;
+  margin: 8px 12px;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.el-menu-item:hover {
+  background-color: rgba(56, 189, 248, 0.1) !important;
+  color: #38bdf8 !important;
+}
+
+.el-menu-item.is-active {
+  background: linear-gradient(
+    135deg,
+    rgba(56, 189, 248, 0.2) 0%,
+    rgba(64, 158, 255, 0.1) 100%
+  );
+  box-shadow: 0 4px 12px rgba(56, 189, 248, 0.2);
+}
+
+.menu-icon {
+  font-size: 20px;
+  transition: all 0.3s ease;
+}
+
+.el-menu-item.is-active .menu-icon {
+  transform: scale(1.1);
 }
 
 .user-info {
-  padding: 15px;
+  padding: 20px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(0, 0, 0, 0.2);
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  margin-top: auto;
+}
+
+.user-avatar {
+  border: 2px solid #38bdf8;
+  box-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
+  transition: all 0.3s ease;
+}
+
+.user-avatar:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.7);
 }
 
 .user-detail {
@@ -840,53 +955,155 @@ onMounted(async () => {
 }
 
 .username {
-  color: #fff;
-  font-size: 14px;
+  color: #f8fafc;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.role-tag {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.logout-btn {
+  transition: all 0.3s ease;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logout-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
 }
 
 .main-header {
-  background: #fff;
-  border-bottom: 1px solid #e4e7ed;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid #e2e8f0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px;
+  padding: 0 30px;
+  height: 70px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.title-icon {
+  transition: all 0.3s ease;
 }
 
 .header-title h2 {
   margin: 0;
-  color: #2c3e50;
-  font-size: 20px;
+  color: #1e293b;
+  font-size: 22px;
+  font-weight: 700;
+  transition: all 0.3s ease;
 }
 
 .header-actions {
   display: flex;
   align-items: center;
+  gap: 12px;
+}
+
+.search-input {
+  border-radius: 20px !important;
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.search-input:hover {
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1);
+}
+
+.add-btn,
+.refresh-btn {
+  border-radius: 20px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.add-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
+}
+
+.refresh-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(148, 163, 184, 0.3);
 }
 
 .main-content {
-  background: #f5f7fa;
-  padding: 20px;
+  background: #f8fafc;
+  padding: 30px;
+  min-height: calc(100vh - 70px);
+}
+
+.monitor-panel {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .stats-row {
-  margin-bottom: 20px;
+  margin-bottom: 30px;
 }
 
 .stat-card {
   display: flex;
   align-items: center;
-  padding: 10px;
+  padding: 20px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  border: 1px solid #e2e8f0;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+  border-color: #38bdf8;
 }
 
 .stat-icon {
-  width: 60px;
-  height: 60px;
-  border-radius: 12px;
+  width: 70px;
+  height: 70px;
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 15px;
+  margin-right: 20px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card:hover .stat-icon {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
 
 .stat-info {
@@ -894,71 +1111,142 @@ onMounted(async () => {
 }
 
 .stat-value {
-  font-size: 28px;
-  font-weight: 600;
-  color: #2c3e50;
+  font-size: 32px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 4px;
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover .stat-value {
+  color: #38bdf8;
 }
 
 .stat-label {
   font-size: 14px;
-  color: #909399;
-  margin-top: 4px;
+  color: #64748b;
+  font-weight: 500;
 }
 
 .device-list-card {
-  margin-top: 20px;
+  margin-top: 30px;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid #e2e8f0;
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #e2e8f0;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+.card-header span {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.viewMode {
+  display: flex;
+  gap: 8px;
 }
 
 .device-card {
-  transition: all 0.3s;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border: 1px solid #e2e8f0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
 }
 
 .device-card:hover {
-  transform: translateY(-5px);
+  transform: translateY(-8px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+  border-color: #38bdf8;
 }
 
 .device-card.offline {
   opacity: 0.7;
+  border-color: #e2e8f0;
+}
+
+.device-card.offline:hover {
+  border-color: #f87171;
+  box-shadow: 0 12px 30px rgba(248, 113, 113, 0.1);
 }
 
 .device-header {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 15px;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 20px;
   padding-bottom: 15px;
-  border-bottom: 1px solid #e4e7ed;
+  border-bottom: 1px solid #e2e8f0;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
 }
 
 .device-name {
   flex: 1;
   font-weight: 600;
-  color: #2c3e50;
+  color: #1e293b;
+  font-size: 16px;
 }
 
 .device-data {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-bottom: 15px;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 0 20px;
 }
 
 .data-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  color: #606266;
+  gap: 10px;
+  color: #64748b;
+  font-weight: 500;
+  font-size: 14px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.data-item:last-child {
+  border-bottom: none;
+}
+
+.data-item el-icon {
+  color: #38bdf8;
+  font-size: 18px;
 }
 
 .device-actions {
   display: flex;
-  gap: 8px;
+  gap: 10px;
+  padding: 15px 20px;
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.device-actions .el-button {
+  flex: 1;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.device-actions .el-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .placeholder {
@@ -966,7 +1254,11 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   min-height: 400px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 }
+
 /* 移动端适配 */
 @media (max-width: 768px) {
   .sidebar {
@@ -974,14 +1266,16 @@ onMounted(async () => {
   }
 
   .logo {
-    font-size: 16px;
+    font-size: 18px;
+    height: 60px;
   }
 
   .main-header {
     flex-direction: column;
     align-items: flex-start;
-    padding: 10px;
-    gap: 10px;
+    padding: 15px;
+    gap: 12px;
+    height: auto;
   }
 
   .header-actions {
@@ -995,26 +1289,26 @@ onMounted(async () => {
   }
 
   .main-content {
-    padding: 10px;
+    padding: 20px;
   }
 
   .stats-row {
-    margin-bottom: 10px;
+    margin-bottom: 20px;
   }
 
   .stat-card {
     flex-direction: column;
     text-align: center;
-    padding: 15px;
+    padding: 20px;
   }
 
   .stat-icon {
     margin-right: 0;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
   }
 
   .device-card {
-    margin-bottom: 10px;
+    margin-bottom: 15px;
   }
 
   .device-actions {
@@ -1023,7 +1317,7 @@ onMounted(async () => {
 
   .device-actions .el-button {
     flex: 1;
-    margin-bottom: 5px;
+    margin-bottom: 8px;
   }
 
   .chart-container {
@@ -1031,11 +1325,11 @@ onMounted(async () => {
   }
 
   .ai-monitor-panel {
-    padding: 10px;
+    padding: 15px;
   }
 
   .prediction-params {
-    padding: 10px;
+    padding: 15px;
   }
 
   .prediction-chart {
@@ -1044,7 +1338,7 @@ onMounted(async () => {
 
   .el-form-item {
     margin-right: 0 !important;
-    margin-bottom: 10px !important;
+    margin-bottom: 15px !important;
   }
 
   .el-select {
@@ -1064,14 +1358,17 @@ onMounted(async () => {
 
   .el-menu-item {
     font-size: 12px;
+    height: 50px;
+    line-height: 50px;
   }
 
-  .el-menu-item .el-icon {
-    margin-right: 5px;
+  .el-menu-item .menu-icon {
+    margin-right: 8px;
+    font-size: 16px;
   }
 
   .stat-value {
-    font-size: 20px;
+    font-size: 24px;
   }
 
   .device-name {
@@ -1083,7 +1380,7 @@ onMounted(async () => {
   }
 
   .prediction-stats .el-col {
-    margin-bottom: 10px;
+    margin-bottom: 15px;
   }
 }
 </style>

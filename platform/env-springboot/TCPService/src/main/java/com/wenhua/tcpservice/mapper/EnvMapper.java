@@ -10,34 +10,34 @@ import java.util.List;
 public interface EnvMapper {
 
     //使目标id的设备上线
-    @Update("update Device set onLine = 1 where id = #{id}")
+    @Update("update device set onLine = 1 where id = #{id}")
     void setOnline(String id);
 
     //使目标id的设备下线
-    @Update("update Device set onLine = 0 where id = #{id}")
+    @Update("update device set onLine = 0 where id = #{id}")
     void setOffline(String id);
 
     //设置目标id设备繁忙
-    @Update("update Device set isBusy = 1 where id = #{id}")
+    @Update("update device set isBusy = 1 where id = #{id}")
     void setBusyId(String id);
 
     //设置目标id设备空闲
-    @Update("update Device set isBusy = 0 where id = #{id}")
+    @Update("update device set isBusy = 0 where id = #{id}")
     void setUnBusyId(String id);
 
     //查询目标设备是否繁忙
-    @Select("select isBusy from Device where id = #{id}")
+    @Select("select isBusy from device where id = #{id}")
     Integer getIsBusy(String id);
 
-    @Select("select isBusy from Device where ip = #{ip}")
+    @Select("select isBusy from device where ip = #{ip}")
     Integer getIsBusyByIp(String ip);
 
     //通过id获取ip
-    @Select("select ip from Device where id = #{id}")
+    @Select("select ip from device where id = #{id}")
     String getIp(String id);
 
     //设置设备ip
-    @Update("update Device set ip = #{ip} where id = #{id}")
+    @Update("update device set ip = #{ip} where id = #{id}")
     void setIp(String id, String ip);
 
     //查询(写xml里面了)
@@ -47,16 +47,16 @@ public interface EnvMapper {
     int selectDeviceCount(QueryParameter queryParameter);
 
     //插入设备
-    @Insert("insert into Device(id, name, ip, port, deviceType, temperature, humidity, lightIntensity, onLine, lampStatus, brightness, faultStatus, powerConsumption) " +
-            "values(#{id}, #{name}, #{ip}, #{port}, #{deviceType}, #{temperature}, #{humidity}, #{lightIntensity}, #{onLine}, #{lampStatus}, #{brightness}, #{faultStatus}, #{powerConsumption})")
+    @Insert("insert into device(id, name, ip, port, deviceType, temperature, humidity, lightIntensity, onLine, isBusy, isBroken) " +
+            "values(#{id}, #{name}, #{ip}, #{port}, #{deviceType}, #{temperature}, #{humidity}, #{lightIntensity}, #{onLine}, #{isBusy}, #{isBroken})")
     int insertDevice(Device device);
 
     //查询设备是否存在
-    @Select("select count(*) from Device where id = #{id}")
+    @Select("select count(*) from device where id = #{id}")
     int isDeviceExist(String id);
 
     //删除设备
-    @Update("delete from Device where id = #{id}")
+    @Update("delete from device where id = #{id}")
     int deleteDevice(String id);
 
     //查询所有设备
@@ -64,19 +64,15 @@ public interface EnvMapper {
     List<Device> selectAllDevice();
 
     //查询一个设备
-    @Select("select * from Device where id = #{id}")
+    @Select("select * from device where id = #{id}")
     Device selectDeviceById(String id);
 
-    //设置设备是否损坏
-    @Update("update Device set isBroken = #{isBroken} where id = #{id}")
-    void setIsBroken(String id, Integer isBroken);
-
     //查询所有设备id
-    @Select("select id from Device")
+    @Select("select id from device")
     List<String> selectAllDeviceId();
 
     //更新设备
-    @Update("update Device set " +
+    @Update("update device set " +
             "name = #{name}, " +
             "ip = #{ip}, " +
             "port = #{port}, " +
@@ -85,15 +81,13 @@ public interface EnvMapper {
             "humidity = #{humidity}, " +
             "lightIntensity = #{lightIntensity}, " +
             "onLine = #{onLine}, " +
-            "lampStatus = #{lampStatus}, " +
-            "brightness = #{brightness}, " +
-            "faultStatus = #{faultStatus}, " +
-            "powerConsumption = #{powerConsumption} " +
+            "isBusy = #{isBusy}, " +
+            "isBroken = #{isBroken} " +
             "where id = #{id}")
     int updateDevice(Device device);
 
     //更新设备状态
-    @Update("update Device set onLine = #{onLine} where id = #{id}")
+    @Update("update device set onLine = #{onLine} where id = #{id}")
     int updateDeviceStatus(String id, Integer onLine);
 
     // ========== 路灯相关方法 ==========
@@ -107,7 +101,7 @@ public interface EnvMapper {
     List<Device> selectFaultLamps();
 
     //更新路灯状态（包含路灯特有字段）
-    @Update("update Device set " +
+    @Update("update device set " +
             "name = #{name}, " +
             "ip = #{ip}, " +
             "port = #{port}, " +
@@ -117,14 +111,7 @@ public interface EnvMapper {
             "lightIntensity = #{lightIntensity}, " +
             "onLine = #{onLine}, " +
             "isBusy = #{isBusy}, " +
-            "isBroken = #{isBroken}, " +
-            "lampStatus = #{lampStatus}, " +
-            "brightness = #{brightness}, " +
-            "longitude = #{longitude}, " +
-            "latitude = #{latitude}, " +
-            "powerConsumption = #{powerConsumption}, " +
-            "lastMaintenance = #{lastMaintenance}, " +
-            "faultStatus = #{faultStatus} " +
+            "isBroken = #{isBroken} " +
             "where id = #{id}")
     int updateLamp(Device device);
 }

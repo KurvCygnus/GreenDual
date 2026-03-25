@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeepSeek API 测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #409EFF;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+        .success {
+            background-color: #f0f9ff;
+            color: #67c23a;
+            border: 1px solid #b3e19d;
+        }
+        .error {
+            background-color: #fef0f0;
+            color: #f56c6c;
+            border: 1px solid #fbc4c4;
+        }
+        .loading {
+            background-color: #f4f4f5;
+            color: #909399;
+            border: 1px solid #d3d4d6;
+        }
+        button {
+            background-color: #409EFF;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #66b1ff;
+        }
+        button:disabled {
+            background-color: #c0c4cc;
+            cursor: not-allowed;
+        }
+        .response {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid #e4e7ed;
+            margin-top: 15px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .info {
+            background-color: #ecf5ff;
+            color: #409EFF;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            border: 1px solid #b3d8ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 DeepSeek API 连接测试</h1>
+        
+        <div class="info">
+            <strong>API配置信息：</strong><br>
+            API URL: https://api.deepseek.com/v1/chat/completions<br>
+            模型: deepseek-chat<br>
+            API Key: sk-d3447a51c4c349c7bd269d1c9654cb25 (已配置)
+        </div>
+
+        <div class="test-section">
+            <h3>📋 测试1: 基础连接测试</h3>
+            <div id="status1" class="status loading">等待测试...</div>
+            <button onclick="testBasicConnection()" id="btn1">开始测试</button>
+            <div id="response1" class="response" style="display:none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🌡️ 测试2: 环境监测数据分析</h3>
+            <div id="status2" class="status loading">等待测试...</div>
+            <button onclick="testEnvironmentAnalysis()" id="btn2">开始测试</button>
+            <div id="response2" class="response" style="display:none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>💡 测试3: 路灯控制建议</h3>
+            <div id="status3" class="status loading">等待测试...</div>
+            <button onclick="testLampControl()" id="btn3">开始测试</button>
+            <div id="response3" class="response" style="display:none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔧 测试4: 故障诊断</h3>
+            <div id="status4" class="status loading">等待测试...</div>
+            <button onclick="testFaultDiagnosis()" id="btn4">开始测试</button>
+            <div id="response4" class="response" style="display:none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const DEEPSEEK_API_KEY = "sk-d3447a51c4c349c7bd269d1c9654cb25";
+        const DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions";
+
+        async function callDeepSeekAPI(messages) {
+            try {
+                const response = await fetch(DEEPSEEK_API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
+                    },
+                    body: JSON.stringify({
+                        model: 'deepseek-chat',
+                        messages: messages,
+                        temperature: 0.7,
+                        max_tokens: 2000
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`HTTP ${response.status}: ${JSON.stringify(errorData)}`);
+                }
+
+                const data = await response.json();
+                return data.choices[0].message.content;
+            } catch (error) {
+                throw error;
+            }
+        }
+
+        async function testBasicConnection() {
+            const statusDiv = document.getElementById('status1');
+            const responseDiv = document.getElementById('response1');
+            const btn = document.getElementById('btn1');
+
+            btn.disabled = true;
+            statusDiv.className = 'status loading';
+            statusDiv.textContent = '正在连接DeepSeek API...';
+            responseDiv.style.display = 'none';
+
+            try {
+                const messages = [
+                    {
+                        role: 'system',
+                        content: '你是一个测试助手。'
+                    },
+                    {
+                        role: 'user',
+                        content: '请回复"连接成功"，确认API正常工作。'
+                    }
+                ];
+
+                const response = await callDeepSeekAPI(messages);
+                
+                statusDiv.className = 'status success';
+                statusDiv.textContent = '✅ 连接成功！API响应正常';
+                responseDiv.style.display = 'block';
+                responseDiv.textContent = `AI回复：\n${response}`;
+            } catch (error) {
+                statusDiv.className = 'status error';
+                statusDiv.textContent = `❌ 连接失败：${error.message}`;
+                responseDiv.style.display = 'block';
+                responseDiv.textContent = `错误详情：\n${error.stack || error.message}`;
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function testEnvironmentAnalysis() {
+            const statusDiv = document.getElementById('status2');
+            const responseDiv = document.getElementById('response2');
+            const btn = document.getElementById('btn2');
+
+            btn.disabled = true;
+            statusDiv.className = 'status loading';
+            statusDiv.textContent = '正在测试环境分析功能...';
+            responseDiv.style.display = 'none';
+
+            try {
+                const messages = [
+                    {
+                        role: 'system',
+                        content: '你是一个环境监测和智能路灯控制系统的AI助手。请用专业、简洁的语言回答用户问题，提供具体的数值分析和可行的建议。'
+                    },
+                    {
+                        role: 'user',
+                        content: `当前环境监测系统实时数据：
+- 监测设备总数：11个
+- 在线设备：10个
+- 离线设备：1个
+- 平均温度：26.1°C
+- 平均湿度：56%
+- 平均光照：2938lux
+
+请分析当前环境状况并给出建议。`
+                    }
+                ];
+
+                const response = await callDeepSeekAPI(messages);
+                
+                statusDiv.className = 'status success';
+                statusDiv.textContent = '✅ 环境分析测试成功！';
+                responseDiv.style.display = 'block';
+                responseDiv.textContent = `AI分析结果：\n${response}`;
+            } catch (error) {
+                statusDiv.className = 'status error';
+                statusDiv.textContent = `❌ 测试失败：${error.message}`;
+                responseDiv.style.display = 'block';
+                responseDiv.textContent = `错误详情：\n${error.stack || error.message}`;
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function testLampControl() {
+            const statusDiv = document.getElementById('status3');
+            const responseDiv = document.getElementById('response3');
+            const btn = document.getElementById('btn3');
+
+            btn.disabled = true;
+            statusDiv.className = 'status loading';
+            statusDiv.textContent = '正在测试路灯控制建议功能...';
+            responseDiv.style.display = 'none';
+
+            try {
+                const messages = [
+                    {
+                        role: 'system',
+                        content: '你是一个环境监测和智能路灯控制系统的AI助手。请用专业、简洁的语言回答用户问题，提供具体的数值分析和可行的建议。'
+                    },
+                    {
+                        role: 'user',
+                        content: `当前环境监测系统实时数据：
+- 平均光照：2938lux
+- 环境温度：26.1°C
+- 环境湿度：56%
+- 监测设备总数：11个
+
+请基于以上数据给出路灯控制建议。`
+                    }
+                ];
+
+                const response = await callDeepSeekAPI(messages);
+                
+                statusDiv.className = 'status success';
+                statusDiv.textContent = '✅ 路灯控制测试成功！';
+                responseDiv.style.display = 'block';
+                responseDiv.textContent = `AI建议：\n${response}`;
+            } catch (error) {
+                statusDiv.className = 'status error';
+                statusDiv.textContent = `❌ 测试失败：${error.message}`;
+                responseDiv.style.display = 'block';
+                responseDiv.textContent = `错误详情：\n${error.stack || error.message}`;
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function testFaultDiagnosis() {
+            const statusDiv = document.getElementById('status4');
+            const responseDiv = document.getElementById('response4');
+            const btn = document.getElementById('btn4');
+
+            btn.disabled = true;
+            statusDiv.className = 'status loading';
+            statusDiv.textContent = '正在测试故障诊断功能...';
+            responseDiv.style.display = 'none';
+
+            try {
+                const messages = [
+                    {
+                        role: 'system',
+                        content: '你是一个环境监测和智能路灯控制系统的AI助手。请用专业、简洁的语言回答用户问题，提供具体的数值分析和可行的建议。'
+                    },
+                    {
+                        role: 'user',
+                        content: `当前环境监测系统实时数据：
+- 监测设备总数：11个
+- 在线设备：10个
+- 离线设备：1个
+- 设备在线率：90.9%
+
+请进行设备故障诊断并给出维护建议。`
+                    }
+                ];
+
+                const response = await callDeepSeekAPI(messages);
+                
+                statusDiv.className = 'status success';
+                statusDiv.textContent = '✅ 故障诊断测试成功！';
+                responseDiv.style.display = 'block';
+                responseDiv.textContent = `AI诊断结果：\n${response}`;
+            } catch (error) {
+                statusDiv.className = 'status error';
+                statusDiv.textContent = `❌ 测试失败：${error.message}`;
+                responseDiv.style.display = 'block';
+                responseDiv.textContent = `错误详情：\n${error.stack || error.message}`;
+            } finally {
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

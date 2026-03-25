@@ -32,8 +32,8 @@
             ><Monitor
           /></el-icon>
         </div>
-        <h1 class="brand-title">绿能智控</h1>
-        <p class="brand-subtitle">基于 AI 与物联网的环境监测与智能节能一体化管控平台</p>
+        <h1 class="brand-title">智绿云控</h1>
+        <p class="brand-subtitle">AI协同的环境监测与智能节能管控平台</p>
         <div class="ai-badge">
           <el-icon size="16" color="#67C23A"><Cpu /></el-icon>
           <span>AI 智能驱动</span>

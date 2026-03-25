@@ -229,6 +229,7 @@
     <el-dialog v-model="locationVisible" title="路灯位置" width="800px">
       <div class="location-info">
         <p><strong>路灯名称:</strong> {{ currentLamp?.name }}</p>
+        <p><strong>位置:</strong> 湖北省武汉市文华学院光谷创业街附近</p>
         <p><strong>经度:</strong> {{ currentLamp?.longitude || "未设置" }}</p>
         <p><strong>纬度:</strong> {{ currentLamp?.latitude || "未设置" }}</p>
       </div>
@@ -516,6 +517,7 @@ const showDetail = (lamp) => {
     `
     设备ID: ${lamp.id}
     名称: ${lamp.name}
+    位置: 湖北省武汉市文华学院光谷创业街附近
     IP地址: ${lamp.ip}
     端口: ${lamp.port}
     在线状态: ${lamp.onLine ? "在线" : "离线"}

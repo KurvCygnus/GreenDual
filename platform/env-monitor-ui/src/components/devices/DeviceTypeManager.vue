@@ -1,33 +1,47 @@
 <template>
   <div class="device-type-manager">
     <!-- 搜索栏 -->
-    <el-card class="search-card" shadow="never">
-      <el-form :inline="true" :model="searchForm">
-        <el-form-item label="类型名称">
+    <el-card class="search-card mb-4" shadow="never">
+      <el-form :inline="true" :model="searchForm" class="flex items-center">
+        <el-form-item label="类型名称" class="mr-4">
           <el-input
             v-model="searchForm.name"
             placeholder="请输入类型名称"
             clearable
-            style="width: 200px"
+            style="width: 220px"
+            class="rounded-lg"
           />
         </el-form-item>
-        <el-form-item label="状态">
+        <el-form-item label="状态" class="mr-4">
           <el-select
             v-model="searchForm.status"
             placeholder="全部"
             clearable
             style="width: 120px"
+            class="rounded-lg"
           >
             <el-option label="启用" value="active" />
             <el-option label="禁用" value="inactive" />
           </el-select>
         </el-form-item>
-        <el-form-item>
-          <el-button type="primary" :icon="Search" @click="handleSearch"
-            >搜索</el-button
+        <el-form-item class="flex gap-2">
+          <el-button
+            type="primary"
+            :icon="Search"
+            @click="handleSearch"
+            class="rounded-full"
           >
-          <el-button :icon="Refresh" @click="handleReset">重置</el-button>
-          <el-button type="primary" size="small" @click="addDeviceType">
+            搜索
+          </el-button>
+          <el-button :icon="Refresh" @click="handleReset" class="rounded-full">
+            重置
+          </el-button>
+          <el-button
+            type="primary"
+            size="small"
+            @click="addDeviceType"
+            class="rounded-full"
+          >
             <el-icon><Plus /></el-icon>
             添加设备类型
           </el-button>
@@ -36,55 +50,77 @@
     </el-card>
 
     <!-- 统计卡片 -->
-    <el-row :gutter="20" class="stats-row">
+    <el-row :gutter="20" class="stats-row mb-4">
       <el-col :span="8">
-        <el-card class="stat-card" shadow="hover">
-          <div class="stat-content">
-            <el-icon size="36" color="#409eff"><Cpu /></el-icon>
-            <div class="stat-info">
-              <div class="stat-value">{{ totalCount }}</div>
-              <div class="stat-label">类型总数</div>
+        <el-card
+          class="stat-card h-full rounded-xl overflow-hidden transition-all duration-300 hover:shadow-lg"
+          shadow="hover"
+        >
+          <div class="stat-content flex items-center p-4">
+            <div class="stat-icon bg-blue-500 rounded-full p-3 mr-4">
+              <el-icon size="32" color="#fff"><Cpu /></el-icon>
+            </div>
+            <div class="stat-info flex-1">
+              <div class="stat-value text-3xl font-bold text-gray-800">
+                {{ totalCount }}
+              </div>
+              <div class="stat-label text-gray-500 mt-1">类型总数</div>
             </div>
           </div>
         </el-card>
       </el-col>
       <el-col :span="8">
-        <el-card class="stat-card" shadow="hover">
-          <div class="stat-content">
-            <el-icon size="36" color="#67c23a"><Check /></el-icon>
-            <div class="stat-info">
-              <div class="stat-value">{{ activeCount }}</div>
-              <div class="stat-label">启用类型</div>
+        <el-card
+          class="stat-card h-full rounded-xl overflow-hidden transition-all duration-300 hover:shadow-lg"
+          shadow="hover"
+        >
+          <div class="stat-content flex items-center p-4">
+            <div class="stat-icon bg-green-500 rounded-full p-3 mr-4">
+              <el-icon size="32" color="#fff"><Check /></el-icon>
+            </div>
+            <div class="stat-info flex-1">
+              <div class="stat-value text-3xl font-bold text-gray-800">
+                {{ activeCount }}
+              </div>
+              <div class="stat-label text-gray-500 mt-1">启用类型</div>
             </div>
           </div>
         </el-card>
       </el-col>
       <el-col :span="8">
-        <el-card class="stat-card" shadow="hover">
-          <div class="stat-content">
-            <el-icon size="36" color="#e6a23c"><Close /></el-icon>
-            <div class="stat-info">
-              <div class="stat-value">{{ inactiveCount }}</div>
-              <div class="stat-label">禁用类型</div>
+        <el-card
+          class="stat-card h-full rounded-xl overflow-hidden transition-all duration-300 hover:shadow-lg"
+          shadow="hover"
+        >
+          <div class="stat-content flex items-center p-4">
+            <div class="stat-icon bg-yellow-500 rounded-full p-3 mr-4">
+              <el-icon size="32" color="#fff"><Close /></el-icon>
+            </div>
+            <div class="stat-info flex-1">
+              <div class="stat-value text-3xl font-bold text-gray-800">
+                {{ inactiveCount }}
+              </div>
+              <div class="stat-label text-gray-500 mt-1">禁用类型</div>
             </div>
           </div>
         </el-card>
       </el-col>
     </el-row>
 
-    <el-card shadow="hover">
-      <div class="device-type-content">
+    <el-card shadow="hover" class="rounded-xl overflow-hidden">
+      <div class="device-type-content p-4">
         <!-- 空状态 -->
         <el-empty
           v-if="filteredTypes.length === 0"
           description="暂无设备类型数据"
+          class="py-10"
         >
-          <el-button type="primary" @click="addDeviceType"
-            >添加设备类型</el-button
-          >
+          <el-button type="primary" @click="addDeviceType" class="rounded-full">
+            添加设备类型
+          </el-button>
         </el-empty>
 
-        <el-row v-else :gutter="20" class="device-type-grid">
+        <el-row v-else :gutter="24" class="device-type-grid">
           <el-col
             v-for="type in filteredTypes"
             :key="type.id"
@@ -92,51 +128,73 @@
             :sm="12"
             :md="8"
             :lg="6"
-            style="margin-bottom: 20px"
+            style="margin-bottom: 24px"
           >
             <el-card
-              class="device-type-card"
+              class="device-type-card rounded-xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
               :class="{ active: selectedType === type.id }"
             >
-              <div class="device-type-header">
-                <div class="type-icon" :style="{ background: type.color }">
-                  <el-icon :size="32" color="#fff">{{
-                    getTypeIcon(type.type)
-                  }}</el-icon>
+              <div
+                class="device-type-header text-center pb-4 border-b border-gray-100"
+              >
+                <div
+                  class="type-icon inline-block rounded-full p-4 mb-3"
+                  :style="{ backgroundColor: type.color + '20' }"
+                >
+                  <component
+                    :is="getTypeIcon(type.type)"
+                    :size="36"
+                    :color="type.color"
+                  />
                 </div>
-                <h3>{{ type.name }}</h3>
+                <h3 class="text-lg font-semibold text-gray-800 mb-2">
+                  {{ type.name }}
+                </h3>
                 <el-tag
                   :type="type.status === 'active' ? 'success' : 'info'"
                   size="small"
+                  effect="light"
+                  class="rounded-full px-3"
                 >
                   {{ type.status === "active" ? "启用" : "禁用" }}
                 </el-tag>
               </div>
 
-              <div class="device-type-info">
-                <div class="info-item">
-                  <span class="label">设备类型:</span>
-                  <span class="value">{{ type.type }}</span>
+              <div class="device-type-info p-4">
+                <div class="info-item flex mb-3">
+                  <span class="label text-gray-500 w-24">设备类型:</span>
+                  <span class="value text-gray-700 flex-1 font-medium">{{
+                    type.type
+                  }}</span>
                 </div>
-                <div class="info-item">
-                  <span class="label">支持传感器:</span>
-                  <span class="value">{{ type.sensors.join(", ") }}</span>
+                <div class="info-item flex mb-3">
+                  <span class="label text-gray-500 w-24">支持传感器:</span>
+                  <span class="value text-gray-700 flex-1">{{
+                    type.sensors.join(", ")
+                  }}</span>
                 </div>
-                <div class="info-item">
-                  <span class="label">设备数量:</span>
-                  <span class="value">{{ type.deviceCount }}</span>
+                <div class="info-item flex mb-3">
+                  <span class="label text-gray-500 w-24">设备数量:</span>
+                  <span class="value text-gray-700 flex-1 font-medium">{{
+                    type.deviceCount
+                  }}</span>
                 </div>
-                <div class="info-item">
-                  <span class="label">描述:</span>
-                  <span class="value">{{ type.description }}</span>
+                <div class="info-item flex mb-3">
+                  <span class="label text-gray-500 w-24">描述:</span>
+                  <span class="value text-gray-700 flex-1">{{
+                    type.description
+                  }}</span>
                 </div>
               </div>
 
-              <div class="device-type-actions">
+              <div
+                class="device-type-actions p-4 border-t border-gray-100 flex gap-2 justify-center"
+              >
                 <el-button
                   type="primary"
                   size="small"
                   @click="editDeviceType(type)"
+                  class="rounded-full px-4"
                 >
                   <el-icon><Edit /></el-icon>
                   编辑
@@ -145,16 +203,18 @@
                   :type="type.status === 'active' ? 'warning' : 'success'"
                   size="small"
                   @click="toggleStatus(type)"
+                  class="rounded-full px-4"
                 >
-                  <el-icon>{{
-                    type.status === "active" ? "Close" : "Check"
-                  }}</el-icon>
+                  <el-icon>
+                    <component :is="type.status === 'active' ? Close : Check" />
+                  </el-icon>
                   {{ type.status === "active" ? "禁用" : "启用" }}
                 </el-button>
                 <el-button
                   type="danger"
                   size="small"
                   @click="deleteDeviceType(type)"
+                  class="rounded-full px-4"
                 >
                   <el-icon><Delete /></el-icon>
                   删除
@@ -167,20 +227,31 @@
     </el-card>
 
     <!-- 添加/编辑设备类型对话框 -->
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="550px">
+    <el-dialog
+      v-model="dialogVisible"
+      :title="dialogTitle"
+      width="550px"
+      class="rounded-xl overflow-hidden"
+    >
       <el-form
         :model="typeForm"
         :rules="rules"
         ref="typeFormRef"
         label-width="100px"
+        class="p-4"
       >
         <el-form-item label="类型名称" prop="name">
-          <el-input v-model="typeForm.name" placeholder="请输入类型名称" />
+          <el-input
+            v-model="typeForm.name"
+            placeholder="请输入类型名称"
+            class="rounded-lg"
+          />
         </el-form-item>
         <el-form-item label="类型标识" prop="type">
           <el-input
             v-model="typeForm.type"
             placeholder="请输入类型标识（英文）"
+            class="rounded-lg"
           />
         </el-form-item>
         <el-form-item label="支持传感器" prop="sensors">
@@ -189,6 +260,7 @@
             multiple
             placeholder="请选择支持的传感器"
             style="width: 100%"
+            class="rounded-lg"
           >
             <el-option label="温度" value="温度" />
             <el-option label="湿度" value="湿度" />
@@ -207,6 +279,7 @@
             v-model="typeForm.color"
             show-alpha
             :predefine="predefineColors"
+            class="rounded-lg"
           />
         </el-form-item>
         <el-form-item label="描述" prop="description">
@@ -215,12 +288,23 @@
             type="textarea"
             :rows="3"
             placeholder="请输入描述"
+            class="rounded-lg"
           />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit">确定</el-button>
+        <div class="flex gap-2 justify-end">
+          <el-button @click="dialogVisible = false" class="rounded-full px-4">
+            取消
+          </el-button>
+          <el-button
+            type="primary"
+            @click="handleSubmit"
+            class="rounded-full px-4"
+          >
+            确定
+          </el-button>
+        </div>
       </template>
     </el-dialog>
   </div>

@@ -57,38 +57,45 @@ const mapContainer = ref(null);
 const mapLoaded = ref(false);
 let map = null;
 let markers = [];
-let L = null;
+let AMap = null;
+
+// 高德地图Key
+const AMAP_KEY = "21d80a7334cb846ee23029681f541a06";
 
 // 初始化地图
 const initMap = () => {
-  if (!mapContainer.value || !L) return;
+  if (!mapContainer.value || !AMap) return;
 
   try {
     // 计算中心点
     const validLamps = getValidLamps();
-    let center = [30.5928, 114.3055]; // 默认武汉 [lat, lng]
+    let center = [114.4212, 30.5086]; // 默认武汉文华学院光谷创业街附近 [lng, lat]
 
     if (props.currentLamp && hasValidCoords(props.currentLamp)) {
       center = [
-        parseFloat(props.currentLamp.latitude),
         parseFloat(props.currentLamp.longitude),
+        parseFloat(props.currentLamp.latitude),
       ];
     } else if (validLamps.length > 0) {
       center = [
-        parseFloat(validLamps[0].latitude),
         parseFloat(validLamps[0].longitude),
+        parseFloat(validLamps[0].latitude),
       ];
     }
 
     // 创建地图
-    map = L.map(mapContainer.value).setView(center, 13);
+    map = new AMap.Map(mapContainer.value, {
+      zoom: 13,
+      center: center,
+      viewMode: "2D",
+      mapStyle: "amap://styles/normal",
+    });
 
-    // 添加 OpenStreetMap 图层（免费，无需 Key）
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      maxZoom: 19,
-    }).addTo(map);
+    // 添加工具栏
+    AMap.plugin(["AMap.ToolBar", "AMap.Scale"], () => {
+      map.addControl(new AMap.ToolBar());
+      map.addControl(new AMap.Scale());
+    });
 
     mapLoaded.value = true;
     addMarkers();
@@ -118,10 +125,10 @@ const hasValidCoords = (lamp) => {
 
 // 添加标记点
 const addMarkers = () => {
-  if (!map || !L) return;
+  if (!map || !AMap) return;
 
   // 清除现有标记
-  markers.forEach((marker) => map.removeLayer(marker));
+  markers.forEach((marker) => map.remove(marker));
   markers = [];
 
   const validLamps = getValidLamps();
@@ -144,27 +151,37 @@ const addMarkers = () => {
     const icon = createCustomIcon(isOnline, isCurrent);
 
     // 创建标记
-    const marker = L.marker([lat, lng], { icon }).addTo(map);
+    const marker = new AMap.Marker({
+      position: [lng, lat],
+      icon: icon,
+      title: lamp.name,
+    });
 
-    // 创建弹出内容
-    const popupContent = createPopupContent(lamp);
-    marker.bindPopup(popupContent);
+    // 创建信息窗体
+    const infoWindow = createInfoWindow(lamp);
+    marker.on("click", () => {
+      infoWindow.open(map, marker.getPosition());
+    });
 
-    // 如果是当前选中的路灯，自动打开弹出框
+    // 如果是当前选中的路灯，自动打开信息窗体
     if (isCurrent) {
-      map.setView([lat, lng], 15);
+      map.setCenter([lng, lat]);
+      map.setZoom(15);
       setTimeout(() => {
-        marker.openPopup();
+        infoWindow.open(map, marker.getPosition());
       }, 300);
     }
 
-    markerBounds.push([lat, lng]);
+    markerBounds.push([lng, lat]);
     markers.push(marker);
   });
 
+  // 添加所有标记到地图
+  map.add(markers);
+
   // 如果没有选中特定路灯，自适应视图
   if (!props.currentLamp && markerBounds.length > 0) {
-    map.fitBounds(markerBounds, { padding: [50, 50] });
+    map.setFitView(markers, false, [50, 50, 50, 50]);
   }
 };
 
@@ -173,30 +190,28 @@ const createCustomIcon = (isOnline, isCurrent) => {
   const color = isCurrent ? "#409EFF" : isOnline ? "#67C23A" : "#909399";
   const size = isCurrent ? 32 : 28;
 
-  return L.divIcon({
-    className: "custom-marker",
-    html: `
+  return new AMap.Icon({
+    image: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
       <svg width="${size}" height="${size}" viewBox="0 0 24 24" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
         <path fill="${color}" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
         <circle cx="12" cy="9" r="2.5" fill="white"/>
       </svg>
-    `,
-    iconSize: [size, size],
-    iconAnchor: [size / 2, size],
-    popupAnchor: [0, -size],
+    `)}`,
+    size: new AMap.Size(size, size),
+    imageSize: new AMap.Size(size, size),
   });
 };
 
-// 创建弹出内容
-const createPopupContent = (lamp) => {
+// 创建信息窗体
+const createInfoWindow = (lamp) => {
   const statusColor = lamp.onLine ? "#67c23a" : "#909399";
   const statusText = lamp.onLine ? "在线" : "离线";
   const lampStatus = lamp.lampStatus ? "开启" : "关闭";
   const faultStatus = lamp.faultStatus || lamp.isBroken ? "故障" : "正常";
   const faultColor = lamp.faultStatus || lamp.isBroken ? "#f56c6c" : "#67c23a";
 
-  return `
-    <div style="min-width: 200px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  const content = `
+    <div style="min-width: 200px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 10px;">
       <h4 style="margin: 0 0 10px 0; color: #303133; font-size: 15px; border-bottom: 1px solid #ebeef5; padding-bottom: 8px;">
         ${lamp.name}
       </h4>
@@ -217,51 +232,53 @@ const createPopupContent = (lamp) => {
       <div style="margin: 6px 0; color: #606266; font-size: 13px;">
         <span style="color: #909399;">IP:</span> ${lamp.ip || "--"}
       </div>
+      <div style="margin: 6px 0; color: #606266; font-size: 13px;">
+        <span style="color: #909399;">位置:</span> 湖北省武汉市文华学院光谷创业街附近
+      </div>
       <div style="margin: 6px 0; color: #606266; font-size: 12px;">
         <span style="color: #909399;">坐标:</span> ${lamp.longitude}, ${lamp.latitude}
       </div>
     </div>
   `;
+
+  return new AMap.InfoWindow({
+    content: content,
+    offset: new AMap.Pixel(0, -28),
+  });
 };
 
 // 重置视图
 const resetView = () => {
   if (!map) return;
-  const defaultCenter = [30.5928, 114.3055];
-  map.setView(defaultCenter, 13);
+  const defaultCenter = [114.4212, 30.5086]; // 武汉文华学院光谷创业街附近
+  map.setCenter(defaultCenter);
+  map.setZoom(15);
 };
 
 // 显示全部路灯
 const showAllLamps = () => {
   if (!map || markers.length === 0) return;
-  const group = new L.featureGroup(markers);
-  map.fitBounds(group.getBounds(), { padding: [50, 50] });
+  map.setFitView(markers, false, [50, 50, 50, 50]);
 };
 
-// 加载 Leaflet 脚本和样式
-const loadLeaflet = () => {
+// 加载高德地图API
+const loadAMap = () => {
   return new Promise((resolve, reject) => {
-    if (typeof window.L !== "undefined") {
-      L = window.L;
+    if (typeof window.AMap !== "undefined") {
+      AMap = window.AMap;
       resolve();
       return;
     }
 
-    // 加载 CSS
-    const link = document.createElement("link");
-    link.rel = "stylesheet";
-    link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
-    document.head.appendChild(link);
-
-    // 加载 JS
     const script = document.createElement("script");
-    script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+    script.type = "text/javascript";
+    script.src = `https://webapi.amap.com/maps?v=2.0&key=${AMAP_KEY}`;
     script.onload = () => {
-      L = window.L;
+      AMap = window.AMap;
       resolve();
     };
     script.onerror = () => {
-      reject(new Error("Leaflet 加载失败"));
+      reject(new Error("高德地图加载失败"));
     };
     document.head.appendChild(script);
   });
@@ -291,7 +308,7 @@ watch(
 
 onMounted(async () => {
   try {
-    await loadLeaflet();
+    await loadAMap();
     initMap();
   } catch (error) {
     console.error("地图加载失败:", error);
@@ -301,7 +318,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   if (map) {
-    map.remove();
+    map.destroy();
     map = null;
   }
 });

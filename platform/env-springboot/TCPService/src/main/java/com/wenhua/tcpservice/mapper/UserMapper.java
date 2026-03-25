@@ -10,13 +10,13 @@ import java.util.List;
 @Mapper
 public interface UserMapper {
 
-    @Select("SELECT * FROM User WHERE username = #{username} AND password = #{password}")
+    @Select("SELECT * FROM user WHERE username = #{username} AND password = #{password}")
     User selectUserByUsernameAndPasswordHash(String username, String password);
 
-    @Select("SELECT * FROM User WHERE userId = #{userId}")
+    @Select("SELECT * FROM user WHERE userId = #{userId}")
     User selectUserById(Integer userId);
 
-    @Select("SELECT * FROM User WHERE username = #{username}")
+    @Select("SELECT * FROM user WHERE username = #{username}")
     User selectUserByUsername(String username);
 
     List<User> selectUsers(QueryParameter queryParameter);
