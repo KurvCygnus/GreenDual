@@ -176,7 +176,18 @@
     </el-card>
 
     <!-- 智能调光对话框 -->
-    <el-dialog v-model="smartAdjustVisible" title="智能调光" width="500px">
+    <el-dialog
+      v-model="smartAdjustVisible"
+      :title="currentLamp ? '智能调光 - ' + currentLamp.name : '批量智能调光'"
+      width="500px"
+    >
+      <el-alert
+        v-if="!currentLamp"
+        title="将对所有在线路灯进行智能调光"
+        type="info"
+        :closable="false"
+        style="margin-bottom: 20px"
+      />
       <el-form :model="smartForm" label-width="120px">
         <el-form-item label="环境光照强度">
           <el-slider v-model="smartForm.ambientLight" :max="30000" show-input />
@@ -215,15 +226,13 @@
     </el-dialog>
 
     <!-- 位置地图对话框 -->
-    <el-dialog v-model="locationVisible" title="路灯位置" width="600px">
+    <el-dialog v-model="locationVisible" title="路灯位置" width="800px">
       <div class="location-info">
         <p><strong>路灯名称:</strong> {{ currentLamp?.name }}</p>
-        <p><strong>经度:</strong> {{ currentLamp?.longitude }}</p>
-        <p><strong>纬度:</strong> {{ currentLamp?.latitude }}</p>
+        <p><strong>经度:</strong> {{ currentLamp?.longitude || "未设置" }}</p>
+        <p><strong>纬度:</strong> {{ currentLamp?.latitude || "未设置" }}</p>
       </div>
-      <div class="map-placeholder">
-        <el-empty description="地图功能开发中..." />
-      </div>
+      <LampMap :lamps="lampList" :current-lamp="currentLamp" />
     </el-dialog>
   </div>
 </template>
@@ -250,6 +259,7 @@ import {
   getFaultLamps,
   smartAdjust as smartAdjustApi,
 } from "@/api/auth";
+import LampMap from "@/components/map/LampMap.vue";
 
 const loading = ref(false);
 const lampList = ref([]);
@@ -418,10 +428,12 @@ const batchTurnOff = async () => {
   }
 };
 
-// 显示智能调光对话框
+// 显示智能调光对话框（批量）
 const showSmartAdjust = () => {
+  currentLamp.value = null;
   smartForm.value = {
     deviceId: "",
+    deviceIds: [],
     ambientLight: 5000,
   };
   smartAdjustVisible.value = true;
@@ -430,26 +442,62 @@ const showSmartAdjust = () => {
 // 单个路灯智能调光
 const smartAdjust = (lamp) => {
   currentLamp.value = lamp;
-  smartForm.value.deviceId = lamp.id;
-  smartForm.value.ambientLight = 5000;
+  smartForm.value = {
+    deviceId: lamp.id,
+    deviceIds: [],
+    ambientLight: 5000,
+  };
   smartAdjustVisible.value = true;
 };
 
 // 确认智能调光
 const confirmSmartAdjust = async () => {
   try {
-    const response = await smartAdjustApi({
-      deviceId: smartForm.value.deviceId,
-      ambientLight: smartForm.value.ambientLight,
-    });
-    if (response.data.code === 1) {
-      ElMessage.success(
-        `智能调光成功，设置亮度为 ${response.data.data.brightness}%`,
-      );
-      fetchLampList();
-      smartAdjustVisible.value = false;
+    let response;
+
+    // 批量调光
+    if (!smartForm.value.deviceId && !currentLamp.value) {
+      const onlineLampIds = lampList.value
+        .filter((l) => l.onLine)
+        .map((l) => l.id);
+
+      if (onlineLampIds.length === 0) {
+        ElMessage.warning("没有在线的路灯可以调光");
+        return;
+      }
+
+      response = await smartAdjustApi({
+        deviceIds: onlineLampIds,
+        ambientLight: smartForm.value.ambientLight,
+      });
+
+      if (response.data.code === 1) {
+        const data = response.data.data;
+        ElMessage.success(
+          `批量智能调光成功，共调节 ${data.successCount}/${data.totalCount} 盏路灯，亮度 ${data.brightness}%`,
+        );
+        fetchLampList();
+        fetchStats();
+        smartAdjustVisible.value = false;
+      } else {
+        ElMessage.error(response.data.msg || "批量智能调光失败");
+      }
     } else {
-      ElMessage.error("智能调光失败");
+      // 单个调光
+      response = await smartAdjustApi({
+        deviceId: smartForm.value.deviceId,
+        ambientLight: smartForm.value.ambientLight,
+      });
+
+      if (response.data.code === 1) {
+        ElMessage.success(
+          `智能调光成功，设置亮度为 ${response.data.data.brightness}%`,
+        );
+        fetchLampList();
+        smartAdjustVisible.value = false;
+      } else {
+        ElMessage.error(response.data.msg || "智能调光失败");
+      }
     }
   } catch (error) {
     ElMessage.error("智能调光失败");
@@ -559,18 +607,19 @@ onMounted(() => {
 
 .location-info {
   margin-bottom: 20px;
+  padding: 15px;
+  background: #f5f7fa;
+  border-radius: 8px;
 }
 
 .location-info p {
-  margin: 10px 0;
+  margin: 8px 0;
+  font-size: 14px;
 }
 
-.map-placeholder {
-  height: 300px;
-  background: #f5f7fa;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.location-info strong {
+  color: #303133;
+  display: inline-block;
+  width: 80px;
 }
 </style>

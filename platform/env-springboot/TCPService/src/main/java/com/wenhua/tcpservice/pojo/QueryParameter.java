@@ -13,8 +13,12 @@ public class QueryParameter {
     private String sort;
     //匹配字符串
     private String match;
+    //用户名搜索
+    private String username;
     //特殊:查询条件
     private Integer query = QUERY_ALL;
+    //权限筛选
+    private Integer permission;
     //偏移量(需要后期计算)
     private Integer offset;
     //查询在线

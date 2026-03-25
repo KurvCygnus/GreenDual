@@ -1,0 +1,428 @@
+# 智绿云控 - AI协同的环境监测与智能路灯节能平台 - 命令文档
+
+## 一、嵌入式设备编译命令
+
+### 1. 编译项目
+
+```bash
+cd flushbonading/this
+python build.py BearPi-HM_Nano
+```
+
+### 2. 烧录程序
+
+使用 HiBurn 工具进行烧录：
+1. 打开 HiBurn 工具
+2. 选择编译生成的 .bin 文件
+3. 设置波特率：921600
+4. 点击"Connect"连接开发板
+5. 点击"Burn"开始烧录
+
+---
+
+## 二、设备与平台通信命令
+
+### 2.1 设备上报命令
+
+#### 设备上线通知
+```json
+{
+    "returnIntent": "online",
+    "id": "ENV000100001",
+    "ip": "192.168.1.105",
+    "onlineStatus": 1,
+    "deviceType": "环境监测",
+    "firmwareVersion": "1.0.0"
+}
+```
+
+#### 定时数据上报
+```json
+{
+    "returnIntent": "REPORT",
+    "id": "ENV000100001",
+    "name": "环境监测设备-ENV000100001",
+    "ip": "192.168.1.105",
+    "onlineStatus": 1,
+    "temperature": 25.5,
+    "humidity": 60,
+    "lightIntensity": 10000,
+    "auto": 1,
+    "interval": 5000,
+    "alertStatus": 0,
+    "deviceType": "环境监测",
+    "firmwareVersion": "1.0.0",
+    "uptime": 3600,
+    "signalStrength": -50,
+    "batteryLevel": 85,
+    "lampStatus": 1,
+    "brightness": 80,
+    "faultStatus": 0,
+    "powerConsumption": 45.5
+}
+```
+
+#### 心跳包
+```json
+{
+    "type": "heartbeat",
+    "id": "ENV000100001",
+    "timestamp": 1704067200,
+    "onlineStatus": 1
+}
+```
+
+---
+
+### 2.2 平台下发控制命令
+
+#### 查询设备状态
+```json
+{
+    "cmd": "REPORT"
+}
+```
+
+#### 设置设备参数
+```json
+{
+    "cmd": "SET",
+    "ip": "192.168.1.100",
+    "port": 8888,
+    "id": "ENV000100001",
+    "name": "智能路灯1号",
+    "deviceType": "路灯",
+    "auto": 1,
+    "interval": 10000
+}
+```
+
+#### 开启自动监测
+```json
+{
+    "cmd": "AUTO_ON"
+}
+```
+
+#### 关闭自动监测
+```json
+{
+    "cmd": "AUTO_OFF"
+}
+```
+
+#### 开灯
+```json
+{
+    "cmd": "LAMP_ON"
+}
+```
+
+#### 关灯
+```json
+{
+    "cmd": "LAMP_OFF"
+}
+```
+
+#### 调节亮度
+```json
+{
+    "cmd": "LAMP_BRIGHTNESS",
+    "brightness": 50
+}
+```
+
+#### 通用控制命令
+```json
+{
+    "cmd": "CONTROL",
+    "action": "LAMP_ON",
+    "value": 80
+}
+```
+
+#### 重启设备
+```json
+{
+    "cmd": "REBOOT"
+}
+```
+
+#### 校准传感器
+```json
+{
+    "cmd": "CALIBRATE"
+}
+```
+
+---
+
+### 2.3 设备响应命令
+
+#### 控制响应
+```json
+{
+    "returnIntent": "CONTROL_RESPONSE",
+    "id": "ENV000100001",
+    "success": 1,
+    "action": "LAMP_ON",
+    "lampStatus": 1,
+    "brightness": 80
+}
+```
+
+#### 设置响应
+```json
+{
+    "returnIntent": "SET",
+    "id": "ENV000100001",
+    "success": 1,
+    "ip": "192.168.1.100",
+    "port": 8888,
+    "auto": 1,
+    "interval": 10000
+}
+```
+
+#### 错误响应
+```json
+{
+    "returnIntent": "ERROR",
+    "id": "ENV000100001",
+    "message": "处理失败"
+}
+```
+
+---
+
+## 三、后端服务启动命令
+
+### 3.1 编译后端服务
+
+```bash
+cd platform/env-springboot/TCPService
+mvn clean package
+```
+
+### 3.2 启动后端服务
+
+```bash
+java -jar target/TCPService-1.0-SNAPSHOT.jar
+```
+
+### 3.3 指定配置文件启动
+
+```bash
+java -jar target/TCPService-1.0-SNAPSHOT.jar --spring.profiles.active=dev
+```
+
+---
+
+## 四、前端项目命令
+
+### 4.1 安装依赖
+
+```bash
+cd platform/env-monitor-ui
+npm install
+```
+
+### 4.2 启动开发服务器
+
+```bash
+npm run dev
+```
+
+### 4.3 构建生产环境
+
+```bash
+npm run build
+```
+
+### 4.4 预览生产构建
+
+```bash
+npm run preview
+```
+
+---
+
+## 五、数据库相关命令
+
+### 5.1 创建数据库
+
+```sql
+CREATE DATABASE envsense CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+### 5.2 创建设备表
+
+```sql
+CREATE TABLE Device (
+    id VARCHAR(50) PRIMARY KEY,
+    name VARCHAR(100),
+    ip VARCHAR(50),
+    port INT,
+    deviceType VARCHAR(50),
+    temperature FLOAT,
+    humidity INT,
+    lightIntensity INT,
+    onLine INT,
+    lampStatus INT,
+    brightness INT,
+    faultStatus INT,
+    powerConsumption FLOAT,
+    firmwareVersion VARCHAR(20),
+    uptime BIGINT,
+    signalStrength INT,
+    batteryLevel INT,
+    alertStatus INT,
+    lastReportTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+```
+
+### 5.3 创建用户表
+
+```sql
+CREATE TABLE User (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    password VARCHAR(100) NOT NULL,
+    realName VARCHAR(50),
+    role INT DEFAULT 1 COMMENT '1-观察员, 2-运维工程师, 3-系统管理员',
+    phone VARCHAR(20),
+    email VARCHAR(100),
+    status INT DEFAULT 1 COMMENT '0-禁用, 1-启用',
+    createTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updateTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+```
+
+### 5.4 创建维护日志表
+
+```sql
+CREATE TABLE MaintenanceLog (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    deviceId VARCHAR(50),
+    logType VARCHAR(50),
+    content TEXT,
+    operator VARCHAR(50),
+    createTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (deviceId) REFERENCES Device(id)
+);
+```
+
+---
+
+## 六、常用配置参数
+
+### 6.1 全局配置 (global_settings.h)
+
+```c
+// WiFi配置
+#define WIFI_NAME "your_wifi_name"
+#define WIFI_PASSWORD "your_wifi_password"
+
+// 服务器配置
+#define SERVER_IP "192.168.1.100"
+#define SERVER_PORT 8888
+
+// 设备配置
+#define DEVICE_ID "ENV000100001"
+
+// 上报间隔 (毫秒)
+#define REPORT_INTERVAL 5000
+
+// 告警阈值
+#define TEMP_ALERT_HIGH 35.0
+#define TEMP_ALERT_LOW 5.0
+#define HUMIDITY_ALERT_HIGH 90
+#define HUMIDITY_ALERT_LOW 20
+#define LIGHT_ALERT_HIGH 80000
+#define LIGHT_ALERT_LOW 100
+
+// 默认亮度
+#define DEFAULT_BRIGHTNESS 80
+```
+
+### 6.2 后端配置 (application.yml)
+
+```yaml
+server:
+  port: 8080
+
+tcp:
+  port: 8888
+  timeout: 30000
+
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/envsense?useUnicode=true&characterEncoding=utf-8
+    username: root
+    password: your_password
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.wenhua.tcpservice.pojo
+```
+
+---
+
+## 七、调试命令
+
+### 7.1 查看设备串口输出
+
+使用串口调试工具（如 SecureCRT、Xshell）：
+- 波特率：115200
+- 数据位：8
+- 停止位：1
+- 校验位：无
+
+### 7.2 测试TCP连接
+
+使用 telnet 测试：
+```bash
+telnet 192.168.1.100 8888
+```
+
+### 7.3 查看后端日志
+
+```bash
+tail -f logs/tcp-service.log
+```
+
+---
+
+## 八、故障排查命令
+
+### 8.1 检查端口占用
+
+Windows:
+```cmd
+netstat -ano | findstr 8888
+```
+
+Linux/Mac:
+```bash
+netstat -tuln | grep 8888
+```
+
+### 8.2 检查网络连通性
+
+```bash
+ping 192.168.1.100
+```
+
+### 8.3 检查防火墙状态
+
+Windows:
+```cmd
+netsh advfirewall show allprofiles
+```
+
+Linux:
+```bash
+sudo ufw status
+```

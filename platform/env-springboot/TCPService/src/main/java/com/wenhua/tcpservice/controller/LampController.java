@@ -192,36 +192,63 @@ public class LampController {
 
     /**
      * 智能调光 - 根据环境光照自动调节
+     * 支持单个路灯调光（deviceId）和批量调光（deviceIds）
      */
     @PostMapping("/smartAdjust")
     public Result smartAdjust(@RequestBody Map<String, Object> params) {
         String deviceId = (String) params.get("deviceId");
-        Integer ambientLight = (Integer) params.get("ambientLight"); // 环境光照强度
+        List<String> deviceIds = (List<String>) params.get("deviceIds");
+        Integer ambientLight = (Integer) params.get("ambientLight");
         
-        Log.d("智能调光请求: deviceId=" + deviceId + ", ambientLight=" + ambientLight);
+        Log.d("智能调光请求: deviceId=" + deviceId + ", deviceIds=" + deviceIds + ", ambientLight=" + ambientLight);
         
-        if (deviceId == null || ambientLight == null) {
-            return Result.error("参数错误");
+        if (ambientLight == null) {
+            return Result.error("缺少环境光照参数");
+        }
+
+        // 智能调光算法：根据环境光照计算亮度
+        int brightness;
+        if (ambientLight < 1000) {
+            brightness = 100;
+        } else if (ambientLight < 5000) {
+            brightness = 80;
+        } else if (ambientLight < 10000) {
+            brightness = 60;
+        } else if (ambientLight < 20000) {
+            brightness = 40;
+        } else {
+            brightness = 20;
+        }
+
+        // 批量调光
+        if (deviceIds != null && !deviceIds.isEmpty()) {
+            int successCount = 0;
+            for (String id : deviceIds) {
+                Device device = envMapper.selectDeviceById(id);
+                if (device != null && device.getOnLine() == 1) {
+                    device.setBrightness(brightness);
+                    device.setLampStatus(brightness > 0 ? 1 : 0);
+                    if (envService.updateDevice(device)) {
+                        successCount++;
+                    }
+                }
+            }
+            Map<String, Object> result = new HashMap<>();
+            result.put("brightness", brightness);
+            result.put("ambientLight", ambientLight);
+            result.put("successCount", successCount);
+            result.put("totalCount", deviceIds.size());
+            return Result.success(result);
+        }
+
+        // 单个调光
+        if (deviceId == null) {
+            return Result.error("缺少设备ID参数");
         }
 
         Device device = envMapper.selectDeviceById(deviceId);
         if (device == null) {
             return Result.error("设备不存在");
-        }
-
-        // 智能调光算法：根据环境光照计算亮度
-        // 环境光照越低，路灯亮度越高
-        int brightness;
-        if (ambientLight < 1000) {
-            brightness = 100; // 很暗，最大亮度
-        } else if (ambientLight < 5000) {
-            brightness = 80; // 较暗，高亮度
-        } else if (ambientLight < 10000) {
-            brightness = 60; // 一般，中等亮度
-        } else if (ambientLight < 20000) {
-            brightness = 40; // 较亮，低亮度
-        } else {
-            brightness = 20; // 很亮，最低亮度
         }
 
         device.setBrightness(brightness);

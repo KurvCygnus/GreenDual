@@ -359,35 +359,21 @@ const fetchUserList = async () => {
   loading.value = true;
   try {
     const params = {
-      match: filterForm.username,
-      page: pagination.currentPage,
+      username: filterForm.username,
+      permission: filterForm.permission,
+      currentPage: pagination.currentPage,
       pageSize: pagination.pageSize,
     };
     const response = await getUserList(params);
     if (response.data.code === 1) {
       userList.value = response.data.data || [];
       pagination.total = response.data.totalPages || userList.value.length;
+    } else {
+      ElMessage.error(response.data.msg || "获取用户列表失败");
     }
   } catch (error) {
     console.error("获取用户列表失败", error);
-    userList.value = [
-      {
-        userId: 1,
-        username: "admin",
-        password: "admin123",
-        userPermission: 2,
-        createTime: "2025-01-01 10:00:00",
-        lastLoginTime: "2026-03-20 00:52:00",
-      },
-      {
-        userId: 2,
-        username: "test",
-        password: "test123",
-        userPermission: 1,
-        createTime: "2025-01-15 14:30:00",
-        lastLoginTime: "2026-03-19 16:20:00",
-      },
-    ];
+    ElMessage.error("获取用户列表失败");
   } finally {
     loading.value = false;
   }
@@ -395,7 +381,8 @@ const fetchUserList = async () => {
 
 // 搜索
 const handleSearch = () => {
-  ElMessage.success("搜索完成");
+  pagination.currentPage = 1;
+  fetchUserList();
 };
 
 // 重置

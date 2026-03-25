@@ -89,205 +89,226 @@
         </el-header>
 
         <el-main class="main-content">
-          <!-- 环境监测面板 -->
-          <div v-if="activeIndex === '1'" class="monitor-panel">
-            <!-- 统计卡片 -->
-            <el-row :gutter="20" class="stats-row">
-              <el-col :span="6">
-                <el-card class="stat-card" shadow="hover">
-                  <div class="stat-icon" style="background: #67c23a">
-                    <el-icon size="32" color="#fff"><Odometer /></el-icon>
-                  </div>
-                  <div class="stat-info">
-                    <div class="stat-value">{{ deviceCount }}</div>
-                    <div class="stat-label">监测设备</div>
-                  </div>
-                </el-card>
-              </el-col>
-
-              <el-col :span="6">
-                <el-card class="stat-card" shadow="hover">
-                  <div class="stat-icon" style="background: #409eff">
-                    <el-icon size="32" color="#fff"><MostlyCloudy /></el-icon>
-                  </div>
-                  <div class="stat-info">
-                    <div class="stat-value">{{ avgTemperature }}°C</div>
-                    <div class="stat-label">平均温度</div>
-                  </div>
-                </el-card>
-              </el-col>
-
-              <el-col :span="6">
-                <el-card class="stat-card" shadow="hover">
-                  <div class="stat-icon" style="background: #e6a23c">
-                    <el-icon size="32" color="#fff"><Watermelon /></el-icon>
-                  </div>
-                  <div class="stat-info">
-                    <div class="stat-value">{{ avgHumidity }}%</div>
-                    <div class="stat-label">平均湿度</div>
-                  </div>
-                </el-card>
-              </el-col>
-
-              <el-col :span="6">
-                <el-card class="stat-card" shadow="hover">
-                  <div class="stat-icon" style="background: #f56c6c">
-                    <el-icon size="32" color="#fff"><Sunny /></el-icon>
-                  </div>
-                  <div class="stat-info">
-                    <div class="stat-value">{{ avgLight }}lux</div>
-                    <div class="stat-label">平均光照</div>
-                  </div>
-                </el-card>
-              </el-col>
-            </el-row>
-
-            <!-- 数据可视化 -->
-            <EnvironmentChart />
-
-            <!-- 设备列表 -->
-            <el-card class="device-list-card" shadow="never">
-              <template #header>
-                <div class="card-header">
-                  <span>设备列表</span>
-                  <el-radio-group v-model="viewMode" size="small">
-                    <el-radio-button label="card">卡片视图</el-radio-button>
-                    <el-radio-button label="table">表格视图</el-radio-button>
-                  </el-radio-group>
-                </div>
-              </template>
-
-              <!-- 卡片视图 -->
-              <el-row v-if="viewMode === 'card'" :gutter="20">
-                <el-col
-                  v-for="device in deviceList"
-                  :key="device.id"
-                  :xs="24"
-                  :sm="12"
-                  :md="8"
-                  :lg="6"
-                  style="margin-bottom: 20px"
-                >
-                  <el-card
-                    class="device-card"
-                    :class="{ offline: !device.onLine }"
-                  >
-                    <div class="device-header">
-                      <el-icon
-                        size="24"
-                        :color="device.onLine ? '#67C23A' : '#909399'"
-                        ><Cpu
-                      /></el-icon>
-                      <span class="device-name">{{ device.name }}</span>
-                      <el-tag
-                        :type="device.onLine ? 'success' : 'info'"
-                        size="small"
-                      >
-                        {{ device.onLine ? "在线" : "离线" }}
-                      </el-tag>
+          <keep-alive>
+            <div v-if="activeIndex === '1'" key="monitor" class="monitor-panel">
+              <!-- 统计卡片 -->
+              <el-row :gutter="20" class="stats-row">
+                <el-col :span="6">
+                  <el-card class="stat-card" shadow="hover">
+                    <div class="stat-icon" style="background: #67c23a">
+                      <el-icon size="32" color="#fff"><Odometer /></el-icon>
                     </div>
-
-                    <div class="device-data">
-                      <div class="data-item">
-                        <el-icon><MostlyCloudy /></el-icon>
-                        <span>温度: {{ device.temperature }}°C</span>
-                      </div>
-                      <div class="data-item">
-                        <el-icon><Watermelon /></el-icon>
-                        <span>湿度: {{ device.humidity }}%</span>
-                      </div>
-                      <div class="data-item">
-                        <el-icon><Sunny /></el-icon>
-                        <span>光照: {{ device.lightIntensity }}lux</span>
-                      </div>
+                    <div class="stat-info">
+                      <div class="stat-value">{{ deviceCount }}</div>
+                      <div class="stat-label">监测设备</div>
                     </div>
+                  </el-card>
+                </el-col>
 
-                    <div class="device-actions">
-                      <el-button
-                        type="primary"
-                        size="small"
-                        @click="viewDetail(device)"
-                        >详情</el-button
-                      >
-                      <el-button
-                        type="warning"
-                        size="small"
-                        @click="editDevice(device)"
-                        >编辑</el-button
-                      >
-                      <el-button
-                        type="danger"
-                        size="small"
-                        @click="deleteDevice(device)"
-                        >删除</el-button
-                      >
+                <el-col :span="6">
+                  <el-card class="stat-card" shadow="hover">
+                    <div class="stat-icon" style="background: #409eff">
+                      <el-icon size="32" color="#fff"><MostlyCloudy /></el-icon>
+                    </div>
+                    <div class="stat-info">
+                      <div class="stat-value">{{ avgTemperature }}°C</div>
+                      <div class="stat-label">平均温度</div>
+                    </div>
+                  </el-card>
+                </el-col>
+
+                <el-col :span="6">
+                  <el-card class="stat-card" shadow="hover">
+                    <div class="stat-icon" style="background: #e6a23c">
+                      <el-icon size="32" color="#fff"><Watermelon /></el-icon>
+                    </div>
+                    <div class="stat-info">
+                      <div class="stat-value">{{ avgHumidity }}%</div>
+                      <div class="stat-label">平均湿度</div>
+                    </div>
+                  </el-card>
+                </el-col>
+
+                <el-col :span="6">
+                  <el-card class="stat-card" shadow="hover">
+                    <div class="stat-icon" style="background: #f56c6c">
+                      <el-icon size="32" color="#fff"><Sunny /></el-icon>
+                    </div>
+                    <div class="stat-info">
+                      <div class="stat-value">{{ avgLight }}lux</div>
+                      <div class="stat-label">平均光照</div>
                     </div>
                   </el-card>
                 </el-col>
               </el-row>
 
-              <!-- 表格视图 -->
-              <el-table v-else :data="deviceList" style="width: 100%">
-                <el-table-column prop="id" label="设备ID" width="120" />
-                <el-table-column prop="name" label="设备名称" />
-                <el-table-column prop="temperature" label="温度(°C)" />
-                <el-table-column prop="humidity" label="湿度(%)" />
-                <el-table-column prop="lightIntensity" label="光照(lux)" />
-                <el-table-column prop="onLine" label="状态">
-                  <template #default="scope">
-                    <el-tag :type="scope.row.onLine ? 'success' : 'info'">
-                      {{ scope.row.onLine ? "在线" : "离线" }}
-                    </el-tag>
-                  </template>
-                </el-table-column>
-                <el-table-column label="操作" width="200">
-                  <template #default="scope">
-                    <el-button
-                      type="primary"
-                      size="small"
-                      @click="viewDetail(scope.row)"
-                      >详情</el-button
+              <!-- 数据可视化 -->
+              <EnvironmentChart />
+
+              <!-- 设备列表 -->
+              <el-card class="device-list-card" shadow="never">
+                <template #header>
+                  <div class="card-header">
+                    <span>设备列表</span>
+                    <el-radio-group v-model="viewMode" size="small">
+                      <el-radio-button label="card">卡片视图</el-radio-button>
+                      <el-radio-button label="table">表格视图</el-radio-button>
+                    </el-radio-group>
+                  </div>
+                </template>
+
+                <!-- 卡片视图 -->
+                <el-row v-if="viewMode === 'card'" :gutter="20">
+                  <el-col
+                    v-for="device in deviceList"
+                    :key="device.id"
+                    :xs="24"
+                    :sm="12"
+                    :md="8"
+                    :lg="6"
+                    style="margin-bottom: 20px"
+                  >
+                    <el-card
+                      class="device-card"
+                      :class="{ offline: !device.onLine }"
                     >
-                    <el-button
-                      type="warning"
-                      size="small"
-                      @click="editDevice(scope.row)"
-                      >编辑</el-button
-                    >
-                    <el-button
-                      type="danger"
-                      size="small"
-                      @click="deleteDevice(scope.row)"
-                      >删除</el-button
-                    >
-                  </template>
-                </el-table-column>
-              </el-table>
-            </el-card>
-          </div>
+                      <div class="device-header">
+                        <el-icon
+                          size="24"
+                          :color="device.onLine ? '#67C23A' : '#909399'"
+                          ><Cpu
+                        /></el-icon>
+                        <span class="device-name">{{ device.name }}</span>
+                        <el-tag
+                          :type="device.onLine ? 'success' : 'info'"
+                          size="small"
+                        >
+                          {{ device.onLine ? "在线" : "离线" }}
+                        </el-tag>
+                      </div>
 
-          <!-- 其他模块 -->
-          <div v-else-if="activeIndex === '2'" class="record-panel">
-            <MonitorRecord />
-          </div>
-          <div v-else-if="activeIndex === '3'" class="user-panel">
-            <UserManagement />
-          </div>
-          <div v-else-if="activeIndex === '4'" class="ai-monitor-panel">
-            <AIPrediction />
-          </div>
+                      <div class="device-data">
+                        <div class="data-item">
+                          <el-icon><MostlyCloudy /></el-icon>
+                          <span>温度: {{ device.temperature }}°C</span>
+                        </div>
+                        <div class="data-item">
+                          <el-icon><Watermelon /></el-icon>
+                          <span>湿度: {{ device.humidity }}%</span>
+                        </div>
+                        <div class="data-item">
+                          <el-icon><Sunny /></el-icon>
+                          <span>光照: {{ device.lightIntensity }}lux</span>
+                        </div>
+                      </div>
 
-          <div v-else-if="activeIndex === '5'" class="device-management-panel">
-            <DeviceTypeManager />
-          </div>
+                      <div class="device-actions">
+                        <el-button
+                          type="primary"
+                          size="small"
+                          @click="viewDetail(device)"
+                          >详情</el-button
+                        >
+                        <el-button
+                          type="warning"
+                          size="small"
+                          @click="editDevice(device)"
+                          >编辑</el-button
+                        >
+                        <el-button
+                          type="danger"
+                          size="small"
+                          @click="deleteDevice(device)"
+                          >删除</el-button
+                        >
+                      </div>
+                    </el-card>
+                  </el-col>
+                </el-row>
 
-          <div v-else-if="activeIndex === '6'" class="cloud-platform-panel">
-            <CloudPlatform />
-          </div>
+                <!-- 表格视图 -->
+                <el-table v-else :data="deviceList" style="width: 100%">
+                  <el-table-column prop="id" label="设备ID" width="120" />
+                  <el-table-column prop="name" label="设备名称" />
+                  <el-table-column prop="temperature" label="温度(°C)" />
+                  <el-table-column prop="humidity" label="湿度(%)" />
+                  <el-table-column prop="lightIntensity" label="光照(lux)" />
+                  <el-table-column prop="onLine" label="状态">
+                    <template #default="scope">
+                      <el-tag :type="scope.row.onLine ? 'success' : 'info'">
+                        {{ scope.row.onLine ? "在线" : "离线" }}
+                      </el-tag>
+                    </template>
+                  </el-table-column>
+                  <el-table-column label="操作" width="200">
+                    <template #default="scope">
+                      <el-button
+                        type="primary"
+                        size="small"
+                        @click="viewDetail(scope.row)"
+                        >详情</el-button
+                      >
+                      <el-button
+                        type="warning"
+                        size="small"
+                        @click="editDevice(scope.row)"
+                        >编辑</el-button
+                      >
+                      <el-button
+                        type="danger"
+                        size="small"
+                        @click="deleteDevice(scope.row)"
+                        >删除</el-button
+                      >
+                    </template>
+                  </el-table-column>
+                </el-table>
+              </el-card>
+            </div>
 
-          <div v-else-if="activeIndex === '7'" class="lamp-management-panel">
-            <LampManager />
-          </div>
+            <!-- 其他模块 -->
+            <div
+              v-else-if="activeIndex === '2'"
+              key="record"
+              class="record-panel"
+            >
+              <MonitorRecord />
+            </div>
+            <div v-else-if="activeIndex === '3'" key="user" class="user-panel">
+              <UserManagement />
+            </div>
+            <div
+              v-else-if="activeIndex === '4'"
+              key="ai"
+              class="ai-monitor-panel"
+            >
+              <AIPrediction />
+            </div>
+
+            <div
+              v-else-if="activeIndex === '5'"
+              key="device"
+              class="device-management-panel"
+            >
+              <DeviceTypeManager />
+            </div>
+
+            <div
+              v-else-if="activeIndex === '6'"
+              key="cloud"
+              class="cloud-platform-panel"
+            >
+              <CloudPlatform />
+            </div>
+
+            <div
+              v-else-if="activeIndex === '7'"
+              key="lamp"
+              class="lamp-management-panel"
+            >
+              <LampManager />
+            </div>
+          </keep-alive>
         </el-main>
       </el-container>
     </el-container>
