@@ -9,10 +9,9 @@ import com.wenhua.tcpservice.pojo.Result;
 import com.wenhua.tcpservice.pojo.User;
 import com.wenhua.tcpservice.service.LogService;
 import com.wenhua.tcpservice.utils.JwtUtils;
-import com.wenhua.tcpservice.utils.Log;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,26 +19,20 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-
-//必须带上这个前端才能获取数据
 @Slf4j
 @RestController
-@CrossOrigin(origins = GlobalConfiguration.ORIGINS)
+@AllArgsConstructor
+@CrossOrigin(origins = GlobalConfiguration.ORIGINS)//必须带上这个前端才能获取数据
 public class MaintenanceLogController {
 
-    @Autowired
     private LogService logService;
-
-    @Autowired
     private LogMapper logMapper;
-
-    @Autowired
     private UserMapper userMapper;
 
     //添加日志
     @PostMapping(GlobalConfiguration.LOG_REQUEST_PREFIX + "/add")
     public Result addMaintenanceLog(@RequestBody MaintenanceLog maintenanceLog) {
-        Log.d(maintenanceLog.toString());
+        log.debug(maintenanceLog.toString());
         logService.addLog(maintenanceLog);
         return Result.success();
     }
@@ -54,7 +47,7 @@ public class MaintenanceLogController {
         int i = logMapper.selectCount(queryParameter);
         Result result = Result.success(select);
         result.setTotalPages(i);
-        Log.d("页面数量"+i);
+        log.debug("页面数量: {}", i);
         return result;
     }
 
@@ -72,10 +65,7 @@ public class MaintenanceLogController {
     private boolean isRoot(HttpServletRequest request){
         Integer userId = JwtUtils.getUserId(request);
         User user = userMapper.selectUserById(userId);
-        System.out.println("用户权位"+user.getUserPermission());
-        if(user.getUserPermission()<2){
-            return false;
-        }
-        return true;
+        log.info("用户权位: {}", user.getUserPermission());
+        return user.getUserPermission() >= 2;
     }
 }

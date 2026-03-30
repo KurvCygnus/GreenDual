@@ -4,16 +4,17 @@ import com.wenhua.tcpservice.mapper.LogMapper;
 import com.wenhua.tcpservice.pojo.MaintenanceLog;
 import com.wenhua.tcpservice.pojo.QueryParameter;
 import com.wenhua.tcpservice.service.LogService;
-import com.wenhua.tcpservice.utils.Log;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
+@AllArgsConstructor
+@Slf4j
 public class LogServiceImpl implements LogService {
 
-    @Autowired
     private LogMapper logMapper;
 
     @Override
@@ -29,16 +30,15 @@ public class LogServiceImpl implements LogService {
     //查询
     @Override
     public List<MaintenanceLog> select(QueryParameter queryParameter) {
-        Log.d(queryParameter.toString());
-        Log.d("---------------------");
+        log.info(queryParameter.toString());
+        log.info("---------------------");
         queryParameter.calculateOffset();
-        List<MaintenanceLog> select = logMapper.select(queryParameter);
-        return select;
+        return logMapper.select(queryParameter);
     }
 
     @Override
     public void deleteLog(List<Integer> ids) {
-        ids.forEach(id -> logMapper.deleteLog(id));
+        ids.forEach(logMapper::deleteLog);
     }
 
 

@@ -5,9 +5,8 @@ import com.wenhua.tcpservice.mapper.EnvMapper;
 import com.wenhua.tcpservice.pojo.Result;
 import com.wenhua.tcpservice.pojo.dev.Device;
 import com.wenhua.tcpservice.service.EnvService;
-import com.wenhua.tcpservice.utils.Log;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -18,12 +17,10 @@ import java.util.Map;
 @RestController
 @CrossOrigin(origins = GlobalConfiguration.ORIGINS)
 @RequestMapping("/lamp")
+@AllArgsConstructor
 public class LampController {
 
-    @Autowired
     private EnvService envService;
-
-    @Autowired
     private EnvMapper envMapper;
 
     /**
@@ -31,7 +28,7 @@ public class LampController {
      */
     @GetMapping("/list")
     public Result getLampList() {
-        Log.d("获取路灯列表请求");
+        log.debug("获取路灯列表请求");
         List<Device> lamps = envMapper.selectLamps();
         return Result.success(lamps);
     }
@@ -44,7 +41,7 @@ public class LampController {
         String deviceId = (String) params.get("deviceId");
         Integer status = (Integer) params.get("status");
         
-        Log.d("路灯控制请求: deviceId=" + deviceId + ", status=" + status);
+        log.debug("路灯控制请求: deviceId = {}, status = {}", deviceId, status);
         
         if (deviceId == null || status == null) {
             return Result.error("参数错误");
@@ -61,7 +58,7 @@ public class LampController {
         
         boolean success = envService.updateDevice(device);
         if (success) {
-            Log.d("路灯控制成功: " + deviceId);
+            log.debug("路灯控制成功: {}", deviceId);
             return Result.success("操作成功");
         } else {
             return Result.error("操作失败");
@@ -76,7 +73,7 @@ public class LampController {
         String deviceId = (String) params.get("deviceId");
         Integer brightness = (Integer) params.get("brightness");
         
-        Log.d("调节亮度请求: deviceId=" + deviceId + ", brightness=" + brightness);
+        log.debug("调节亮度请求: deviceId = {}, brightness = {}", deviceId, brightness);
         
         if (deviceId == null || brightness == null) {
             return Result.error("参数错误");
@@ -114,7 +111,7 @@ public class LampController {
         List<String> deviceIds = (List<String>) params.get("deviceIds");
         Integer status = (Integer) params.get("status");
         
-        Log.d("批量控制路灯请求: deviceIds=" + deviceIds + ", status=" + status);
+        log.debug("批量控制路灯请求: deviceIds = {}, status = {}", deviceIds, status);
         
         if (deviceIds == null || status == null) {
             return Result.error("参数错误");
@@ -144,7 +141,7 @@ public class LampController {
      */
     @GetMapping("/stats")
     public Result getLampStats() {
-        Log.d("获取路灯统计请求");
+        log.debug("获取路灯统计请求");
         List<Device> lamps = envMapper.selectLamps();
         
         int totalCount = lamps.size();
@@ -194,7 +191,7 @@ public class LampController {
      */
     @GetMapping("/faults")
     public Result getFaultLamps() {
-        Log.d("获取故障路灯请求");
+        log.debug("获取故障路灯请求");
         List<Device> faultLamps = envMapper.selectFaultLamps();
         return Result.success(faultLamps);
     }
@@ -209,7 +206,7 @@ public class LampController {
         List<String> deviceIds = (List<String>) params.get("deviceIds");
         Integer ambientLight = (Integer) params.get("ambientLight");
         
-        Log.d("智能调光请求: deviceId=" + deviceId + ", deviceIds=" + deviceIds + ", ambientLight=" + ambientLight);
+        log.debug("智能调光请求: deviceId = {}, deviceIds = {}, ambientLight = {}", deviceId, deviceIds, ambientLight);
         
         if (ambientLight == null) {
             return Result.error("缺少环境光照参数");

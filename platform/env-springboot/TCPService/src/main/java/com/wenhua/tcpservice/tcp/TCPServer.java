@@ -3,13 +3,15 @@ package com.wenhua.tcpservice.tcp;
 import com.wenhua.tcpservice.config.GlobalConfiguration;
 import com.wenhua.tcpservice.mapper.EnvMapper;
 import com.wenhua.tcpservice.pojo.dev.Device;
-import com.wenhua.tcpservice.utils.Log;
+import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Map;
@@ -18,15 +20,17 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @Component
+@Slf4j
 public class TCPServer implements CommandLineRunner {
 
-    @Autowired
-    private EnvMapper envMapper;
+    private final EnvMapper envMapper;
 
     private static final Map<String, Socket> deviceSockets = new ConcurrentHashMap<>();
     private static final Map<String, PrintWriter> deviceWriters = new ConcurrentHashMap<>();
     private ExecutorService executorService = Executors.newCachedThreadPool();
-
+    
+    public TCPServer(EnvMapper envMapper) { this.envMapper = envMapper; }
+    
     @Override
     public void run(String... args) throws Exception {
         startServer();
@@ -35,15 +39,15 @@ public class TCPServer implements CommandLineRunner {
     public void startServer() {
         new Thread(() -> {
             try (ServerSocket serverSocket = new ServerSocket(GlobalConfiguration.TCP_PORT)) {
-                Log.d("TCP服务端启动，端口: " + GlobalConfiguration.TCP_PORT);
+                log.debug("TCP服务端启动，端口: {}", GlobalConfiguration.TCP_PORT);
                 
                 while (true) {
                     Socket clientSocket = serverSocket.accept();
-                    Log.d("新的设备连接: " + clientSocket.getInetAddress().getHostAddress());
+                    log.debug("新的设备连接: {}", clientSocket.getInetAddress().getHostAddress());
                     executorService.submit(() -> handleClient(clientSocket));
                 }
             } catch (IOException e) {
-                Log.e("TCP服务端启动失败: " + e.getMessage());
+                log.error("TCP服务端启动失败: {}", e.getMessage());
             }
         }).start();
     }
@@ -59,7 +63,7 @@ public class TCPServer implements CommandLineRunner {
             String inputLine;
             
             while ((inputLine = in.readLine()) != null) {
-                Log.d("收到设备数据: " + inputLine);
+                log.debug("收到设备数据: {}", inputLine);
                 
                 try {
                     JSONObject json = new JSONObject(inputLine);
@@ -85,12 +89,12 @@ public class TCPServer implements CommandLineRunner {
                             sendCommand(out, "cmd", "REPORT");
                     }
                 } catch (Exception e) {
-                    Log.e("解析JSON失败: " + e.getMessage());
+                    log.error("解析JSON失败: {}", e.getMessage());
                     out.println("{\"status\":\"error\",\"message\":\"Invalid JSON\"}");
                 }
             }
         } catch (IOException e) {
-            Log.d("设备断开连接: " + deviceIp);
+            log.debug("设备断开连接: {}", deviceIp);
         } finally {
             if (deviceId != null) {
                 deviceSockets.remove(deviceId);
@@ -102,7 +106,7 @@ public class TCPServer implements CommandLineRunner {
 
     private void handleDeviceOnline(JSONObject json, String ip, PrintWriter out) {
         String deviceId = json.optString("id", "");
-        Log.d("设备上线: " + deviceId + ", IP: " + ip);
+        log.debug("设备上线: {}, IP: {}", deviceId, ip);
         
         Device device = envMapper.selectDeviceById(deviceId);
         if (device == null) {
@@ -181,14 +185,20 @@ public class TCPServer implements CommandLineRunner {
             envMapper.updateDevice(device);
         }
         
-        Log.d("设备数据更新: " + deviceId + ", 温度: " + device.getTemperature() + 
-              ", 湿度: " + device.getHumidity() + ", 光照: " + device.getLightIntensity() +
-              ", 路灯状态: " + device.getLampStatus() + ", 亮度: " + device.getBrightness());
+        log.debug(
+            "设备数据更新: {}, 温度: {}, 湿度: {}, 光照: {}, 路灯状态: {}, 亮度: {}",
+            deviceId,
+            device.getTemperature(),
+            device.getHumidity(),
+            device.getLightIntensity(),
+            device.getLampStatus(),
+            device.getBrightness()
+        );
     }
 
     private void handleDeviceSetResponse(JSONObject json) {
         String deviceId = json.optString("id", "");
-        Log.d("设备设置响应: " + deviceId);
+        log.debug("设备设置响应: {}", deviceId);
     }
 
     private void updateDeviceOffline(String deviceId) {
@@ -196,24 +206,24 @@ public class TCPServer implements CommandLineRunner {
         if (device != null) {
             device.setOnLine(0);
             envMapper.updateDevice(device);
-            Log.d("设备离线: " + deviceId);
+            log.debug("设备离线: {}", deviceId);
         }
     }
 
     private void sendCommand(PrintWriter out, String key, String value) {
         JSONObject cmd = new JSONObject();
         cmd.put(key, value);
-        out.println(cmd.toString());
+        out.println(cmd);
     }
 
     public static boolean sendCommandToDevice(String deviceId, String command) {
         PrintWriter writer = deviceWriters.get(deviceId);
         if (writer != null) {
             writer.println(command);
-            Log.d("发送命令到设备 " + deviceId + ": " + command);
+            log.debug("发送命令到设备 {}: {}", deviceId, command);
             return true;
         }
-        Log.e("设备 " + deviceId + " 未连接");
+        log.error("设备 {} 未连接", deviceId);
         return false;
     }
 

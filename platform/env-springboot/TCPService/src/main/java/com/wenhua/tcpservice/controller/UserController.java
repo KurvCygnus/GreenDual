@@ -7,24 +7,25 @@ import com.wenhua.tcpservice.pojo.Result;
 import com.wenhua.tcpservice.pojo.User;
 import com.wenhua.tcpservice.service.UserService;
 import com.wenhua.tcpservice.utils.JwtUtils;
-import com.wenhua.tcpservice.utils.Log;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @RestController
 @CrossOrigin(origins = GlobalConfiguration.ORIGINS)
+@AllArgsConstructor
+@Slf4j
 public class UserController {
 
-    @Autowired
     private UserService userService;
-
-    @Autowired
     private UserMapper userMapper;
 
     @PostMapping(GlobalConfiguration.USER_REQUEST_PREFIX + "/select")
@@ -32,9 +33,9 @@ public class UserController {
         if (!isRoot(request)) {
             return Result.error("权限不足");
         }
-        Log.d(queryParameter + "");
+        log.debug("{}", queryParameter);
         List<User> users = userService.selectUsers(queryParameter);
-        Log.d("查询到了用户" + users);
+        log.debug("查询到了用户: {}", users);
         Result result = Result.success(users);
         result.setTotalPages(userMapper.selectUserCount(queryParameter));
         return result;
@@ -45,7 +46,7 @@ public class UserController {
         if (!isRoot(request)) {
             return Result.error("权限不足");
         }
-        Log.d(user + "");
+        log.debug("{}", user);
         userService.updateUser(user);
         return Result.success();
     }
@@ -59,7 +60,7 @@ public class UserController {
         if (existing != null) {
             return Result.error("用户名已存在");
         }
-        Log.d(user + "");
+        log.debug("{}", user);
         userService.addUser(user);
         return Result.success();
     }
@@ -72,7 +73,7 @@ public class UserController {
         if (user.getUserId() == 1) {
             return Result.error("不能删除管理员账户");
         }
-        Log.d(user + "");
+        log.debug("{}", user);
         userService.deleteUser(user);
         return Result.success();
     }
@@ -93,7 +94,7 @@ public class UserController {
             userMapper.updatePassword(userId, newPassword);
             return Result.success("密码重置成功");
         } catch (Exception e) {
-            Log.e("重置密码失败: " + e.getMessage());
+            log.error("重置密码失败: {}", e.getMessage());
             return Result.error("重置密码失败");
         }
     }
@@ -107,7 +108,7 @@ public class UserController {
             stats.put("normal", userMapper.countByPermission(1));
             return Result.success(stats);
         } catch (Exception e) {
-            Log.e("获取用户统计失败: " + e.getMessage());
+            log.error("获取用户统计失败: {}", e.getMessage());
             return Result.error("获取用户统计失败");
         }
     }
@@ -116,9 +117,6 @@ public class UserController {
         Integer userId = JwtUtils.getUserId(request);
         User user = userMapper.selectUserById(userId);
         System.out.println("用户权位" + user.getUserPermission());
-        if (user.getUserPermission() < 2) {
-            return false;
-        }
-        return true;
+        return user.getUserPermission() >= 2;
     }
 }

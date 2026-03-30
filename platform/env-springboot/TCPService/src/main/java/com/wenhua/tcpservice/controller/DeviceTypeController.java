@@ -5,26 +5,26 @@ import com.wenhua.tcpservice.mapper.DeviceTypeMapper;
 import com.wenhua.tcpservice.pojo.DeviceType;
 import com.wenhua.tcpservice.pojo.Result;
 import com.wenhua.tcpservice.utils.JwtUtils;
-import com.wenhua.tcpservice.utils.Log;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
 
 @RestController
+@AllArgsConstructor
+@Slf4j
 @CrossOrigin(origins = GlobalConfiguration.ORIGINS)
 @RequestMapping(GlobalConfiguration.USER_REQUEST_PREFIX + "/deviceType")
 public class DeviceTypeController {
 
-    @Autowired
     private DeviceTypeMapper deviceTypeMapper;
 
     private boolean isAdmin(HttpServletRequest request) {
         Integer userId = JwtUtils.getUserId(request);
-        if (userId == null) return false;
-        return true;
+        return userId != null;
     }
 
     @PostMapping("/list")
@@ -33,7 +33,7 @@ public class DeviceTypeController {
             List<DeviceType> types = deviceTypeMapper.selectAll();
             return Result.success(types);
         } catch (Exception e) {
-            Log.e("获取设备类型列表失败: " + e.getMessage());
+            log.error("获取设备类型列表失败: {}", e.getMessage());
             return Result.error("获取设备类型列表失败");
         }
     }
@@ -54,7 +54,7 @@ public class DeviceTypeController {
             deviceTypeMapper.insert(deviceType);
             return Result.success("添加成功");
         } catch (Exception e) {
-            Log.e("添加设备类型失败: " + e.getMessage());
+            log.error("添加设备类型失败: {}", e.getMessage());
             return Result.error("添加设备类型失败");
         }
     }
@@ -69,7 +69,7 @@ public class DeviceTypeController {
             deviceTypeMapper.update(deviceType);
             return Result.success("更新成功");
         } catch (Exception e) {
-            Log.e("更新设备类型失败: " + e.getMessage());
+            log.error("更新设备类型失败: {}", e.getMessage());
             return Result.error("更新设备类型失败");
         }
     }
@@ -86,7 +86,7 @@ public class DeviceTypeController {
             deviceTypeMapper.updateStatus(id, newStatus);
             return Result.success("状态更新成功");
         } catch (Exception e) {
-            Log.e("更新状态失败: " + e.getMessage());
+            log.error("更新状态失败: {}", e.getMessage());
             return Result.error("更新状态失败");
         }
     }
@@ -98,7 +98,7 @@ public class DeviceTypeController {
             deviceTypeMapper.deleteById(id);
             return Result.success("删除成功");
         } catch (Exception e) {
-            Log.e("删除设备类型失败: " + e.getMessage());
+            log.error("删除设备类型失败: {}", e.getMessage());
             return Result.error("删除设备类型失败");
         }
     }

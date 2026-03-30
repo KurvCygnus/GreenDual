@@ -4,10 +4,9 @@ import com.wenhua.tcpservice.config.GlobalConfiguration;
 import com.wenhua.tcpservice.mapper.MonitorRecordMapper;
 import com.wenhua.tcpservice.pojo.MonitorRecord;
 import com.wenhua.tcpservice.pojo.Result;
-import com.wenhua.tcpservice.utils.JwtUtils;
-import com.wenhua.tcpservice.utils.Log;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -18,16 +17,17 @@ import java.util.Map;
 @RestController
 @CrossOrigin(origins = GlobalConfiguration.ORIGINS)
 @RequestMapping(GlobalConfiguration.USER_REQUEST_PREFIX + "/record")
+@AllArgsConstructor
+@Slf4j
 public class MonitorRecordController {
 
-    @Autowired
     private MonitorRecordMapper monitorRecordMapper;
 
     @PostMapping("/list")
     public Result getRecordList(@RequestBody Map<String, Object> params, HttpServletRequest request) {
         try {
-            Integer page = params.get("page") != null ? (Integer) params.get("page") : 1;
-            Integer pageSize = params.get("pageSize") != null ? (Integer) params.get("pageSize") : 10;
+            int page = params.get("page") != null ? (Integer) params.get("page") : 1;
+            int pageSize = params.get("pageSize") != null ? (Integer) params.get("pageSize") : 10;
             String deviceId = (String) params.get("deviceId");
             String dataType = (String) params.get("dataType");
             List<String> dateRange = (List<String>) params.get("dateRange");
@@ -50,7 +50,7 @@ public class MonitorRecordController {
             result.setTotalPages(total);
             return result;
         } catch (Exception e) {
-            Log.e("获取监测记录失败: " + e.getMessage());
+            log.error("获取监测记录失败: {}", e.getMessage());
             return Result.error("获取监测记录失败");
         }
     }
@@ -65,7 +65,7 @@ public class MonitorRecordController {
             stats.put("abnormal", monitorRecordMapper.countByStatus("abnormal"));
             return Result.success(stats);
         } catch (Exception e) {
-            Log.e("获取统计信息失败: " + e.getMessage());
+            log.error("获取统计信息失败: {}", e.getMessage());
             return Result.error("获取统计信息失败");
         }
     }
@@ -80,7 +80,7 @@ public class MonitorRecordController {
             }
             return Result.error("记录不存在");
         } catch (Exception e) {
-            Log.e("获取记录详情失败: " + e.getMessage());
+            log.error("获取记录详情失败: {}", e.getMessage());
             return Result.error("获取记录详情失败");
         }
     }
@@ -92,7 +92,7 @@ public class MonitorRecordController {
             monitorRecordMapper.deleteById(id);
             return Result.success("删除成功");
         } catch (Exception e) {
-            Log.e("删除记录失败: " + e.getMessage());
+            log.error("删除记录失败: {}", e.getMessage());
             return Result.error("删除记录失败");
         }
     }
@@ -104,7 +104,7 @@ public class MonitorRecordController {
             record.setDeviceId((String) params.get("deviceId"));
             record.setDeviceName((String) params.get("deviceName"));
             record.setDataType((String) params.get("dataType"));
-            record.setValue(params.get("value") != null ? Double.valueOf(params.get("value").toString()) : 0.0);
+            record.setValue(params.get("value") != null ? Double.parseDouble(params.get("value").toString()) : 0.0);
             record.setStatus((String) params.get("status"));
             record.setRemark((String) params.get("remark"));
             
@@ -129,8 +129,8 @@ public class MonitorRecordController {
             monitorRecordMapper.insertRecord(record);
             return Result.success("添加成功");
         } catch (Exception e) {
-            Log.e("添加记录失败: " + e.getMessage());
-            return Result.error("添加记录失败: " + e.getMessage());
+            log.error("添加记录失败: {}", e.getMessage());
+            return Result.error("添加记录失败: %s".formatted(e.getMessage()));
         }
     }
 }
