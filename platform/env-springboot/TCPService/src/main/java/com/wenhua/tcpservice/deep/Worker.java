@@ -8,7 +8,7 @@ import java.util.List;
 //工作者
 public abstract class Worker {
     //是否需要日志1
-    protected boolean needLog = true;
+    protected final boolean needLog = true;
     private void log(String  l){
         if (needLog){
             System.out.println("log->"+l);
@@ -17,13 +17,13 @@ public abstract class Worker {
     //通话器
     public ThreadSafeStringStorage storage=new ThreadSafeStringStorage();
     //工具箱
-    protected List<WorkerTool> tools;
+    protected final List<WorkerTool> tools;
 
     //人设
-    protected String workerSetting;
+    protected final String workerSetting;
 
     //传话器
-    protected Talker talker;
+    protected final Talker talker;
     //获取历史记录
     public abstract List<JSONObject> getWorkerTalk();
     //全参构造

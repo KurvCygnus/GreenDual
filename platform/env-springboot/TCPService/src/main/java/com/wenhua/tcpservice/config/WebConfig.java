@@ -1,16 +1,16 @@
 package com.wenhua.tcpservice.config;
 
 import com.wenhua.tcpservice.interceptor.LoginCheckInterceptor;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 //配置类
 @Configuration
+@AllArgsConstructor
 public class WebConfig implements WebMvcConfigurer {
-
-    @Autowired
+    
     private LoginCheckInterceptor loginCheckInterceptor;
 
     //注册拦截器

@@ -4,14 +4,14 @@ import com.wenhua.tcpservice.mapper.UserMapper;
 import com.wenhua.tcpservice.pojo.QueryParameter;
 import com.wenhua.tcpservice.pojo.User;
 import com.wenhua.tcpservice.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
+@AllArgsConstructor
 public class UserServiceImpl implements UserService {
-    @Autowired
     private UserMapper userMapper;
 
     @Override
@@ -19,9 +19,8 @@ public class UserServiceImpl implements UserService {
 
         //调用mapper层方法
         /* 实际上这里要处理麻麻加密等东西,现在测试省略了 */
-        User user = userMapper.selectUserByUsernameAndPasswordHash(username, password);
-
-        return user;
+        
+        return userMapper.selectUserByUsernameAndPasswordHash(username, password);
     }
 
     @Override

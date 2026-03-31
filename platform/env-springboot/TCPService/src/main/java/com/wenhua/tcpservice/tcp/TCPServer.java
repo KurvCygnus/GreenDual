@@ -27,12 +27,13 @@ public class TCPServer implements CommandLineRunner {
 
     private static final Map<String, Socket> deviceSockets = new ConcurrentHashMap<>();
     private static final Map<String, PrintWriter> deviceWriters = new ConcurrentHashMap<>();
-    private ExecutorService executorService = Executors.newCachedThreadPool();
+    private final ExecutorService executorService = Executors.newCachedThreadPool();
     
     public TCPServer(EnvMapper envMapper) { this.envMapper = envMapper; }
     
     @Override
-    public void run(String... args) throws Exception {
+    public void run(String... args)
+    {
         startServer();
     }
 

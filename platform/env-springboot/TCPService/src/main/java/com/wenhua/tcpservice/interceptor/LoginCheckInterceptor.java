@@ -7,6 +7,7 @@ import com.wenhua.tcpservice.utils.JwtUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -18,20 +19,22 @@ import java.util.Enumeration;
 @Slf4j
 public class LoginCheckInterceptor implements HandlerInterceptor {
     @Override//视图渲染完毕后执行...
-    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
+    public void afterCompletion(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler, Exception ex)
+    {
         System.out.println("afterCompletion");
     }
 
     @Override//资源方法运行后运行
-    public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) throws Exception {
+    public void postHandle(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler, ModelAndView modelAndView)
+    {
         System.out.println("postHandle");
 
     }
 
     //目标资源方法运行前运行,返回true:放行;返回false:不放行
     @Override
-    public boolean preHandle(HttpServletRequest req, HttpServletResponse resp, Object handler) throws Exception {
-        System.out.println("preHandle执行");
+    public boolean preHandle(HttpServletRequest req, @NonNull HttpServletResponse resp, @NonNull Object handler) throws Exception {
+        log.info("preHandle执行");
 
         //这里校验
         //1.获取请求url
@@ -44,12 +47,12 @@ public class LoginCheckInterceptor implements HandlerInterceptor {
             String[] parameterValues = req.getParameterValues(parameterName);
             StringBuilder values = new StringBuilder();
             for (String value : parameterValues) {
-                if (values.length() > 0) {
+                if (!values.isEmpty()) {
                     values.append(", ");
                 }
                 values.append(value);
             }
-            log.info("请求参数 {}: {}", parameterName, values.toString());
+            log.info("请求参数 {}: {}", parameterName, values);
         }
 
         //2.判断请求url中是否包含login,如果包含,说明是登录,放行
@@ -60,7 +63,7 @@ public class LoginCheckInterceptor implements HandlerInterceptor {
 
         //3.获取请求头中的令牌(token)
         String jwt = req.getHeader("token");
-        System.out.println("jwt:"+jwt);
+        log.info("jwt: {}", jwt);
 
         //4.判断令牌是否存在,如果不存在,返回错误
         if(!StringUtils.hasLength(jwt)){/*判断字符串是否有长度*/

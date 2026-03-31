@@ -6,14 +6,14 @@ import java.nio.charset.StandardCharsets;
 
 public class CMDTool implements WorkerTool{
     //字段-CMD
-    private static String CMD ="cmd";
-    private static String CMD_RES ="cmd-result";
+    private static final String CMD ="cmd";
+    private static final String CMD_RES ="cmd-result";
     //字段-powerShell
-    private static String POWER_SHELL ="power-shell";
-    private static String POWER_SHELL_RES ="power-shell-result";
+    private static final String POWER_SHELL ="power-shell";
+    private static final String POWER_SHELL_RES ="power-shell-result";
     @Override
     public String work(String content) {
-        String result = "";
+        StringBuilder result = new StringBuilder();
         //是否包含cmd
         if(content.contains(xml(CMD))){
             //解析
@@ -22,7 +22,7 @@ public class CMDTool implements WorkerTool{
                 cmd=cmd.trim();
                 cmd=formCorrection(cmd);
                 //执行
-                result+=XmlUtil.generateTag(CMD_RES, executeCMD(cmd));
+                result.append(XmlUtil.generateTag(CMD_RES, executeCMD(cmd)));
             }
         }
         //是否包含powerShell
@@ -33,11 +33,11 @@ public class CMDTool implements WorkerTool{
                 cmd=cmd.trim();
                 cmd=formCorrection(cmd);
                 //执行
-                result+=XmlUtil.generateTag(POWER_SHELL_RES, executePowerShell(cmd));
+                result.append(XmlUtil.generateTag(POWER_SHELL_RES, executePowerShell(cmd)));
             }
         }
 
-        return result;
+        return result.toString();
     }
 
     @Override

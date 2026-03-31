@@ -1,5 +1,7 @@
 package com.wenhua.tcpservice.deep.tool;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -12,6 +14,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 
 //文件工具-实现文件写入
+@Slf4j
 public class FileTool implements WorkerTool {
 
     //文件工具
@@ -39,9 +42,9 @@ public class FileTool implements WorkerTool {
         if(!content.contains(FILE)){
             return "";
         }
-        System.out.println("AI->"+content);
+        log.debug("AI -> {}", content);
         //包含文件标签,进行处理
-        StringBuffer sbRes=new StringBuffer();
+        StringBuilder sbRes=new StringBuilder();
         String[] todoFiles = XmlUtil.parseTagContents(FILE, content);
         for (String todoFile : todoFiles) {
             //进行操作-获取操作路径(只有一个操作路径)
@@ -121,11 +124,11 @@ public class FileTool implements WorkerTool {
     }
 
     private String xml(String content){
-        return "<"+content+">";
+        return "<%s>".formatted(content);
     }
 
     private String xmlA(String content){
-        return "<"+content+"/>";
+        return "<%s/>".formatted(content);
     }
 
     // 写入文件（覆盖模式）
@@ -170,7 +173,7 @@ public class FileTool implements WorkerTool {
     // 读取文件内容
     private String read(String filePath) {
         try {
-            return new String(Files.readAllBytes(Paths.get(filePath)), StandardCharsets.UTF_8);
+            return Files.readString(Paths.get(filePath));
         } catch (IOException e) {
             //e.printStackTrace();
             return "[读取失败]";
@@ -227,7 +230,7 @@ public class FileTool implements WorkerTool {
         try {
             return dir.mkdirs();
         } catch (SecurityException e) {
-            System.err.println("没有创建目录的权限: " + filePath);
+            log.error("没有创建目录的权限: {}", filePath);
             return false;
         }
     }

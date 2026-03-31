@@ -4,7 +4,6 @@ import com.wenhua.tcpservice.pojo.QueryParameter;
 import com.wenhua.tcpservice.pojo.ai.AiActionLog;
 import com.wenhua.tcpservice.pojo.ai.AiEmployee;
 import org.apache.ibatis.annotations.*;
-import org.apache.ibatis.type.JdbcType;
 
 import java.util.List;
 

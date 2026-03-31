@@ -1,7 +1,10 @@
 package com.wenhua.tcpservice.deep;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.concurrent.atomic.AtomicReference;
 
+@Slf4j
 public class ThreadSafeStringStorage {
     // 使用 AtomicReference 存储字符串，保证原子性和可见性
     private final AtomicReference<String> storage = new AtomicReference<>("");
@@ -69,7 +72,7 @@ public class ThreadSafeStringStorage {
         // 主线程：持续打印结果
         for (int i = 0; i < 10; i++) {
             Thread.sleep(200);
-            System.out.println("Current Value: " + storage.get());
+            log.info("Current Value: {}", storage.get());
         }
     }
 }

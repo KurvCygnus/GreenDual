@@ -19,8 +19,8 @@ public class XmlUtil {
             return null;
         }
 
-        String startTag = "<" + tagName + ">";
-        String endTag = "</" + tagName + ">";
+        String startTag = "<%s>".formatted(tagName);
+        String endTag = "</%s>".formatted(tagName);
 
         int startIndex = input.indexOf(startTag);
         if (startIndex == -1) {
@@ -32,11 +32,9 @@ public class XmlUtil {
         if (endIndex == -1) {
             return null;
         }
-
-        String res=input.substring(startIndex, endIndex).trim();
-
+        
         //LogUtil.w("\n[][][]"+res+"\n");
-        return res;
+        return input.substring(startIndex, endIndex).trim();
     }
 
     /**
@@ -51,8 +49,8 @@ public class XmlUtil {
             return new String[0];
         }
 
-        String startTag = "<" + tagName + ">";
-        String endTag = "</" + tagName + ">";
+        String startTag = "<%s>".formatted(tagName);
+        String endTag = "</%s>".formatted(tagName);
         List<String> contents = new ArrayList<>();
         int index = 0;
 
@@ -81,7 +79,7 @@ public class XmlUtil {
             return null;
         }
 
-        return "<" + tagName + ">" + content + "</" + tagName + ">";
+        return "<%s>%s</%s>".formatted(tagName, content, tagName);
     }
 
 }

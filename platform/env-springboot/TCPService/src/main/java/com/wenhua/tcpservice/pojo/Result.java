@@ -1,11 +1,49 @@
 package com.wenhua.tcpservice.pojo;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /*@Data
 @NoArgsConstructor
 @AllArgsConstructor*/
+@Setter
+@Getter
 public class Result {
+    /**
+     * -- GETTER --
+     *  获取
+     *
+     *
+     * -- SETTER --
+     *  设置
+     *
+     @return code
+      * @param code
+     */
     private Integer code;//响应码，1 代表成功; 0 代表失败
+    /**
+     * -- GETTER --
+     *  获取
+     *
+     *
+     * -- SETTER --
+     *  设置
+     *
+     @return msg
+      * @param msg
+     */
     private String msg;  //响应信息 描述字符串
+    /**
+     * -- GETTER --
+     *  获取
+     *
+     *
+     * -- SETTER --
+     *  设置
+     *
+     @return data
+      * @param data
+     */
     private Object data; //返回的数据
 
     //响应码
@@ -22,7 +60,18 @@ public class Result {
     public static final String EXIST = "设备已存在";
     //响应超时
     public static final String TIMEOUT = "响应超时";
-
+    
+    /**
+     * -- GETTER --
+     *  获取
+     *
+     *
+     * -- SETTER --
+     *  设置
+     *
+     @return totalPages
+      * @param totalPages
+     */
     //特殊
     //页面数量
     private Integer totalPages;
@@ -70,73 +119,10 @@ public class Result {
         }else
             this.code = ERROR;
     }
-
-
-    /**
-     * 获取
-     * @return code
-     */
-    public Integer getCode() {
-        return code;
-    }
-
-    /**
-     * 设置
-     * @param code
-     */
-    public void setCode(Integer code) {
-        this.code = code;
-    }
-
-    /**
-     * 获取
-     * @return msg
-     */
-    public String getMsg() {
-        return msg;
-    }
-
-    /**
-     * 设置
-     * @param msg
-     */
-    public void setMsg(String msg) {
-        this.msg = msg;
-    }
-
-    /**
-     * 获取
-     * @return data
-     */
-    public Object getData() {
-        return data;
-    }
-
-    /**
-     * 设置
-     * @param data
-     */
-    public void setData(Object data) {
-        this.data = data;
-    }
-
+    
+    
     public String toString() {
         return "Result{code = " + code + ", msg = " + msg + ", data = " + data + "}";
     }
-
-    /**
-     * 获取
-     * @return totalPages
-     */
-    public Integer getTotalPages() {
-        return totalPages;
-    }
-
-    /**
-     * 设置
-     * @param totalPages
-     */
-    public void setTotalPages(Integer totalPages) {
-        this.totalPages = totalPages;
-    }
+    
 }

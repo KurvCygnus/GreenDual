@@ -18,7 +18,7 @@ public class TimeTool implements WorkerTool{
         // 格式化时间并转换为字符串
         String formattedDate = now.format(formatter);
 
-        formattedDate="["+formattedDate+"]";
+        formattedDate= "[%s]".formatted(formattedDate);
 
         // 返回格式化后的时间字符串
         return formattedDate;

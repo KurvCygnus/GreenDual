@@ -1,5 +1,6 @@
 package com.wenhua.tcpservice.deep;
 
+import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -8,58 +9,56 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 //deepseek传话器
+@Slf4j
 public class DeepTalker implements Talker {
     //参数
-    private Config config;
+    private final Config config;
     private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
 
     //历史记录
-    protected List<JSONObject> messages=new CopyOnWriteArrayList<>();
+    protected final List<JSONObject> messages = new CopyOnWriteArrayList<>();
     //获取历史记录
     public synchronized List<JSONObject> getMessageHistory() {
-        return new ArrayList<>(messages);
+        return List.copyOf(messages);
     }
+    
     //测试方法:打印历史记录
     public void printHistory(){
         for (JSONObject message : messages) {
-            System.out.println(message);
+            log.debug("{}", message);
         }
     }
-    //配置参数内部类
-    private class Config {
-        //配置参数
-        //apikey
-        private String apiKey;
-        //URLbase
-        private String urlBase;
-        //模型名字
-        private String modelName;
-        //最大token数
-        private int maxToken;
-        //温度
-        private float temperature;
-        //空参构造-默认参数
-        public Config() {
-            //写一套默认的
-            urlBase = "https://api.deepseek.com/v1/chat/completions"; // 假设这是默认API地址
-            maxToken = 4000;  // 典型默认值
-            temperature = 0.5f; // 默认随机性
-            modelName = "deepseek-reasoner"; // 默认模型
-            apiKey="sk-be71f2ddc3d94427a8c49f979eabd473";
-        }
+    
+    /**
+     * @param apiKey      配置参数apikey
+     * @param urlBase     URLbase
+     * @param modelName   模型名字
+     * @param maxToken    最大token数
+     * @param temperature 温度
+     */
+    private record Config(String apiKey, String urlBase, String modelName, int maxToken, float temperature)
+    {
+            //空参构造-默认参数
+            public Config()
+            {
+                //写一套默认的
+                // 假设这是默认API地址
+                // 典型默认值
+                // 默认随机性
+                // 默认模型
+                this(
+                    "sk-be71f2ddc3d94427a8c49f979eabd473",
+                    "https://api.deepseek.com/v1/chat/completions",
+                    "deepseek-reasoner",
+                    4000,
+                    0.5f
+                );
+            }
         //带参构造
-        public Config(String apiKey, String urlBase, String modelName, int maxToken, float temperature) {
-            this.apiKey = apiKey;
-            this.urlBase = urlBase;
-            this.modelName = modelName;
-            this.maxToken = maxToken;
-            this.temperature = temperature;
-        }
     }
 
     //构造方法
@@ -91,7 +90,7 @@ public class DeepTalker implements Talker {
         if (response.statusCode() != 200) {
             String errorBody = response.body();
             //LogUtil.d("[ERROR] API错误响应：\n" + errorBody);
-            throw new RuntimeException("API请求失败，状态码: " + response.statusCode() + "\n响应内容：" + errorBody);
+            throw new RuntimeException("API请求失败，状态码: %d\n响应内容：%s".formatted(response.statusCode(), errorBody));
         }
 
         return response.body();
@@ -111,8 +110,8 @@ public class DeepTalker implements Talker {
         JSONObject message = createMessage("user", content);
         messages.add(message);
         //发送请求
-        String res="";
-        JSONObject aiMessage=null;
+        String res;
+        JSONObject aiMessage;
         try {
             res=sendRequest(messages);
             //成功则将res放入历史记录
@@ -122,7 +121,7 @@ public class DeepTalker implements Talker {
             //出现异常,移除上次的用户上下文
             messages.remove(message);
             //e.printStackTrace();
-            res="请求失败，请重试"+e.getMessage();
+            res = "请求失败，请重试%s".formatted(e.getMessage());
             return res;
         }
 
@@ -169,6 +168,6 @@ public class DeepTalker implements Talker {
 
     @Override
     public void clearRecord() {
-        this.messages=new ArrayList<>();
+        this.messages.clear();
     }
 }

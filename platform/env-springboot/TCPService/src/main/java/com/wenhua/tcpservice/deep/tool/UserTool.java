@@ -14,8 +14,7 @@ public class UserTool implements WorkerTool{
     public String work(String content) {
         if (content.contains(xml(REPORT))){
             //获取内容
-            String res = XmlUtil.parseTagContent(REPORT, content);
-            return res;
+            return XmlUtil.parseTagContent(REPORT, content);
         }
         return "";
     }
@@ -36,7 +35,7 @@ public class UserTool implements WorkerTool{
     }
 
     private String xml(String content){
-        return "<"+content+">";
+        return "<%s>".formatted(content);
     }
 
 }

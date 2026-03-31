@@ -1,4 +1,4 @@
-package com.wenhua.tcpservice.myexception;
+package com.wenhua.tcpservice.exception;
 
 
 //设备指令类型未定义异常

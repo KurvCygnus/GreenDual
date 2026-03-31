@@ -11,13 +11,13 @@ import java.util.Map;
 public class JwtUtils {
 
 
-    public static String signKey = "itheima";
-    private static Long expire = 43200000L;
+    public static final String signKey = "itheima";
+    private static final Long expire = 43200000L;
 
     //通过令牌获取用户id方法
     public static Integer getUserId(HttpServletRequest request){
         String token = request.getHeader("token");
-        Integer userId = null;
+        Integer userId;
         // 解析令牌,找出用户id
         try {
             // 解析 JWT
@@ -45,7 +45,7 @@ public class JwtUtils {
     //通过令牌获取用户id方法
     public static Integer getUserId(String token){
 
-        Integer userId = null;
+        Integer userId;
         // 解析令牌,找出用户id
         try {
             // 解析 JWT
@@ -78,12 +78,11 @@ public class JwtUtils {
      * @return
      */
     public static String generateJwt(Map<String, Object> claims){
-        String jwt = Jwts.builder()
+        return Jwts.builder()
                 .addClaims(claims)
                 .signWith(SignatureAlgorithm.HS256, signKey)
                 .setExpiration(new Date(System.currentTimeMillis() + expire))
                 .compact();
-        return jwt;
     }
 
     /**
@@ -92,10 +91,9 @@ public class JwtUtils {
      * @return JWT第二部分负载 payload 中存储的内容
      */
     public static Claims parseJWT(String jwt){
-        Claims claims = Jwts.parser()
+        return Jwts.parser()
                 .setSigningKey(signKey)
                 .parseClaimsJws(jwt)
                 .getBody();
-        return claims;
     }
 }
