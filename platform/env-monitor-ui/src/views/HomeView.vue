@@ -5,7 +5,7 @@
       <el-aside width="240px" class="sidebar">
         <div class="logo">
           <el-icon size="32" color="#409EFF"><Monitor /></el-icon>
-          <span>智绿云控平台</span>
+          <span>绿智双擎</span>
         </div>
 
         <el-menu
@@ -17,40 +17,61 @@
           @select="handleSelect"
           :collapse-transition="false"
         >
-          <el-menu-item index="1">
-            <el-icon class="menu-icon"><Odometer /></el-icon>
-            <span>环境监测</span>
+          <!-- 双引擎驾驶舱 -->
+          <el-menu-item index="0">
+            <el-icon class="menu-icon"><HomeFilled /></el-icon>
+            <span>双引擎驾驶舱</span>
           </el-menu-item>
 
-          <el-menu-item index="2">
-            <el-icon class="menu-icon"><Document /></el-icon>
-            <span>监测记录</span>
-          </el-menu-item>
+          <!-- 节能引擎 -->
+          <el-sub-menu index="1">
+            <template #title>
+              <el-icon class="menu-icon" style="color: #e6a23c"
+                ><Sunny
+              /></el-icon>
+              <span>节能引擎</span>
+            </template>
+            <el-menu-item index="1-1">路灯监控</el-menu-item>
+            <el-menu-item index="1-2">智能调光</el-menu-item>
+            <el-menu-item index="1-3">故障告警</el-menu-item>
+            <el-menu-item index="1-4">能耗分析</el-menu-item>
+          </el-sub-menu>
 
-          <el-menu-item index="3">
-            <el-icon class="menu-icon"><User /></el-icon>
-            <span>用户管理</span>
-          </el-menu-item>
+          <!-- 生态引擎 -->
+          <el-sub-menu index="2">
+            <template #title>
+              <el-icon class="menu-icon" style="color: #67c23a"
+                ><FirstAidKit
+              /></el-icon>
+              <span>生态引擎</span>
+            </template>
+            <el-menu-item index="2-1">环境监测</el-menu-item>
+            <el-menu-item index="2-2">绿植管理</el-menu-item>
+            <el-menu-item index="2-3">灌溉控制</el-menu-item>
+            <el-menu-item index="2-4">健康预警</el-menu-item>
+          </el-sub-menu>
 
-          <el-menu-item index="4">
-            <el-icon class="menu-icon"><Cpu /></el-icon>
-            <span>AI监测</span>
-          </el-menu-item>
+          <!-- 智慧运营 -->
+          <el-sub-menu index="3">
+            <template #title>
+              <el-icon class="menu-icon"><MagicStick /></el-icon>
+              <span>智慧运营</span>
+            </template>
+            <el-menu-item index="3-1">AI助手</el-menu-item>
+            <el-menu-item index="3-2">教学联动</el-menu-item>
+            <el-menu-item index="3-3">数据报表</el-menu-item>
+          </el-sub-menu>
 
-          <el-menu-item index="5">
-            <el-icon class="menu-icon"><Cpu /></el-icon>
-            <span>设备管理</span>
-          </el-menu-item>
-
-          <el-menu-item index="7">
-            <el-icon class="menu-icon"><Sunny /></el-icon>
-            <span>路灯管理</span>
-          </el-menu-item>
-
-          <el-menu-item index="6">
-            <el-icon class="menu-icon"><Cloudy /></el-icon>
-            <span>云平台</span>
-          </el-menu-item>
+          <!-- 系统管理 -->
+          <el-sub-menu index="4">
+            <template #title>
+              <el-icon class="menu-icon"><Setting /></el-icon>
+              <span>系统管理</span>
+            </template>
+            <el-menu-item index="4-1">设备管理</el-menu-item>
+            <el-menu-item index="4-2">用户管理</el-menu-item>
+            <el-menu-item index="4-3">监测记录</el-menu-item>
+          </el-sub-menu>
         </el-menu>
 
         <div class="user-info">
@@ -84,251 +105,19 @@
           </div>
 
           <div class="header-actions">
-            <el-input
-              v-model="searchKeyword"
-              placeholder="搜索设备..."
-              :prefix-icon="Search"
-              clearable
-              style="width: 280px; margin-right: 16px"
-              class="search-input"
-            />
-            <el-button
-              type="primary"
-              :icon="Plus"
-              @click="handleAdd"
-              class="add-btn"
-              >添加设备</el-button
-            >
             <el-button
               type="info"
               :icon="Refresh"
               @click="refreshData"
               class="refresh-btn"
-              >刷新</el-button
+              >刷新数据</el-button
             >
           </div>
         </el-header>
 
         <el-main class="main-content">
           <keep-alive>
-            <div v-if="activeIndex === '1'" key="monitor" class="monitor-panel">
-              <!-- 统计卡片 -->
-              <el-row :gutter="20" class="stats-row">
-                <el-col :span="6">
-                  <el-card class="stat-card" shadow="hover">
-                    <div class="stat-icon" style="background: #67c23a">
-                      <el-icon size="32" color="#fff"><Odometer /></el-icon>
-                    </div>
-                    <div class="stat-info">
-                      <div class="stat-value">{{ deviceCount }}</div>
-                      <div class="stat-label">监测设备</div>
-                    </div>
-                  </el-card>
-                </el-col>
-
-                <el-col :span="6">
-                  <el-card class="stat-card" shadow="hover">
-                    <div class="stat-icon" style="background: #409eff">
-                      <el-icon size="32" color="#fff"><MostlyCloudy /></el-icon>
-                    </div>
-                    <div class="stat-info">
-                      <div class="stat-value">{{ avgTemperature }}°C</div>
-                      <div class="stat-label">平均温度</div>
-                    </div>
-                  </el-card>
-                </el-col>
-
-                <el-col :span="6">
-                  <el-card class="stat-card" shadow="hover">
-                    <div class="stat-icon" style="background: #e6a23c">
-                      <el-icon size="32" color="#fff"><Watermelon /></el-icon>
-                    </div>
-                    <div class="stat-info">
-                      <div class="stat-value">{{ avgHumidity }}%</div>
-                      <div class="stat-label">平均湿度</div>
-                    </div>
-                  </el-card>
-                </el-col>
-
-                <el-col :span="6">
-                  <el-card class="stat-card" shadow="hover">
-                    <div class="stat-icon" style="background: #f56c6c">
-                      <el-icon size="32" color="#fff"><Sunny /></el-icon>
-                    </div>
-                    <div class="stat-info">
-                      <div class="stat-value">{{ avgLight }}lux</div>
-                      <div class="stat-label">平均光照</div>
-                    </div>
-                  </el-card>
-                </el-col>
-              </el-row>
-
-              <!-- 数据可视化 -->
-              <EnvironmentChart :device-type="selectedDeviceType" />
-
-              <!-- 设备列表 -->
-              <el-card class="device-list-card" shadow="never">
-                <template #header>
-                  <div class="card-header">
-                    <span>设备列表</span>
-                    <el-radio-group v-model="viewMode" size="small">
-                      <el-radio-button label="card">卡片视图</el-radio-button>
-                      <el-radio-button label="table">表格视图</el-radio-button>
-                    </el-radio-group>
-                  </div>
-                </template>
-
-                <!-- 卡片视图 -->
-                <el-row v-if="viewMode === 'card'" :gutter="20">
-                  <el-col
-                    v-for="device in deviceList"
-                    :key="device.id"
-                    :xs="24"
-                    :sm="12"
-                    :md="8"
-                    :lg="6"
-                    style="margin-bottom: 20px"
-                  >
-                    <el-card
-                      class="device-card"
-                      :class="{ offline: !device.onLine }"
-                    >
-                      <div class="device-header">
-                        <el-icon
-                          size="24"
-                          :color="device.onLine ? '#67C23A' : '#909399'"
-                          ><Cpu
-                        /></el-icon>
-                        <span class="device-name">{{ device.name }}</span>
-                        <el-tag
-                          :type="device.onLine ? 'success' : 'info'"
-                          size="small"
-                        >
-                          {{ device.onLine ? "在线" : "离线" }}
-                        </el-tag>
-                      </div>
-
-                      <div class="device-data">
-                        <div class="data-item">
-                          <el-icon><MostlyCloudy /></el-icon>
-                          <span>温度: {{ device.temperature }}°C</span>
-                        </div>
-                        <div class="data-item">
-                          <el-icon><Watermelon /></el-icon>
-                          <span>湿度: {{ device.humidity }}%</span>
-                        </div>
-                        <div class="data-item">
-                          <el-icon><Sunny /></el-icon>
-                          <span>光照: {{ device.lightIntensity }}lux</span>
-                        </div>
-                      </div>
-
-                      <div class="device-actions">
-                        <el-button
-                          type="primary"
-                          size="small"
-                          @click="viewDetail(device)"
-                          >详情</el-button
-                        >
-                        <el-button
-                          type="warning"
-                          size="small"
-                          @click="editDevice(device)"
-                          >编辑</el-button
-                        >
-                        <el-button
-                          type="danger"
-                          size="small"
-                          @click="deleteDevice(device)"
-                          >删除</el-button
-                        >
-                      </div>
-                    </el-card>
-                  </el-col>
-                </el-row>
-
-                <!-- 表格视图 -->
-                <el-table v-else :data="deviceList" style="width: 100%">
-                  <el-table-column prop="id" label="设备ID" width="120" />
-                  <el-table-column prop="name" label="设备名称" />
-                  <el-table-column prop="temperature" label="温度(°C)" />
-                  <el-table-column prop="humidity" label="湿度(%)" />
-                  <el-table-column prop="lightIntensity" label="光照(lux)" />
-                  <el-table-column prop="onLine" label="状态">
-                    <template #default="scope">
-                      <el-tag :type="scope.row.onLine ? 'success' : 'info'">
-                        {{ scope.row.onLine ? "在线" : "离线" }}
-                      </el-tag>
-                    </template>
-                  </el-table-column>
-                  <el-table-column label="操作" width="200">
-                    <template #default="scope">
-                      <el-button
-                        type="primary"
-                        size="small"
-                        @click="viewDetail(scope.row)"
-                        >详情</el-button
-                      >
-                      <el-button
-                        type="warning"
-                        size="small"
-                        @click="editDevice(scope.row)"
-                        >编辑</el-button
-                      >
-                      <el-button
-                        type="danger"
-                        size="small"
-                        @click="deleteDevice(scope.row)"
-                        >删除</el-button
-                      >
-                    </template>
-                  </el-table-column>
-                </el-table>
-              </el-card>
-            </div>
-
-            <!-- 其他模块 -->
-            <div
-              v-else-if="activeIndex === '2'"
-              key="record"
-              class="record-panel"
-            >
-              <MonitorRecord />
-            </div>
-            <div v-else-if="activeIndex === '3'" key="user" class="user-panel">
-              <UserManagement />
-            </div>
-            <div
-              v-else-if="activeIndex === '4'"
-              key="ai"
-              class="ai-monitor-panel"
-            >
-              <AIPrediction />
-            </div>
-
-            <div
-              v-else-if="activeIndex === '5'"
-              key="device"
-              class="device-management-panel"
-            >
-              <DeviceTypeManager />
-            </div>
-
-            <div
-              v-else-if="activeIndex === '6'"
-              key="cloud"
-              class="cloud-platform-panel"
-            >
-              <CloudPlatform />
-            </div>
-
-            <div
-              v-else-if="activeIndex === '7'"
-              key="lamp"
-              class="lamp-management-panel"
-            >
-              <LampManager />
-            </div>
+            <component :is="currentComponent" :active-index="activeIndex" />
           </keep-alive>
         </el-main>
       </el-container>
@@ -542,22 +331,25 @@ import {
   Search,
   Plus,
   Refresh,
-  Odometer,
-  MostlyCloudy,
-  Watermelon,
+  HomeFilled,
   Sunny,
-  Cloudy,
-  Document,
-  User,
+  TrendCharts,
+  FirstAidKit,
+  Reading,
+  MagicStick,
+  Setting,
 } from "@element-plus/icons-vue";
 
 import EnvironmentChart from "../components/charts/EnvironmentChart.vue";
 import AIPrediction from "../components/ai/AIPrediction.vue";
-import DeviceTypeManager from "../components/devices/DeviceTypeManager.vue";
+import DeviceManager from "../components/devices/DeviceManager.vue";
 import LampManager from "../components/lamp/LampManager.vue";
 import CloudPlatform from "../components/cloud/CloudPlatform.vue";
 import MonitorRecord from "../components/records/MonitorRecord.vue";
 import UserManagement from "../components/user/UserManagement.vue";
+import CampusEnergy from "../components/campus/CampusEnergy.vue";
+import TeachingLinkage from "../components/teaching/TeachingLinkage.vue";
+import EcologyEngine from "../components/ecology/EcologyEngine.vue";
 import {
   getDeviceStats,
   getDeviceList,
@@ -570,7 +362,7 @@ import {
 const router = useRouter();
 
 // 状态
-const activeIndex = ref("1");
+const activeIndex = ref("0");
 const searchKeyword = ref("");
 const viewMode = ref("card");
 const username = ref(localStorage.getItem("name") || "管理员");
@@ -583,15 +375,52 @@ const roleText = computed(() => {
 
 const currentTitle = computed(() => {
   const titles = {
-    1: "环境监测",
-    2: "监测记录",
-    3: "用户管理",
-    4: "AI监测",
-    5: "设备管理",
-    6: "云平台",
-    7: "路灯管理",
+    0: "双引擎驾驶舱",
+    1: "节能引擎",
+    "1-1": "路灯监控",
+    "1-2": "智能调光",
+    "1-3": "故障告警",
+    "1-4": "能耗分析",
+    2: "生态引擎",
+    "2-1": "环境监测",
+    "2-2": "绿植管理",
+    "2-3": "灌溉控制",
+    "2-4": "健康预警",
+    3: "智慧运营",
+    "3-1": "AI助手",
+    "3-2": "教学联动",
+    "3-3": "数据报表",
+    4: "系统管理",
+    "4-1": "设备管理",
+    "4-2": "用户管理",
+    "4-3": "监测记录",
   };
-  return titles[activeIndex.value] || "环境监测";
+  return titles[activeIndex.value] || "双引擎驾驶舱";
+});
+
+const currentComponent = computed(() => {
+  const components = {
+    0: CampusEnergy,
+    1: LampManager,
+    "1-1": LampManager,
+    "1-2": LampManager,
+    "1-3": LampManager,
+    "1-4": CampusEnergy,
+    2: EcologyEngine,
+    "2-1": EcologyEngine,
+    "2-2": EcologyEngine,
+    "2-3": EcologyEngine,
+    "2-4": EcologyEngine,
+    3: AIPrediction,
+    "3-1": AIPrediction,
+    "3-2": TeachingLinkage,
+    "3-3": CampusEnergy,
+    4: DeviceManager,
+    "4-1": DeviceManager,
+    "4-2": UserManagement,
+    "4-3": MonitorRecord,
+  };
+  return components[activeIndex.value] || CampusEnergy;
 });
 
 // 统计数据
@@ -857,8 +686,22 @@ onMounted(async () => {
 
 <style scoped>
 .home-container {
-  min-height: 100vh;
+  height: 100vh;
   background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%);
+}
+
+.home-container :deep(.el-container) {
+  height: 100%;
+}
+
+.home-container :deep(.el-aside) {
+  height: 100%;
+}
+
+.home-container :deep(.el-main) {
+  height: 100%;
+  padding: 0;
+  overflow-y: auto;
 }
 
 .sidebar {
@@ -867,6 +710,8 @@ onMounted(async () => {
   flex-direction: column;
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
+  height: 100%;
+  overflow: hidden;
 }
 
 .sidebar:hover {
@@ -1049,7 +894,8 @@ onMounted(async () => {
 .main-content {
   background: #f8fafc;
   padding: 30px;
-  min-height: calc(100vh - 70px);
+  overflow-y: auto;
+  height: calc(100vh - 70px);
 }
 
 .monitor-panel {

@@ -160,16 +160,16 @@ const DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions";
 export async function aiChat(sessionId, message) {
   try {
     const response = await fetch(DEEPSEEK_API_URL, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'deepseek-chat',
+        model: "deepseek-chat",
         messages: [
           {
-            role: 'system',
+            role: "system",
             content: `你是一个环境监测和智能路灯控制系统的AI助手。你的职责是：
 1. 分析环境数据（温度、湿度、光照强度）
 2. 提供路灯控制建议（基于光照、天气状况）
@@ -177,16 +177,16 @@ export async function aiChat(sessionId, message) {
 4. 诊断设备故障和提供维护建议
 5. 基于真实监测数据给出实用建议
 
-请用专业、简洁的语言回答用户问题，提供具体的数值分析和可行的建议。`
+请用专业、简洁的语言回答用户问题，提供具体的数值分析和可行的建议。`,
           },
           {
-            role: 'user',
-            content: message
-          }
+            role: "user",
+            content: message,
+          },
         ],
         temperature: 0.7,
-        max_tokens: 2000
-      })
+        max_tokens: 2000,
+      }),
     });
 
     if (!response.ok) {
@@ -200,12 +200,12 @@ export async function aiChat(sessionId, message) {
       data: {
         code: 1,
         data: {
-          response: aiResponse
-        }
-      }
+          response: aiResponse,
+        },
+      },
     };
   } catch (error) {
-    console.error('DeepSeek API调用失败:', error);
+    console.error("DeepSeek API调用失败:", error);
     throw error;
   }
 }
@@ -229,4 +229,54 @@ export function aiPredictTrend(sessionId, predictType, hours, historicalData) {
     hours,
     historicalData,
   });
+}
+
+// ========== 校园能源管理API ==========
+
+export function getCampusOverview() {
+  return axios.get(api + "/campus/overview");
+}
+
+export function getEnergyStatistics(areaId) {
+  return axios.get(api + "/campus/energy/statistics", { params: { areaId } });
+}
+
+export function getBillHistory(areaId, months = 6) {
+  return axios.get(api + "/campus/energy/bill/history", {
+    params: { areaId, months },
+  });
+}
+
+export function createBill(areaId, billMonth) {
+  return axios.post(api + "/campus/energy/bill/generate", {
+    areaId,
+    billMonth,
+  });
+}
+
+export function getEnergyDashboard(areaId) {
+  return axios.get(api + "/campus/energy/dashboard", { params: { areaId } });
+}
+
+export function getTeachingStatistics() {
+  return axios.get(api + "/campus/teaching/statistics");
+}
+
+export function getTeachingCases(course) {
+  return axios.get(api + "/campus/teaching/cases", { params: { course } });
+}
+
+export function createTeachingCase(deviceId, caseType) {
+  return axios.post(api + "/campus/teaching/case/create", {
+    deviceId,
+    caseType,
+  });
+}
+
+export function optimizeLighting(deviceId) {
+  return axios.post(api + "/campus/lighting/optimize", { deviceId });
+}
+
+export function applyLightingOptimization(deviceId, brightness) {
+  return axios.post(api + "/campus/lighting/apply", { deviceId, brightness });
 }

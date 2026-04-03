@@ -32,8 +32,8 @@
             ><Monitor
           /></el-icon>
         </div>
-        <h1 class="brand-title">智绿云控</h1>
-        <p class="brand-subtitle">AI协同的环境监测与智能节能管控平台</p>
+        <h1 class="brand-title">绿智双擎</h1>
+        <p class="brand-subtitle">校园照明与生态协同AI管控平台</p>
         <div class="ai-badge">
           <el-icon size="16" color="#67C23A"><Cpu /></el-icon>
           <span>AI 智能驱动</span>
@@ -41,29 +41,29 @@
         <div class="feature-list">
           <div class="feature-item">
             <div class="feature-icon-wrapper">
-              <el-icon size="20" color="#67C23A"><Odometer /></el-icon>
+              <el-icon size="20" color="#67C23A"><Sunny /></el-icon>
             </div>
             <div class="feature-content">
-              <span class="feature-title">环境温湿度实时监测</span>
-              <span class="feature-desc">精准感知，毫秒级响应</span>
+              <span class="feature-title">节能引擎 · AI动态调光</span>
+              <span class="feature-desc">人来灯亮、人走灯暗，降低35%能耗</span>
             </div>
           </div>
           <div class="feature-item">
             <div class="feature-icon-wrapper">
-              <el-icon size="20" color="#67C23A"><Cpu /></el-icon>
+              <el-icon size="20" color="#67C23A"><FirstAidKit /></el-icon>
             </div>
             <div class="feature-content">
-              <span class="feature-title">AI 智能节能算法</span>
-              <span class="feature-desc">自适应调节，降低30%能耗</span>
+              <span class="feature-title">生态引擎 · 智慧养护</span>
+              <span class="feature-desc">微环境监测，智能灌溉建议</span>
             </div>
           </div>
           <div class="feature-item">
             <div class="feature-icon-wrapper">
-              <el-icon size="20" color="#67C23A"><Lightning /></el-icon>
+              <el-icon size="20" color="#67C23A"><Warning /></el-icon>
             </div>
             <div class="feature-content">
-              <span class="feature-title">智能路灯远程控制</span>
-              <span class="feature-desc">云端管理，一键操控</span>
+              <span class="feature-title">双引擎协同预警</span>
+              <span class="feature-desc">故障30秒报警，冻害晒伤预警</span>
             </div>
           </div>
           <div class="feature-item">
@@ -71,8 +71,8 @@
               <el-icon size="20" color="#67C23A"><TrendCharts /></el-icon>
             </div>
             <div class="feature-content">
-              <span class="feature-title">数据可视化分析</span>
-              <span class="feature-desc">多维报表，智能预警</span>
+              <span class="feature-title">生态热力图可视化</span>
+              <span class="feature-desc">照明与绿植数据一屏掌控</span>
             </div>
           </div>
         </div>
@@ -148,9 +148,9 @@ import { ElMessage } from "element-plus";
 import {
   UserFilled,
   Monitor,
-  Cpu,
-  Odometer,
-  Lightning,
+  Sunny,
+  FirstAidKit,
+  Warning,
   TrendCharts,
 } from "@element-plus/icons-vue";
 import { login } from "@/api/auth";

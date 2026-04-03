@@ -111,7 +111,17 @@ public interface EnvMapper {
             "lightIntensity = #{lightIntensity}, " +
             "onLine = #{onLine}, " +
             "isBusy = #{isBusy}, " +
-            "isBroken = #{isBroken} " +
+            "isBroken = #{isBroken}, " +
+            "lampStatus = #{lampStatus}, " +
+            "brightness = #{brightness} " +
             "where id = #{id}")
     int updateLamp(Device device);
+
+    //更新路灯亮度
+    @Update("update device set brightness = #{brightness}, lampStatus = #{lampStatus} where id = #{id}")
+    int updateLampBrightness(@Param("id") String id, @Param("brightness") Integer brightness, @Param("lampStatus") Integer lampStatus);
+
+    //查询指定区域的设备
+    @Select("select * from device where name like concat('%', #{areaName}, '%')")
+    List<Device> selectDevicesByArea(String areaName);
 }

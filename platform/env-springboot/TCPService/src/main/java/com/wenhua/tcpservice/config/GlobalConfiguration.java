@@ -3,8 +3,8 @@ package com.wenhua.tcpservice.config;
 //全局配置类
 public class GlobalConfiguration {
 
-    //前端origins - 更新为Vue3项目端口
-    public static final String ORIGINS="http://localhost:5173";
+    //前端origins - 支持多个端口
+    public static final String ORIGINS="http://localhost:5173,http://localhost:5174,http://localhost:5175";
     //public static final String ORIGINS="*";
 
     //TCP服务端口号
