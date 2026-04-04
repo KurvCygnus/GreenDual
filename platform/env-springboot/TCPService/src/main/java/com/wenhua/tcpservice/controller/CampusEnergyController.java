@@ -220,7 +220,7 @@ public class CampusEnergyController {
                 if (device.getOnLine() != null && device.getOnLine() == 1) {
                     onlineDevices++;
                 }
-                if ("lamp".equals(device.getDeviceType())) {
+                if ("路灯".equals(device.getDeviceType()) || "智慧路灯".equals(device.getDeviceType())) {
                     lampCount++;
                 }
             }

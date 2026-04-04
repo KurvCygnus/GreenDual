@@ -150,6 +150,7 @@ public class LampController {
         int totalCount = lamps.size();
         int onlineCount = 0;
         int onCount = 0;
+        int offCount = 0;
         int faultCount = 0;
         double totalPower = 0;
         
@@ -157,14 +158,22 @@ public class LampController {
             if (lamp.getOnLine() != null && lamp.getOnLine() == 1) {
                 onlineCount++;
             }
-            if (lamp.getLampStatus() != null && lamp.getLampStatus() == 1) {
-                onCount++;
-            }
-            if (lamp.getFaultStatus() != null && lamp.getFaultStatus() == 1) {
+            
+            // 检查是否为故障路灯（同时检查faultStatus和isBroken字段）
+            boolean isFault = (lamp.getFaultStatus() != null && lamp.getFaultStatus() == 1) || (lamp.getIsBroken() == 1);
+            if (isFault) {
                 faultCount++;
-            }
-            if (lamp.getPowerConsumption() != null) {
-                totalPower += lamp.getPowerConsumption();
+            } else {
+                // 只有非故障路灯才统计开启/关闭状态
+                if (lamp.getLampStatus() != null && lamp.getLampStatus() == 1) {
+                    onCount++;
+                    // 只计算开启状态的路灯功耗
+                    if (lamp.getPowerConsumption() != null) {
+                        totalPower += lamp.getPowerConsumption();
+                    }
+                } else {
+                    offCount++;
+                }
             }
         }
         
@@ -173,7 +182,7 @@ public class LampController {
         stats.put("onlineCount", onlineCount);
         stats.put("offlineCount", totalCount - onlineCount);
         stats.put("onCount", onCount);
-        stats.put("offCount", totalCount - onCount);
+        stats.put("offCount", offCount);
         stats.put("faultCount", faultCount);
         stats.put("totalPower", String.format("%.1f", totalPower));
         

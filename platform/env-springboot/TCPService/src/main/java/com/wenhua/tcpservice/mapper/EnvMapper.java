@@ -93,11 +93,11 @@ public interface EnvMapper {
     // ========== 路灯相关方法 ==========
 
     //查询所有路灯
-    @Select("select * from device where deviceType = '路灯'")
+    @Select("select * from device where deviceType = '路灯' or deviceType = '智慧路灯'")
     List<Device> selectLamps();
 
     //查询故障路灯
-    @Select("select * from device where deviceType = '路灯' and (faultStatus = 1 or isBroken = 1)")
+    @Select("select * from device where (deviceType = '路灯' or deviceType = '智慧路灯') and (faultStatus = 1 or isBroken = 1)")
     List<Device> selectFaultLamps();
 
     //更新路灯状态（包含路灯特有字段）

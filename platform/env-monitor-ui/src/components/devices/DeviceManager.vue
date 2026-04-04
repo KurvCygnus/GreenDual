@@ -111,18 +111,9 @@
               class="device-icon"
               :class="getDeviceIconClass(device.deviceType)"
             >
-              <img
-                v-if="device.deviceType === '智慧路灯'"
-                :src="'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=smart%20street%20light%20on%20campus%20road&image_size=square'"
-                :alt="device.deviceType"
-                style="width: 24px; height: 24px; object-fit: contain"
-              />
-              <img
-                v-else
-                :src="'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=smart%20agriculture%20greenhouse%20with%20sensors&image_size=square'"
-                :alt="device.deviceType"
-                style="width: 24px; height: 24px; object-fit: contain"
-              />
+              <el-icon v-if="device.deviceType === '智慧路灯'" :size="24" color="#409EFF"><Monitor /></el-icon>
+              <el-icon v-else-if="device.deviceType === '生态引擎'" :size="24" color="#67C23A"><Settings /></el-icon>
+              <el-icon v-else :size="24" color="#E6A23A"><Cpu /></el-icon>
             </div>
             <div class="device-info">
               <div class="device-name">{{ device.name }}</div>

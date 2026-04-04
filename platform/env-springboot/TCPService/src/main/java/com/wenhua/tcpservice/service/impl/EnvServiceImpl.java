@@ -38,8 +38,8 @@ public class EnvServiceImpl implements EnvService {
     public boolean updateDevice(Device device) {
         Log.d("更新设备: " + device.toString());
         try {
-            // 如果是路灯类型，使用updateLamp更新所有字段
-            if ("路灯".equals(device.getDeviceType())) {
+            // 如果是路灯类型或智慧路灯类型，使用updateLamp更新所有字段
+            if ("路灯".equals(device.getDeviceType()) || "智慧路灯".equals(device.getDeviceType())) {
                 int result = envMapper.updateLamp(device);
                 return result > 0;
             } else {

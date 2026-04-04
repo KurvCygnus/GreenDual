@@ -982,7 +982,7 @@ watch(
         initDimmingCharts();
       }, 100);
     }
-  }
+  },
 );
 
 // 窗口大小变化时重新调整图表
@@ -1057,6 +1057,7 @@ const handleLampSwitch = async (lamp, status) => {
     });
     if (response.data.code === 1) {
       ElMessage.success(status === 1 ? "路灯已开启" : "路灯已关闭");
+      fetchLampList();
       fetchStats();
     } else {
       ElMessage.error("操作失败");
@@ -1077,6 +1078,8 @@ const handleBrightnessChange = async (lamp, brightness) => {
     });
     if (response.data.code === 1) {
       ElMessage.success("亮度调节成功");
+      fetchLampList();
+      fetchStats();
     } else {
       ElMessage.error("亮度调节失败");
     }
