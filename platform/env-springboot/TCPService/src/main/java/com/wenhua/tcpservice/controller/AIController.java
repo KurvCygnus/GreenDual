@@ -268,7 +268,7 @@ public class AIController {
             
             // 生成模拟趋势预测报告
             StringBuilder prediction = new StringBuilder();
-            prediction.append("📈 **未来").append(hours).append("小时").append(predictType).append("趋势预测**\n\n");
+            prediction.append("📈 **未来%d小时%s趋势预测**\n\n".formatted(hours, predictType));
             
             if ("temperature".equals(predictType) || "温度".equals(predictType)) {
                 prediction.append("""
@@ -312,7 +312,8 @@ public class AIController {
                 );
             }
 
-            prediction.append("""
+            prediction.append(
+                """
                 
                 ⚠️ **异常预警**
                 • 无异常天气预警

@@ -21,14 +21,13 @@ public class LoginCheckInterceptor implements HandlerInterceptor {
     @Override//视图渲染完毕后执行...
     public void afterCompletion(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler, Exception ex)
     {
-        System.out.println("afterCompletion");
+        log.info("afterCompletion");
     }
 
     @Override//资源方法运行后运行
     public void postHandle(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler, ModelAndView modelAndView)
     {
-        System.out.println("postHandle");
-
+        log.info("postHandle");
     }
 
     //目标资源方法运行前运行,返回true:放行;返回false:不放行

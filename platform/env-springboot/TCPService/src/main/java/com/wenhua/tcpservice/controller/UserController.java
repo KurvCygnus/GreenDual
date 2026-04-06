@@ -116,7 +116,7 @@ public class UserController {
     private boolean isRoot(HttpServletRequest request) {
         Integer userId = JwtUtils.getUserId(request);
         User user = userMapper.selectUserById(userId);
-        System.out.println("用户权位" + user.getUserPermission());
+        log.info("用户权位: {}", user.getUserPermission());
         return user.getUserPermission() >= 2;
     }
 }
