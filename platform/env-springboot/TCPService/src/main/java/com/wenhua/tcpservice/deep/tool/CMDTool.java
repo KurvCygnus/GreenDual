@@ -4,7 +4,10 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-public class CMDTool implements WorkerTool{
+public class CMDTool implements WorkerTool {
+    
+    private CMDTool() { throw new IllegalStateException("Utility class"); }
+    
     //字段-CMD
     private static final String CMD ="cmd";
     private static final String CMD_RES ="cmd-result";

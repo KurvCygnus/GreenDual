@@ -398,6 +398,7 @@ import {
   VideoPlay,
 } from "@element-plus/icons-vue";
 import { ElMessage, ElMessageBox } from "element-plus";
+import MarkdownIt from 'markdown-it';
 
 const loading = ref(false);
 const predictType = ref("temperature");
@@ -427,6 +428,13 @@ const faultDeviceCount = ref(0);
 const monitoringLogs = ref([]);
 const deviceList = ref([]);
 const monitoringTimer = ref(null);
+
+// 基于Markdown-It的Markdown渲染实例, 原方案采用的正则替换没有效果.
+const md = new MarkdownIt({
+  html: true,        // 允许 HTML 标签
+  linkify: true,     // 自动转换链接
+  typographer: true, // 优化标点符号
+});
 
 const unit = computed(() => {
   if (predictType.value === "temperature") return "°C";
@@ -1460,14 +1468,12 @@ const scrollToBottom = () => {
 
 const formatMessage = (content) => {
   if (!content) return "";
-  return content.replace(/\n/g, "<br>");
+  return md.render(content);
 };
 
 const formatAnalysis = (content) => {
   if (!content) return "";
-  return content
-    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-    .replace(/\n/g, "<br>");
+  return md.render(content);
 };
 
 onMounted(() => {
@@ -1764,26 +1770,25 @@ onMounted(() => {
   border-color: #38bdf8;
 }
 
-.analysis-content {
-  line-height: 1.8;
-  color: #475569;
-}
-
-.analysis-content h3 {
-  color: #409eff;
-  margin-bottom: 15px;
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.analysis-content ul {
-  margin-left: 20px;
-  margin-bottom: 15px;
-}
-
-.analysis-content li {
+.analysis-content :deep(h1), 
+.analysis-content :deep(h2), 
+.analysis-content :deep(h3) {
+  margin-top: 16px;
   margin-bottom: 8px;
-  color: #64748b;
+  color: #1e293b;
+}
+
+.analysis-content :deep(table) {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0;
+}
+
+.analysis-content :deep(th), 
+.analysis-content :deep(td) {
+  border: 1px solid #e2e8f0;
+  padding: 8px;
+  text-align: left;
 }
 
 .analysis-content strong {
@@ -1874,6 +1879,22 @@ onMounted(() => {
 .message-content:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   transform: translateY(-2px);
+}
+
+.message-text :deep(p) {
+  margin: 0 0 8px 0;
+}
+
+.message-text :deep(ul), .message-text :deep(ol) {
+  padding-left: 20px;
+  margin: 8px 0;
+}
+
+.message-text :deep(code) {
+  background-color: rgba(0, 0, 0, 0.06);
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-family: monospace;
 }
 
 .message-text.loading {
