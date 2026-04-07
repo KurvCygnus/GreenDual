@@ -24,3 +24,20 @@ static_library("e53_ia1_example") {
         "include"
     ]
 }
+
+static_library("tcp_client") {
+    sources = [
+        "src/E53_IA1.c",
+        "tcp_client.c",
+        "src/wifi_connect.c"
+    ]
+
+    include_dirs = [
+        "//utils/native/lite/include",
+        "//kernel/liteos_m/components/cmsis/2.0",
+        "//base/iot_hardware/interfaces/kits/wifiiot_lite",
+        "//third_party/lwip/include",
+        "include",
+        "src"
+    ]
+}

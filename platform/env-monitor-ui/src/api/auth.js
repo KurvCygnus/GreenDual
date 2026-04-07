@@ -1,6 +1,8 @@
 import axios from "axios";
 
-const api = "http://localhost:18081";
+//const api = "http://localhost:18081";
+//服务器ip   8.130.125.122
+const api = "http://8.130.125.122:18081";
 
 // 请求拦截器 - 添加token
 axios.interceptors.request.use(

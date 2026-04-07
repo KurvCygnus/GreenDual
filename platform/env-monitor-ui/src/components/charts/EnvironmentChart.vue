@@ -84,12 +84,7 @@ const historicalData = computed(() => {
           humidity: { min: 20, max: 90 },
           light: { min: 1000, max: 15000 },
         };
-      case "air":
-        return {
-          temperature: { min: 19, max: 27 },
-          humidity: { min: 40, max: 60 },
-          light: { min: 2000, max: 15000 },
-        };
+
       case "wind":
         return {
           temperature: { min: 15, max: 35 },

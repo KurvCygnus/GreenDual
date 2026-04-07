@@ -442,7 +442,6 @@ const getTypeIcon = (type) => {
     temperature_humidity: Odometer,
     light: Sunny,
     soil: Watermelon,
-    air: Cloudy,
     wind: Cloudy,
     comprehensive: Cpu,
   };

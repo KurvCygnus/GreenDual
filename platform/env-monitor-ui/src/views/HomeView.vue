@@ -1,11 +1,21 @@
 <template>
   <div class="home-container">
+    <!-- 移动端遮罩层 -->
+    <div
+      v-if="isMobile && !isCollapse"
+      class="mobile-overlay"
+      @click="toggleCollapse"
+    ></div>
     <el-container>
       <!-- 侧边栏 -->
-      <el-aside width="240px" class="sidebar">
+      <el-aside
+        :width="isCollapse ? (isMobile ? '0px' : '80px') : '240px'"
+        class="sidebar"
+        :class="{ collapsed: isCollapse, mobile: isMobile }"
+      >
         <div class="logo">
           <el-icon size="32" color="#409EFF"><Monitor /></el-icon>
-          <span>绿智双擎</span>
+          <span v-if="!isCollapse">绿智双擎</span>
         </div>
 
         <el-menu
@@ -16,11 +26,14 @@
           active-text-color="#38bdf8"
           @select="handleSelect"
           :collapse-transition="false"
+          :collapse="isCollapse"
         >
           <!-- 双引擎驾驶舱 -->
           <el-menu-item index="0">
             <el-icon class="menu-icon"><HomeFilled /></el-icon>
-            <span>双引擎驾驶舱</span>
+            <template #title>
+              <span>双引擎驾驶舱</span>
+            </template>
           </el-menu-item>
 
           <!-- 节能引擎 -->
@@ -31,10 +44,26 @@
               /></el-icon>
               <span>节能引擎</span>
             </template>
-            <el-menu-item index="1-1">路灯监控</el-menu-item>
-            <el-menu-item index="1-2">智能调光</el-menu-item>
-            <el-menu-item index="1-3">故障告警</el-menu-item>
-            <el-menu-item index="1-4">能耗分析</el-menu-item>
+            <el-menu-item index="1-1">
+              <template #title>
+                <span>路灯监控</span>
+              </template>
+            </el-menu-item>
+            <el-menu-item index="1-2">
+              <template #title>
+                <span>智能调光</span>
+              </template>
+            </el-menu-item>
+            <el-menu-item index="1-3">
+              <template #title>
+                <span>故障告警</span>
+              </template>
+            </el-menu-item>
+            <el-menu-item index="1-4">
+              <template #title>
+                <span>能耗分析</span>
+              </template>
+            </el-menu-item>
           </el-sub-menu>
 
           <!-- 生态引擎 -->
@@ -45,10 +74,26 @@
               /></el-icon>
               <span>生态引擎</span>
             </template>
-            <el-menu-item index="2-1">环境监测</el-menu-item>
-            <el-menu-item index="2-2">绿植管理</el-menu-item>
-            <el-menu-item index="2-3">灌溉控制</el-menu-item>
-            <el-menu-item index="2-4">健康预警</el-menu-item>
+            <el-menu-item index="2-1">
+              <template #title>
+                <span>环境监测</span>
+              </template>
+            </el-menu-item>
+            <el-menu-item index="2-2">
+              <template #title>
+                <span>绿植管理</span>
+              </template>
+            </el-menu-item>
+            <el-menu-item index="2-3">
+              <template #title>
+                <span>灌溉控制</span>
+              </template>
+            </el-menu-item>
+            <el-menu-item index="2-4">
+              <template #title>
+                <span>健康预警</span>
+              </template>
+            </el-menu-item>
           </el-sub-menu>
 
           <!-- 智慧运营 -->
@@ -57,9 +102,21 @@
               <el-icon class="menu-icon"><MagicStick /></el-icon>
               <span>智慧运营</span>
             </template>
-            <el-menu-item index="3-1">AI助手</el-menu-item>
-            <el-menu-item index="3-2">教学联动</el-menu-item>
-            <el-menu-item index="3-3">数据报表</el-menu-item>
+            <el-menu-item index="3-1">
+              <template #title>
+                <span>AI助手</span>
+              </template>
+            </el-menu-item>
+            <el-menu-item index="3-2">
+              <template #title>
+                <span>教学联动</span>
+              </template>
+            </el-menu-item>
+            <el-menu-item index="3-3">
+              <template #title>
+                <span>数据报表</span>
+              </template>
+            </el-menu-item>
           </el-sub-menu>
 
           <!-- 系统管理 -->
@@ -68,13 +125,25 @@
               <el-icon class="menu-icon"><Setting /></el-icon>
               <span>系统管理</span>
             </template>
-            <el-menu-item index="4-1">设备管理</el-menu-item>
-            <el-menu-item index="4-2">用户管理</el-menu-item>
-            <el-menu-item index="4-3">监测记录</el-menu-item>
+            <el-menu-item index="4-1">
+              <template #title>
+                <span>设备管理</span>
+              </template>
+            </el-menu-item>
+            <el-menu-item index="4-2">
+              <template #title>
+                <span>用户管理</span>
+              </template>
+            </el-menu-item>
+            <el-menu-item index="4-3">
+              <template #title>
+                <span>监测记录</span>
+              </template>
+            </el-menu-item>
           </el-sub-menu>
         </el-menu>
 
-        <div class="user-info">
+        <div class="user-info" v-if="!isCollapse">
           <el-avatar :size="48" :icon="UserFilled" class="user-avatar" />
           <div class="user-detail">
             <span class="username">{{ username }}</span>
@@ -92,16 +161,35 @@
             <el-icon><SwitchButton /></el-icon>
           </el-button>
         </div>
+        <el-button
+          v-else
+          type="primary"
+          size="small"
+          @click="logout"
+          circle
+          class="logout-btn-collapse"
+        >
+          <el-icon><SwitchButton /></el-icon>
+        </el-button>
       </el-aside>
 
       <!-- 主内容区 -->
       <el-container>
         <el-header class="main-header">
-          <div class="header-title">
-            <el-icon :size="24" color="#409EFF" class="title-icon"
-              ><Monitor
-            /></el-icon>
-            <h2>{{ currentTitle }}</h2>
+          <div class="header-left">
+            <el-button
+              type="primary"
+              :icon="isCollapse ? Expand : Fold"
+              @click="toggleCollapse"
+              circle
+              class="sidebar-toggle"
+            />
+            <div class="header-title">
+              <el-icon :size="24" color="#409EFF" class="title-icon"
+                ><Monitor
+              /></el-icon>
+              <h2>{{ currentTitle }}</h2>
+            </div>
           </div>
 
           <div class="header-actions">
@@ -338,6 +426,8 @@ import {
   Reading,
   MagicStick,
   Setting,
+  Fold,
+  Expand,
 } from "@element-plus/icons-vue";
 
 import EnvironmentChart from "../components/charts/EnvironmentChart.vue";
@@ -367,6 +457,16 @@ const searchKeyword = ref("");
 const viewMode = ref("card");
 const username = ref(localStorage.getItem("name") || "管理员");
 const roleId = ref(parseInt(localStorage.getItem("roleId")) || 1);
+const isCollapse = ref(false);
+const isMobile = ref(false);
+
+// 检测移动端
+const checkMobile = () => {
+  isMobile.value = window.innerWidth <= 768;
+  if (isMobile.value) {
+    isCollapse.value = true;
+  }
+};
 
 // 计算属性
 const roleText = computed(() => {
@@ -500,6 +600,10 @@ const editForm = ref({
 // 方法
 const handleSelect = (index) => {
   activeIndex.value = index;
+};
+
+const toggleCollapse = () => {
+  isCollapse.value = !isCollapse.value;
 };
 
 const logout = () => {
@@ -679,6 +783,8 @@ const deleteDevice = async (device) => {
 };
 
 onMounted(async () => {
+  checkMobile();
+  window.addEventListener("resize", checkMobile);
   await fetchDeviceTypes();
   await refreshData();
 });
@@ -688,6 +794,19 @@ onMounted(async () => {
 .home-container {
   height: 100vh;
   background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%);
+  position: relative;
+}
+
+/* 移动端遮罩层 */
+.mobile-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 100;
+  transition: opacity 0.3s ease;
 }
 
 .home-container :deep(.el-container) {
@@ -827,6 +946,37 @@ onMounted(async () => {
   box-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
 }
 
+.logout-btn-collapse {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  transition: all 0.3s ease;
+}
+
+.logout-btn-collapse:hover {
+  transform: translateX(-50%) scale(1.1);
+  box-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
+}
+
+.sidebar.collapsed .logo {
+  justify-content: center;
+  gap: 0;
+}
+
+.sidebar.collapsed .logo span {
+  display: none;
+}
+
+.sidebar.collapsed .el-menu-item {
+  justify-content: center;
+  gap: 0;
+}
+
+.sidebar.collapsed .el-menu-item .menu-icon {
+  margin-right: 0;
+}
+
 .main-header {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
@@ -837,6 +987,21 @@ onMounted(async () => {
   padding: 0 30px;
   height: 70px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sidebar-toggle {
+  transition: all 0.3s ease;
+}
+
+.sidebar-toggle:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
 }
 
 .header-title {
@@ -1108,104 +1273,210 @@ onMounted(async () => {
 /* 移动端适配 */
 @media (max-width: 768px) {
   .sidebar {
-    width: 200px !important;
+    position: fixed !important;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 101;
+    width: 240px !important;
+    transform: translateX(0);
+    transition:
+      transform 0.3s ease,
+      width 0.3s ease;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+  }
+
+  .sidebar.collapsed {
+    transform: translateX(-100%);
+    width: 0 !important;
+  }
+
+  .sidebar.mobile {
+    width: 240px !important;
+  }
+
+  .sidebar.mobile.collapsed {
+    transform: translateX(-100%);
+    width: 0 !important;
   }
 
   .logo {
-    font-size: 18px;
+    font-size: 16px;
     height: 60px;
   }
 
   .main-header {
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 15px;
-    gap: 12px;
-    height: auto;
+    flex-direction: row;
+    align-items: center;
+    padding: 12px 15px;
+    gap: 10px;
+    height: 60px;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+  }
+
+  .header-title h2 {
+    font-size: 16px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .header-actions {
-    width: 100%;
-    justify-content: space-between;
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
 
-  .header-actions .el-input {
-    flex: 1;
-    margin-right: 10px !important;
+  .header-actions .el-button {
+    font-size: 12px;
+    padding: 6px 12px;
   }
 
   .main-content {
-    padding: 20px;
+    padding: 10px;
+    margin-left: 0 !important;
   }
 
   .stats-row {
-    margin-bottom: 20px;
+    margin-bottom: 15px;
   }
 
   .stat-card {
-    flex-direction: column;
-    text-align: center;
-    padding: 20px;
+    flex-direction: row;
+    text-align: left;
+    padding: 12px;
+    margin-bottom: 10px;
   }
 
   .stat-icon {
-    margin-right: 0;
-    margin-bottom: 15px;
+    margin-right: 12px;
+    margin-bottom: 0;
+    width: 50px;
+    height: 50px;
+    min-width: 50px;
+  }
+
+  .stat-value {
+    font-size: 20px;
+  }
+
+  .stat-label {
+    font-size: 12px;
   }
 
   .device-card {
-    margin-bottom: 15px;
+    margin-bottom: 10px;
   }
 
   .device-actions {
     flex-wrap: wrap;
+    gap: 8px;
   }
 
   .device-actions .el-button {
     flex: 1;
-    margin-bottom: 8px;
+    margin-bottom: 0;
+    font-size: 12px;
+    min-width: 60px;
   }
 
   .chart-container {
-    height: 300px !important;
+    height: 250px !important;
   }
 
   .ai-monitor-panel {
-    padding: 15px;
+    padding: 10px;
   }
 
   .prediction-params {
-    padding: 15px;
+    padding: 10px;
   }
 
   .prediction-chart {
-    height: 300px !important;
+    height: 250px !important;
   }
 
   .el-form-item {
     margin-right: 0 !important;
-    margin-bottom: 15px !important;
+    margin-bottom: 12px !important;
   }
 
   .el-select {
     width: 100% !important;
+  }
+
+  /* 对话框适配 */
+  .el-dialog {
+    width: 95% !important;
+    margin: 10px auto !important;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .el-dialog__header {
+    padding: 12px 15px;
+  }
+
+  .el-dialog__body {
+    padding: 12px 15px;
+  }
+
+  .el-dialog__footer {
+    padding: 12px 15px;
+  }
+
+  /* 表格适配 */
+  .el-table {
+    font-size: 11px;
+  }
+
+  .el-table__header-wrapper th {
+    padding: 6px 8px;
+  }
+
+  .el-table__body-wrapper td {
+    padding: 6px 8px;
+  }
+
+  /* 优化按钮大小 */
+  .sidebar-toggle {
+    min-width: 40px;
+    height: 40px;
+    padding: 0;
+  }
+
+  .refresh-btn {
+    font-size: 12px;
+    padding: 6px 10px;
   }
 }
 
 /* 小屏幕适配 */
 @media (max-width: 480px) {
   .sidebar {
-    width: 180px !important;
+    width: 220px !important;
+  }
+
+  .logo {
+    font-size: 14px;
+    height: 50px;
   }
 
   .logo span {
-    display: none;
+    font-size: 14px;
   }
 
   .el-menu-item {
-    font-size: 12px;
-    height: 50px;
-    line-height: 50px;
+    font-size: 13px;
+    height: 44px;
+    line-height: 44px;
+    padding: 0 15px !important;
   }
 
   .el-menu-item .menu-icon {
@@ -1213,20 +1484,188 @@ onMounted(async () => {
     font-size: 16px;
   }
 
+  .main-header {
+    padding: 10px 12px;
+    height: 50px;
+  }
+
+  .header-left {
+    gap: 8px;
+  }
+
+  .header-title h2 {
+    font-size: 14px;
+    max-width: 120px;
+  }
+
+  .header-actions {
+    gap: 6px;
+  }
+
+  .header-actions .el-button {
+    font-size: 11px;
+    padding: 5px 8px;
+    min-width: auto;
+  }
+
+  .sidebar-toggle {
+    min-width: 36px;
+    height: 36px;
+  }
+
+  .main-content {
+    padding: 8px;
+  }
+
+  .stats-row {
+    margin-bottom: 10px;
+  }
+
+  .stat-card {
+    padding: 10px;
+    margin-bottom: 8px;
+  }
+
+  .stat-icon {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    margin-right: 10px;
+  }
+
   .stat-value {
-    font-size: 24px;
+    font-size: 18px;
+  }
+
+  .stat-label {
+    font-size: 11px;
   }
 
   .device-name {
-    font-size: 14px;
+    font-size: 13px;
   }
 
   .data-item {
-    font-size: 12px;
+    font-size: 11px;
+    gap: 6px;
   }
 
   .prediction-stats .el-col {
-    margin-bottom: 15px;
+    margin-bottom: 10px;
+  }
+
+  .chart-container {
+    height: 200px !important;
+    padding: 8px;
+  }
+
+  .el-dialog {
+    width: 98% !important;
+    margin: 5px auto !important;
+  }
+
+  .el-form-item label {
+    font-size: 11px;
+  }
+
+  .el-input {
+    font-size: 11px;
+    min-height: 36px;
+  }
+
+  .el-button {
+    font-size: 11px;
+    min-height: 32px;
+    padding: 0 10px;
+  }
+
+  .el-select {
+    min-height: 36px;
+  }
+
+  .el-input-number {
+    min-height: 36px;
+  }
+
+  .el-switch {
+    min-height: 28px;
+  }
+
+  /* 触摸友好设计 */
+  .el-menu-item,
+  .el-sub-menu__title {
+    touch-action: manipulation;
+    cursor: pointer;
+  }
+
+  .el-button {
+    touch-action: manipulation;
+  }
+
+  .device-actions .el-button {
+    min-height: 32px;
+    font-size: 11px;
+  }
+
+  /* 优化滚动体验 */
+  .main-content {
+    -webkit-overflow-scrolling: touch;
+    overflow-y: auto;
+  }
+
+  /* 响应式图标大小 */
+  .menu-icon {
+    font-size: 16px !important;
+  }
+
+  .title-icon {
+    font-size: 18px !important;
+  }
+
+  /* 优化对话框按钮 */
+  .el-dialog__footer .el-button {
+    min-width: 60px;
+    font-size: 11px;
+  }
+
+  /* 优化表格行高 */
+  .el-table__row {
+    height: 40px;
+  }
+
+  /* 优化下拉菜单 */
+  .el-select-dropdown {
+    font-size: 11px;
+  }
+
+  /* 优化输入框 */
+  .el-input__inner {
+    font-size: 11px;
+    padding: 0 10px;
+  }
+
+  /* 优化标签 */
+  .el-tag {
+    font-size: 10px;
+    padding: 1px 6px;
+  }
+
+  /* 用户信息显示优化 */
+  .user-info {
+    padding: 10px;
+  }
+
+  .user-avatar {
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+  .username {
+    font-size: 13px;
+  }
+
+  .role-tag {
+    font-size: 10px;
   }
 }
 </style>

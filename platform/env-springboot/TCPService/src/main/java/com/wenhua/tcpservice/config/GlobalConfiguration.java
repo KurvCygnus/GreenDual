@@ -4,7 +4,7 @@ package com.wenhua.tcpservice.config;
 public class GlobalConfiguration {
 
     //前端origins - 支持多个端口
-    public static final String ORIGINS="http://localhost:5173,http://localhost:5174,http://localhost:5175";
+    public static final String ORIGINS="http://localhost:5173,http://localhost:5174,http://localhost:5175,http://8.130.125.122:8088";
     //public static final String ORIGINS="*";
 
     //TCP服务端口号

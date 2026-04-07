@@ -1231,15 +1231,6 @@ const loadDeviceList = async () => {
         lightIntensity: 2900,
       },
       {
-        id: "DEV006",
-        name: "空气质量监测-1",
-        deviceType: "空气质量监测",
-        onLine: 1,
-        temperature: 24.5,
-        humidity: 51,
-        lightIntensity: 2700,
-      },
-      {
         id: "DEV007",
         name: "路灯-2",
         deviceType: "路灯",
