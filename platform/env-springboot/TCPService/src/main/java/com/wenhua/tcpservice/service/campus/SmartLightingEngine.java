@@ -2,8 +2,8 @@ package com.wenhua.tcpservice.service.campus;
 
 import com.wenhua.tcpservice.mapper.EnvMapper;
 import com.wenhua.tcpservice.pojo.dev.Device;
-import com.wenhua.tcpservice.utils.Log;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalTime;
@@ -13,9 +13,10 @@ import java.util.List;
 import java.util.Map;
 
 @Service
+@Slf4j
+@AllArgsConstructor
 public class SmartLightingEngine {
 
-    @Autowired
     private EnvMapper envMapper;
 
     private static final int MIN_BRIGHTNESS = 20;
@@ -153,7 +154,7 @@ public class SmartLightingEngine {
         result.put("averageSavingRate", adjustedDevices > 0 ? totalSavingRate / adjustedDevices : 0);
         result.put("estimatedMonthlySaving", calculateMonthlySaving(totalSavingRate / Math.max(adjustedDevices, 1)));
         
-        Log.d("批量优化完成: " + result);
+        log.debug("批量优化完成: {}", result);
         return result;
     }
 

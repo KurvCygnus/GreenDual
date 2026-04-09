@@ -1,11 +1,10 @@
 package com.wenhua.tcpservice.service.campus;
 
 import com.wenhua.tcpservice.mapper.EnvMapper;
-import com.wenhua.tcpservice.pojo.MonitorRecord;
 import com.wenhua.tcpservice.pojo.campus.TeachingCase;
 import com.wenhua.tcpservice.pojo.dev.Device;
-import com.wenhua.tcpservice.utils.Log;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -13,12 +12,14 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Service
-public class TeachingCaseService {
-
-    @Autowired
+@AllArgsConstructor
+@Slf4j
+public class TeachingCaseService
+{
     private EnvMapper envMapper;
-
-    public TeachingCase createTeachingCase(Device device, String caseType) {
+    
+    public TeachingCase createTeachingCase(Device device, String caseType)
+    {
         TeachingCase teachingCase = new TeachingCase();
         teachingCase.setCaseName(generateCaseName(device, caseType));
         teachingCase.setCaseType(caseType);
@@ -28,8 +29,9 @@ public class TeachingCaseService {
         teachingCase.setUpdateTime(LocalDateTime.now());
         teachingCase.setStatus(1);
         teachingCase.setUseCount(0);
-
-        switch (caseType) {
+        
+        switch(caseType)
+        {
             case "lighting_control":
                 teachingCase.setDescription("智能路灯控制实验案例");
                 teachingCase.setTeachingContent(generateLightingTeachingContent(device));
@@ -54,27 +56,29 @@ public class TeachingCaseService {
                 teachingCase.setExperimentGuide(generateGeneralExperimentGuide());
                 teachingCase.setRelatedCourse("物联网工程导论");
         }
-
+        
         teachingCase.setDataPreview(generateDataPreview(device));
         teachingCase.setAnalysisResult(generateAnalysisResult(device, caseType));
         teachingCase.setDataSource("实时设备数据");
-
-        Log.d("创建教学案例: " + teachingCase.getCaseName());
+        
+        log.debug("创建教学案例: {}", teachingCase.getCaseName());
         return teachingCase;
     }
-
-    private String generateCaseName(Device device, String caseType) {
-        String typeName;
-        switch (caseType) {
-            case "lighting_control": typeName = "智能路灯控制"; break;
-            case "environment_monitor": typeName = "环境监测"; break;
-            case "energy_saving": typeName = "节能控制"; break;
-            default: typeName = "综合应用";
-        }
+    
+    private String generateCaseName(Device device, String caseType)
+    {
+        String typeName = switch(caseType)
+        {
+            case "lighting_control" -> "智能路灯控制";
+            case "environment_monitor" -> "环境监测";
+            case "energy_saving" -> "节能控制";
+            default -> "综合应用";
+        };
         return device.getName() + "-" + typeName + "-实验案例";
     }
-
-    private String generateLightingTeachingContent(Device device) {
+    
+    private String generateLightingTeachingContent(Device device)
+    {
         StringBuilder content = new StringBuilder();
         content.append("【教学目标】\n");
         content.append("1. 理解智能路灯控制系统的工作原理\n");
@@ -96,8 +100,9 @@ public class TeachingCaseService {
         
         return content.toString();
     }
-
-    private String generateLightingExperimentGuide() {
+    
+    private String generateLightingExperimentGuide()
+    {
         StringBuilder guide = new StringBuilder();
         guide.append("【实验步骤】\n\n");
         guide.append("实验一：基础控制实验\n");
@@ -119,8 +124,9 @@ public class TeachingCaseService {
         
         return guide.toString();
     }
-
-    private String generateEnvironmentTeachingContent(Device device) {
+    
+    private String generateEnvironmentTeachingContent(Device device)
+    {
         StringBuilder content = new StringBuilder();
         content.append("【教学目标】\n");
         content.append("1. 掌握环境监测传感器的使用方法\n");
@@ -140,8 +146,9 @@ public class TeachingCaseService {
         
         return content.toString();
     }
-
-    private String generateEnvironmentExperimentGuide() {
+    
+    private String generateEnvironmentExperimentGuide()
+    {
         StringBuilder guide = new StringBuilder();
         guide.append("【实验步骤】\n\n");
         guide.append("实验一：传感器校准\n");
@@ -161,8 +168,9 @@ public class TeachingCaseService {
         
         return guide.toString();
     }
-
-    private String generateEnergySavingTeachingContent(Device device) {
+    
+    private String generateEnergySavingTeachingContent(Device device)
+    {
         StringBuilder content = new StringBuilder();
         content.append("【教学目标】\n");
         content.append("1. 理解智能节能控制原理\n");
@@ -182,8 +190,9 @@ public class TeachingCaseService {
         
         return content.toString();
     }
-
-    private String generateEnergySavingExperimentGuide() {
+    
+    private String generateEnergySavingExperimentGuide()
+    {
         StringBuilder guide = new StringBuilder();
         guide.append("【实验步骤】\n\n");
         guide.append("实验一：能耗测量\n");
@@ -203,8 +212,9 @@ public class TeachingCaseService {
         
         return guide.toString();
     }
-
-    private String generateGeneralTeachingContent(Device device) {
+    
+    private String generateGeneralTeachingContent(Device device)
+    {
         StringBuilder content = new StringBuilder();
         content.append("【教学目标】\n");
         content.append("1. 了解物联网系统整体架构\n");
@@ -219,8 +229,9 @@ public class TeachingCaseService {
         
         return content.toString();
     }
-
-    private String generateGeneralExperimentGuide() {
+    
+    private String generateGeneralExperimentGuide()
+    {
         StringBuilder guide = new StringBuilder();
         guide.append("【实验步骤】\n\n");
         guide.append("1. 设备注册与接入\n");
@@ -230,8 +241,9 @@ public class TeachingCaseService {
         
         return guide.toString();
     }
-
-    private String generateDataPreview(Device device) {
+    
+    private String generateDataPreview(Device device)
+    {
         StringBuilder preview = new StringBuilder();
         preview.append("{\n");
         preview.append("  \"deviceId\": \"").append(device.getId()).append("\",\n");
@@ -245,19 +257,22 @@ public class TeachingCaseService {
         preview.append("}");
         return preview.toString();
     }
-
-    private String generateAnalysisResult(Device device, String caseType) {
+    
+    private String generateAnalysisResult(Device device, String caseType)
+    {
         StringBuilder result = new StringBuilder();
         result.append("【数据分析结果】\n\n");
         
-        if ("lighting_control".equals(caseType) || "energy_saving".equals(caseType)) {
+        if("lighting_control".equals(caseType) || "energy_saving".equals(caseType))
+        {
             result.append("当前亮度: ").append(device.getBrightness()).append("%\n");
             result.append("光照强度: ").append(device.getLightIntensity()).append(" Lux\n");
             result.append("节能潜力: ").append(100 - device.getBrightness()).append("%\n");
             result.append("建议亮度: ").append(calculateSuggestedBrightness(device)).append("%\n");
         }
         
-        if ("environment_monitor".equals(caseType)) {
+        if("environment_monitor".equals(caseType))
+        {
             result.append("温度状态: ").append(device.getTemperature() > 30 ? "偏高" : "正常").append("\n");
             result.append("湿度状态: ").append(device.getHumidity() > 70 ? "偏高" : "正常").append("\n");
             result.append("光照状态: ").append(device.getLightIntensity() > 500 ? "充足" : "不足").append("\n");
@@ -265,42 +280,51 @@ public class TeachingCaseService {
         
         return result.toString();
     }
-
-    private int calculateSuggestedBrightness(Device device) {
-        if (device.getLightIntensity() != null) {
-            if (device.getLightIntensity() > 500) return 30;
-            if (device.getLightIntensity() > 300) return 50;
-            if (device.getLightIntensity() > 100) return 70;
+    
+    private int calculateSuggestedBrightness(Device device)
+    {
+        if(device.getLightIntensity() != null)
+        {
+            if(device.getLightIntensity() > 500) return 30;
+            if(device.getLightIntensity() > 300) return 50;
+            if(device.getLightIntensity() > 100) return 70;
         }
         return 80;
     }
-
-    private double calculateMonthlySaving(Device device) {
+    
+    private double calculateMonthlySaving(Device device)
+    {
         int brightness = device.getBrightness() != null ? device.getBrightness() : 100;
         double savingRate = (100 - brightness) / 100.0;
         return 150 * 10 * 30 * savingRate * 0.6 / 1000;
     }
-
-    public List<TeachingCase> getTeachingCasesByCourse(String courseName) {
+    
+    public List<TeachingCase> getTeachingCasesByCourse(String courseName)
+    {
         List<TeachingCase> cases = new ArrayList<>();
         List<Device> devices = envMapper.selectAllDevice();
         
-        for (Device device : devices) {
-            if (courseName.contains("物联网") || courseName.contains("嵌入式")) {
+        for(Device device: devices)
+        {
+            if(courseName.contains("物联网") || courseName.contains("嵌入式"))
+            {
                 cases.add(createTeachingCase(device, "lighting_control"));
             }
-            if (courseName.contains("传感器") || courseName.contains("数据采集")) {
+            if(courseName.contains("传感器") || courseName.contains("数据采集"))
+            {
                 cases.add(createTeachingCase(device, "environment_monitor"));
             }
-            if (courseName.contains("控制") || courseName.contains("能源")) {
+            if(courseName.contains("控制") || courseName.contains("能源"))
+            {
                 cases.add(createTeachingCase(device, "energy_saving"));
             }
         }
         
         return cases;
     }
-
-    public Map<String, Object> getTeachingStatistics() {
+    
+    public Map<String, Object> getTeachingStatistics()
+    {
         Map<String, Object> stats = new HashMap<>();
         
         List<Device> devices = envMapper.selectAllDevice();
@@ -310,13 +334,14 @@ public class TeachingCaseService {
         stats.put("environmentCases", devices.size());
         stats.put("energyCases", devices.size());
         stats.put("relatedCourses", Arrays.asList(
-            "物联网技术基础",
-            "嵌入式系统设计",
-            "传感器技术",
-            "数据采集与处理",
-            "智能控制",
-            "能源管理"
-        ));
+                "物联网技术基础",
+                "嵌入式系统设计",
+                "传感器技术",
+                "数据采集与处理",
+                "智能控制",
+                "能源管理"
+            )
+        );
         
         return stats;
     }

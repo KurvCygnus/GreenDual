@@ -9,7 +9,7 @@ import com.wenhua.tcpservice.pojo.dev.Device;
 import com.wenhua.tcpservice.service.campus.EnergyBillService;
 import com.wenhua.tcpservice.service.campus.SmartLightingEngine;
 import com.wenhua.tcpservice.service.campus.TeachingCaseService;
-import com.wenhua.tcpservice.utils.Log;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,6 +19,7 @@ import java.util.Map;
 @RestController
 @CrossOrigin(origins = GlobalConfiguration.ORIGINS)
 @RequestMapping("/campus")
+@Slf4j
 public class CampusEnergyController {
 
     @Autowired
@@ -51,7 +52,7 @@ public class CampusEnergyController {
                 return Result.success(result);
             }
         } catch (Exception e) {
-            Log.e("智能调光失败: " + e.getMessage());
+            log.error("智能调光失败: {}", e.getMessage());
             return Result.error("智能调光失败: " + e.getMessage());
         }
     }
@@ -80,10 +81,10 @@ public class CampusEnergyController {
             
             envMapper.updateDevice(device);
             
-            Log.d("应用优化方案成功: " + deviceId + " -> " + brightness + "%");
+            log.debug("应用优化方案成功: {} -> {}%", deviceId, brightness);
             return Result.success("优化方案应用成功");
         } catch (Exception e) {
-            Log.e("应用优化方案失败: " + e.getMessage());
+            log.error("应用优化方案失败: ", e);
             return Result.error("应用优化方案失败: " + e.getMessage());
         }
     }
@@ -94,7 +95,7 @@ public class CampusEnergyController {
             Map<String, Object> stats = smartLightingEngine.getEnergyStatistics(areaId);
             return Result.success(stats);
         } catch (Exception e) {
-            Log.e("获取能源统计失败: " + e.getMessage());
+            log.error("获取能源统计失败: ", e);
             return Result.error("获取能源统计失败: " + e.getMessage());
         }
     }
@@ -108,7 +109,7 @@ public class CampusEnergyController {
             EnergyBill bill = energyBillService.generateMonthlyBill(areaId, billMonth);
             return Result.success(bill);
         } catch (Exception e) {
-            Log.e("生成能耗账单失败: " + e.getMessage());
+            log.error("生成能耗账单失败: ", e);
             return Result.error("生成能耗账单失败: " + e.getMessage());
         }
     }
@@ -120,7 +121,7 @@ public class CampusEnergyController {
             List<EnergyBill> bills = energyBillService.getBillHistory(areaId, months);
             return Result.success(bills);
         } catch (Exception e) {
-            Log.e("获取账单历史失败: " + e.getMessage());
+            log.error("获取账单历史失败: ", e);
             return Result.error("获取账单历史失败: " + e.getMessage());
         }
     }
@@ -131,7 +132,7 @@ public class CampusEnergyController {
             Map<String, Object> dashboard = energyBillService.getEnergyDashboard(areaId);
             return Result.success(dashboard);
         } catch (Exception e) {
-            Log.e("获取能源仪表盘失败: " + e.getMessage());
+            log.error("获取能源仪表盘失败: ", e);
             return Result.error("获取能源仪表盘失败: " + e.getMessage());
         }
     }
@@ -142,7 +143,7 @@ public class CampusEnergyController {
             Map<String, Object> comparison = energyBillService.compareWithBaseline(areaId);
             return Result.success(comparison);
         } catch (Exception e) {
-            Log.e("能耗对比失败: " + e.getMessage());
+            log.error("能耗对比失败: ", e);
             return Result.error("能耗对比失败: " + e.getMessage());
         }
     }
@@ -165,7 +166,7 @@ public class CampusEnergyController {
             TeachingCase teachingCase = teachingCaseService.createTeachingCase(device, caseType);
             return Result.success(teachingCase);
         } catch (Exception e) {
-            Log.e("创建教学案例失败: " + e.getMessage());
+            log.error("创建教学案例失败: ", e);
             return Result.error("创建教学案例失败: " + e.getMessage());
         }
     }
@@ -181,7 +182,7 @@ public class CampusEnergyController {
                 return Result.success(stats);
             }
         } catch (Exception e) {
-            Log.e("获取教学案例失败: " + e.getMessage());
+            log.error("获取教学案例失败: ", e);
             return Result.error("获取教学案例失败: " + e.getMessage());
         }
     }
@@ -192,7 +193,7 @@ public class CampusEnergyController {
             Map<String, Object> stats = teachingCaseService.getTeachingStatistics();
             return Result.success(stats);
         } catch (Exception e) {
-            Log.e("获取教学统计失败: " + e.getMessage());
+            log.error("获取教学统计失败: ", e);
             return Result.error("获取教学统计失败: " + e.getMessage());
         }
     }
@@ -229,7 +230,7 @@ public class CampusEnergyController {
             
             return Result.success(overview);
         } catch (Exception e) {
-            Log.e("获取校园概览失败: " + e.getMessage());
+            log.error("获取校园概览失败: ", e);
             return Result.error("获取校园概览失败: " + e.getMessage());
         }
     }
