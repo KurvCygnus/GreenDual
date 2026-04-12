@@ -2,6 +2,8 @@ package com.wenhua.tcpservice.config;
 
 import com.wenhua.tcpservice.deep.MockedChatModel;
 import lombok.NonNull;
+import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.memory.InMemoryChatMemory;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.api.OpenAiApi;
@@ -22,4 +24,6 @@ public class AIAutowiredConfig
     
     @Bean @ConditionalOnMissingBean(ChatModel.class)
     public @NonNull ChatModel mockChatModel() { return new MockedChatModel(); }
+    
+    @Bean public @NonNull ChatMemory chatMemory() { return new InMemoryChatMemory(); }
 }
