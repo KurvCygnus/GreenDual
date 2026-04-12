@@ -105,7 +105,6 @@ public class AIController
                 return Result.error("缺少环境参数");
             
             String response = chatClient.prompt().
-                system("你是一个智能路灯专家，请分析环境数据并提供Markdown格式的报告。").
                 user("分析数据：%s".formatted(dataContext)).
                 call().
                 content();
@@ -138,7 +137,6 @@ public class AIController
             String historySummary = (historicalData != null) ? historicalData.toString() : "暂无历史数据";
             
             String response = chatClient.prompt().
-                system("你是一个环境数据分析专家，请根据历史数据预测未来趋势并提供Markdown报告。").
                 user("预测类型：%s, 预测时长：%s小时, 历史参考数据：%s".
                     formatted(predictType, hours, historySummary)).
                 call().
