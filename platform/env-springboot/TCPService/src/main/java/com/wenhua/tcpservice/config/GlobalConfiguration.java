@@ -44,4 +44,6 @@ public class GlobalConfiguration {
     public static final float ALERT_TEMPERATURE_LOW=5;
     public static final int ALERT_HUMIDITY_HIGH=90;
     public static final int ALERT_HUMIDITY_LOW=20;
+    
+    public static final String AI_INITIALIZATION_SYSTEM_INFO = "";
 }

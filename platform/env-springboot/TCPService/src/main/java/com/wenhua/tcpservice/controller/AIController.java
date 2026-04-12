@@ -4,9 +4,11 @@ import com.wenhua.tcpservice.config.GlobalConfiguration;
 import com.wenhua.tcpservice.deep.DeepTalker;
 import com.wenhua.tcpservice.deep.Talker;
 import com.wenhua.tcpservice.pojo.Result;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -19,10 +21,23 @@ import java.util.concurrent.ConcurrentHashMap;
 public class AIController {
 
     private final Map<String, Talker> talkerMap = new ConcurrentHashMap<>();
+    
+    /**
+     * @implNote <span style="color: red">
+     *     这里不建议, 也不应该使用 <u>{@link org.springframework.beans.factory.annotation.Autowired Autowired}</u> 或者
+     *      <u>{@link lombok.AllArgsConstructor AllArgsConstructor}</u> 来注入字段.
+     * </span><br>
+     * Spring AI 将 <u>{@link org.springframework.ai.chat.model.ChatModel ChatModel}</u>
+     * 设计为单例, 这代表着其是<b>有状态的, 可定制的, 是AI后端的连接池, 因此Spring Bean不提供默认的Bean来注入.</b>
+     * @see AIController#AIController(ChatClient.Builder)
+     */
+    private final ChatClient chatClient;
 
     private Talker getOrCreateTalker(String sessionId) {
         return talkerMap.computeIfAbsent(sessionId, k -> new DeepTalker());
     }
+    
+    public AIController(ChatClient.@NonNull Builder builder) { this.chatClient = builder.defaultSystem(GlobalConfiguration.AI_INITIALIZATION_SYSTEM_INFO).build(); }
 
     @PostMapping(GlobalConfiguration.AI_REQUEST_PREFIX + "/chat")
     public Result chat(@RequestBody Map<String, Object> params) {
@@ -39,8 +54,7 @@ public class AIController {
                 sessionId = "default";
             }
             
-            // 模拟AI响应（当外部AI服务不可用时使用）
-            String response = generateSimulatedResponse(message);
+            String response = chatClient.prompt().user(message).call().content();
             
             Map<String, Object> result = new HashMap<>();
             result.put("response", response);
@@ -53,77 +67,6 @@ public class AIController {
         }
     }
     
-    // 生成模拟AI响应
-    private String generateSimulatedResponse(String message) {
-        String lowerMsg = message.toLowerCase();
-        
-        if (lowerMsg.contains("环境") || lowerMsg.contains("温度") || lowerMsg.contains("湿度")) {
-            return """
-                根据当前环境监测数据分析：
-                
-                📊 **环境状况评估**
-                • 温度处于正常范围，建议保持当前通风状态
-                • 湿度适中，无需特殊调节
-                • 光照强度良好，路灯可适度调低亮度节能
-                
-                💡 **改善建议**
-                1. 继续保持环境监测频率
-                2. 根据光照变化自动调节路灯亮度
-                3. 定期检查传感器设备状态
-                
-                预计可节省能源消耗约25%！
-                """;
-        } else if (lowerMsg.contains("路灯") || lowerMsg.contains("照明") || lowerMsg.contains("亮度")) {
-            return """
-                💡 **智能路灯控制建议**
-                
-                根据当前环境数据分析：
-                • 当前光照充足，建议将路灯亮度调至60%
-                • 预计可节省电力消耗30%
-                • 夜间人流高峰时段建议恢复100%亮度
-                
-                🎯 **优化方案**
-                1. 启用自动感光调节模式
-                2. 设置分时段亮度策略
-                3. 定期维护检查灯具状态
-                """;
-        } else if (lowerMsg.contains("节能") || lowerMsg.contains("省电") || lowerMsg.contains("能耗")) {
-            return """
-                📈 **节能分析报告**
-                
-                基于AI算法的能耗优化建议：
-                
-                ✅ **当前优化效果**
-                • 自适应调光策略已节省28%电力
-                • 智能开关控制减少无效照明时间
-                • 设备运行效率提升35%
-                
-                🚀 **进一步优化建议**
-                1. 根据人流密度动态调整照明
-                2. 预测性维护减少设备故障
-                3. 整合天气数据优化控制策略
-                
-                预计全年可节省电费支出约40%！
-                """;
-        } else {
-            return """
-                🤖 **智绿云控AI助手**
-                
-                您好！我是智绿云控平台的AI智能助手，可以为您提供以下服务：
-                
-                📊 **环境分析** - 分析温湿度、光照等环境数据
-                💡 **路灯控制** - 提供照明优化建议
-                📈 **节能方案** - 生成能耗优化报告
-                🔧 **故障诊断** - 设备异常分析与处理建议
-                
-                请告诉我您想了解哪方面的信息？例如：
-                • "分析当前环境情况"
-                • "路灯亮度建议"
-                • "如何进一步节能"
-                """;
-        }
-    }
-
     @PostMapping(GlobalConfiguration.AI_REQUEST_PREFIX + "/clear")
     public Result clearHistory(@RequestBody Map<String, Object> params) {
         log.info("接收到清空对话历史请求");
