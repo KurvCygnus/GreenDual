@@ -6,10 +6,11 @@ import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.InMemoryChatMemory;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.openai.OpenAiChatModel;
+import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.openai.api.OpenAiApi;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -17,10 +18,12 @@ import org.springframework.context.annotation.Configuration;
 public class AIAutowiredConfig
 {
     @Value("${spring.ai.openai.base-url}") private String aiBaseUrl;
-    
-    @Bean @ConditionalOnProperty("spring.ai.openai.api-key")
+    @Value("${spring.ai.openai.chat.options.model:deepseek-chat}") private String aiModel;
+
+    @Bean @ConditionalOnExpression("'${spring.ai.openai.api-key:}'.length() > 0")
     public @NonNull ChatModel intializeChatModel(@NonNull @Value("${spring.ai.openai.api-key}") String apiKey)
-        { return new OpenAiChatModel(new OpenAiApi(aiBaseUrl, apiKey)); }
+        { return new OpenAiChatModel(new OpenAiApi(aiBaseUrl, apiKey),
+              OpenAiChatOptions.builder().withModel(aiModel).build()); }
     
     @Bean @ConditionalOnMissingBean(ChatModel.class)
     public @NonNull ChatModel mockChatModel() { return new MockedChatModel(); }

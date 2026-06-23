@@ -51,7 +51,7 @@ public class DeepTalker implements Talker {
                 // 默认随机性
                 // 默认模型
                 this(
-                    "sk-be71f2ddc3d94427a8c49f979eabd473",
+                    System.getenv("DEEP_TALKER_API_KEY") != null ? System.getenv("DEEP_TALKER_API_KEY") : "YOUR_API_KEY_HERE",
                     "https://api.deepseek.com/v1/chat/completions",
                     "deepseek-reasoner",
                     4000,
