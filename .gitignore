@@ -100,7 +100,7 @@ Thumbs.db
 # ==============================================
 # 1. Maven编译产物（SpringBoot项目核心过滤）
 # ==============================================
-platform/env-springboot/TCPService/target/
+platform/backend/TCPService/target/
 target/
 *.class
 

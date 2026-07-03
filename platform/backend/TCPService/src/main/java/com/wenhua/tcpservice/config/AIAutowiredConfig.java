@@ -22,11 +22,9 @@ public class AIAutowiredConfig
 
     @Bean @ConditionalOnExpression("'${spring.ai.openai.api-key:}'.length() > 0")
     public @NonNull ChatModel intializeChatModel(@NonNull @Value("${spring.ai.openai.api-key}") String apiKey)
-        { return new OpenAiChatModel(new OpenAiApi(aiBaseUrl, apiKey),
-              OpenAiChatOptions.builder().withModel(aiModel).build()); }
+        { return new OpenAiChatModel(new OpenAiApi(aiBaseUrl, apiKey), OpenAiChatOptions.builder().withModel(aiModel).build()); }
     
-    @Bean @ConditionalOnMissingBean(ChatModel.class)
-    public @NonNull ChatModel mockChatModel() { return new MockedChatModel(); }
+    @Bean @ConditionalOnMissingBean(ChatModel.class) public @NonNull ChatModel mockChatModel() { return new MockedChatModel(); }
     
     @Bean public @NonNull ChatMemory chatMemory() { return new InMemoryChatMemory(); }
 }
