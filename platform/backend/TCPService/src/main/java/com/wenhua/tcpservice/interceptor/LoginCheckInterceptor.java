@@ -17,7 +17,7 @@ import java.util.Enumeration;
 
 @Component
 @Slf4j
-public class LoginCheckInterceptor implements HandlerInterceptor {
+public final class LoginCheckInterceptor implements HandlerInterceptor {
     @Override//视图渲染完毕后执行...
     public void afterCompletion(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler, Exception ex)
     {

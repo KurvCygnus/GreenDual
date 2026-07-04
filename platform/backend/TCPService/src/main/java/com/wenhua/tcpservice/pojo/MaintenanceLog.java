@@ -4,7 +4,7 @@ import lombok.Data;
 
 //维修日志
 @Data
-public class MaintenanceLog {
+public final class MaintenanceLog {
     private Integer id;
     private Timestamp time;
     private String subject;

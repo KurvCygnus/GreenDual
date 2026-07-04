@@ -4,11 +4,11 @@ import lombok.Data;
 
 //查询参数类
 @Data
-public class QueryParameter {
+public final class QueryParameter {
     //当前页
-    private Integer currentPage;
+    private Integer currentPage = 1;
     //每页条数
-    private Integer pageSize;
+    private Integer pageSize = 10;
     //排序方式(升序降序)
     private String sort;
     //匹配字符串

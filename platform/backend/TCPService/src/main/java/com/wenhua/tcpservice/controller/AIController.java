@@ -2,6 +2,9 @@ package com.wenhua.tcpservice.controller;
 
 import com.wenhua.tcpservice.config.GlobalConfiguration;
 import com.wenhua.tcpservice.pojo.Result;
+import com.wenhua.tcpservice.utils.StringFormatter;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
@@ -15,7 +18,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController @Slf4j
-public class AIController
+@Tag(name = "AI助手", description = "AI对话、环境分析、趋势预测接口")
+public final class AIController
 {
     /**
      * @implNote <span style="color: red">
@@ -38,6 +42,7 @@ public class AIController
         this.chatMemory = chatMemory;
     }
 
+    @Operation(summary = "AI对话", description = "发送消息给AI助手并获取回复")
     @PostMapping(GlobalConfiguration.AI_REQUEST_PREFIX + "/chat")
     public Result chat(@RequestBody Map<String, Object> params) {
         log.debug("接收到AI对话请求");
@@ -63,10 +68,11 @@ public class AIController
             return Result.success(result);
         } catch (Exception e) {
             log.error("AI对话失败: {}", e.getMessage(), e);
-            return Result.error("AI对话失败: %s".formatted(e.getMessage()));
+            return Result.error(StringFormatter.format("AI对话失败: {}", e.getMessage()));
         }
     }
     
+    @Operation(summary = "清空会话历史")
     @PostMapping(GlobalConfiguration.AI_REQUEST_PREFIX + "/clear")
     public Result clearHistory(@RequestBody Map<String, Object> params)
     {
@@ -74,11 +80,12 @@ public class AIController
         {
             String sessionId = (String) params.getOrDefault("sessionId", "default");
             chatMemory.clear(sessionId);
-            return Result.success("会话 [%s] 历史已清空".formatted(sessionId));
+            return Result.success(StringFormatter.format("会话 [{}] 历史已清空", sessionId));
         }
         catch(Exception e) { return Result.error("清空失败"); }
     }
     
+    @Operation(summary = "获取对话历史")
     @PostMapping(GlobalConfiguration.AI_REQUEST_PREFIX + "/history")
     public Result getHistory(@RequestBody Map<String, Object> params)
     {
@@ -90,6 +97,7 @@ public class AIController
         catch(Exception e) { return Result.error("获取历史失败"); }
     }
     
+    @Operation(summary = "环境分析", description = "基于传感器数据分析环境状况")
     @PostMapping(GlobalConfiguration.AI_REQUEST_PREFIX + "/analyze")
     public Result analyzeEnvironment(@RequestBody Map<String, Object> params)
     {
@@ -98,14 +106,14 @@ public class AIController
         {
             String dataContext = params.entrySet().stream().
                 filter(entry -> List.of("temperature", "humidity", "lightIntensity").contains(entry.getKey())).
-                map(entry -> "%s:%s".formatted(entry.getKey(), entry.getValue())).
+                map(entry -> StringFormatter.format("{}:{}", entry.getKey(), entry.getValue())).
                 collect(Collectors.joining(", "));
             
             if(dataContext.isEmpty())
                 return Result.error("缺少环境参数");
             
             String response = chatClient.prompt().
-                user("分析数据：%s".formatted(dataContext)).
+                user(StringFormatter.format("分析数据：{}", dataContext)).
                 call().
                 content();
             
@@ -119,10 +127,11 @@ public class AIController
         catch(Exception e)
         {
             log.error("分析失败", e);
-            return Result.error("分析失败: %s".formatted(e.getMessage()));
+            return Result.error(StringFormatter.format("分析失败: {}", e.getMessage()));
         }
     }
     
+    @Operation(summary = "趋势预测", description = "基于历史数据预测环境趋势")
     @PostMapping(GlobalConfiguration.AI_REQUEST_PREFIX + "/predict")
     public Result predictTrend(@RequestBody Map<String, Object> params)
     {
@@ -137,8 +146,8 @@ public class AIController
             String historySummary = (historicalData != null) ? historicalData.toString() : "暂无历史数据";
             
             String response = chatClient.prompt().
-                user("预测类型：%s, 预测时长：%s小时, 历史参考数据：%s".
-                    formatted(predictType, hours, historySummary)).
+                user(StringFormatter.format("预测类型：{}, 预测时长：{}小时, 历史参考数据：{}",
+                    predictType, hours, historySummary)).
                 call().
                 content();
             
@@ -152,7 +161,7 @@ public class AIController
         catch(Exception e)
         {
             log.error("趋势预测失败", e);
-            return Result.error("趋势预测失败: %s".formatted(e.getMessage()));
+            return Result.error(StringFormatter.format("趋势预测失败: {}", e.getMessage()));
         }
     }
 }

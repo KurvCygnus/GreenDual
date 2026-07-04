@@ -4,7 +4,9 @@ import com.wenhua.tcpservice.config.GlobalConfiguration;
 import com.wenhua.tcpservice.mapper.DeviceTypeMapper;
 import com.wenhua.tcpservice.pojo.DeviceType;
 import com.wenhua.tcpservice.pojo.Result;
-import com.wenhua.tcpservice.utils.JwtUtils;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.annotation.Nonnull;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,15 +20,12 @@ import java.util.Map;
 @Slf4j
 @CrossOrigin(origins = GlobalConfiguration.ORIGINS)
 @RequestMapping(GlobalConfiguration.USER_REQUEST_PREFIX + "/deviceType")
-public class DeviceTypeController {
+@Tag(name = "设备类型", description = "设备类型CRUD接口")
+public final class DeviceTypeController {
 
-    private DeviceTypeMapper deviceTypeMapper;
+    private final DeviceTypeMapper deviceTypeMapper;
 
-    private boolean isAdmin(HttpServletRequest request) {
-        Integer userId = JwtUtils.getUserId(request);
-        return userId != null;
-    }
-
+    @Operation(summary = "获取设备类型列表")
     @PostMapping("/list")
     public Result getDeviceTypeList(HttpServletRequest request) {
         try {
@@ -38,6 +37,7 @@ public class DeviceTypeController {
         }
     }
 
+    @Operation(summary = "添加设备类型")
     @PostMapping("/add")
     public Result addDeviceType(@RequestBody DeviceType deviceType, HttpServletRequest request) {
         try {
@@ -59,6 +59,7 @@ public class DeviceTypeController {
         }
     }
 
+    @Operation(summary = "更新设备类型")
     @PostMapping("/update")
     public Result updateDeviceType(@RequestBody DeviceType deviceType, HttpServletRequest request) {
         try {
@@ -74,6 +75,7 @@ public class DeviceTypeController {
         }
     }
 
+    @Operation(summary = "切换设备类型状态")
     @PostMapping("/toggleStatus")
     public Result toggleStatus(@RequestBody Map<String, Object> params, HttpServletRequest request) {
         try {
@@ -91,6 +93,7 @@ public class DeviceTypeController {
         }
     }
 
+    @Operation(summary = "删除设备类型")
     @PostMapping("/delete")
     public Result deleteDeviceType(@RequestBody Map<String, Object> params, HttpServletRequest request) {
         try {

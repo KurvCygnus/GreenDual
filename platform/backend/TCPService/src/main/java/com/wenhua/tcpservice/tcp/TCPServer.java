@@ -3,6 +3,8 @@ package com.wenhua.tcpservice.tcp;
 import com.wenhua.tcpservice.config.GlobalConfiguration;
 import com.wenhua.tcpservice.mapper.EnvMapper;
 import com.wenhua.tcpservice.pojo.dev.Device;
+import com.wenhua.tcpservice.utils.StringFormatter;
+import jakarta.annotation.Nonnull;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.springframework.boot.CommandLineRunner;
@@ -21,121 +23,127 @@ import java.util.concurrent.Executors;
 
 @Component
 @Slf4j
-public class TCPServer implements CommandLineRunner {
-
+public final class TCPServer implements CommandLineRunner
+{
     private final EnvMapper envMapper;
 
-    private static final Map<String, Socket> deviceSockets = new ConcurrentHashMap<>();
-    private static final Map<String, PrintWriter> deviceWriters = new ConcurrentHashMap<>();
+    private static final Map<String, Socket> DEVICE_SOCKETS = new ConcurrentHashMap<>();
+    private static final Map<String, PrintWriter> DEVICE_WRITERS = new ConcurrentHashMap<>();
     private final ExecutorService executorService = Executors.newCachedThreadPool();
     
     public TCPServer(EnvMapper envMapper) { this.envMapper = envMapper; }
     
-    @Override
-    public void run(String... args)
+    @Override public void run(String... args)
     {
-        startServer();
-    }
-
-    public void startServer() {
-        new Thread(() -> {
-            try (ServerSocket serverSocket = new ServerSocket(GlobalConfiguration.TCP_PORT)) {
-                log.debug("TCP服务端启动，端口: {}", GlobalConfiguration.TCP_PORT);
-                
-                while (true) {
-                    Socket clientSocket = serverSocket.accept();
-                    log.debug("新的设备连接: {}", clientSocket.getInetAddress().getHostAddress());
-                    executorService.submit(() -> handleClient(clientSocket));
+        new Thread(
+            () ->
+            {
+                try(final var serverSocket = new ServerSocket(GlobalConfiguration.TCP_PORT))
+                {
+                    log.debug("TCP服务端启动，端口: {}", GlobalConfiguration.TCP_PORT);
+                    
+                    while(true)
+                    {
+                        final var clientSocket = serverSocket.accept();
+                        log.debug("新的设备连接: {}", clientSocket.getInetAddress().getHostAddress());
+                        executorService.submit(() -> handleClient(clientSocket));
+                    }
                 }
-            } catch (IOException e) {
-                log.error("TCP服务端启动失败: {}", e.getMessage());
+                catch(IOException e) { log.error("TCP服务端启动失败: {}", e.getMessage()); }
             }
-        }).start();
+        ).start();
     }
-
-    private void handleClient(Socket socket) {
+    
+    private void handleClient(Socket socket)
+    {
         String deviceIp = socket.getInetAddress().getHostAddress();
         String deviceId = null;
         
-        try (BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-             PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
+        try(
+            final var in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            final var out = new PrintWriter(socket.getOutputStream(), true)
+        )
+        {
             
             socket.setSoTimeout(0);
             String inputLine;
             
-            while ((inputLine = in.readLine()) != null) {
+            while((inputLine = in.readLine()) != null)
+            {
                 log.debug("收到设备数据: {}", inputLine);
                 
-                try {
+                try
+                {
                     JSONObject json = new JSONObject(inputLine);
                     String returnIntent = json.optString("returnIntent", "");
                     deviceId = json.optString("id", "");
                     
-                    if (!deviceId.isEmpty()) {
-                        deviceSockets.put(deviceId, socket);
-                        deviceWriters.put(deviceId, out);
+                    if(!deviceId.isEmpty())
+                    {
+                        DEVICE_SOCKETS.put(deviceId, socket);
+                        DEVICE_WRITERS.put(deviceId, out);
                     }
                     
-                    switch (returnIntent) {
-                        case "online":
-                            handleDeviceOnline(json, deviceIp, out);
-                            break;
-                        case "REPORT":
-                            handleDeviceReport(json, deviceIp);
-                            break;
-                        case "SET":
-                            handleDeviceSetResponse(json);
-                            break;
-                        default:
-                            sendCommand(out, "cmd", "REPORT");
+                    switch(returnIntent)
+                    {
+                        case "online" -> handleDeviceOnline(json, deviceIp, out);
+                        case "REPORT" -> handleDeviceReport(json, deviceIp);
+                        case "SET" -> handleDeviceSetResponse(json);
+                        default -> sendCommand(out, "cmd", "REPORT");
                     }
-                } catch (Exception e) {
+                }
+                catch(Exception e)
+                {
                     log.error("解析JSON失败: {}", e.getMessage());
                     out.println("{\"status\":\"error\",\"message\":\"Invalid JSON\"}");
                 }
             }
-        } catch (IOException e) {
-            log.debug("设备断开连接: {}", deviceIp);
-        } finally {
-            if (deviceId != null) {
-                deviceSockets.remove(deviceId);
-                deviceWriters.remove(deviceId);
+        }
+        catch(IOException e) { log.debug("设备断开连接: {}", deviceIp); }
+        finally
+        {
+            if(deviceId != null)
+            {
+                DEVICE_SOCKETS.remove(deviceId);
+                DEVICE_WRITERS.remove(deviceId);
                 updateDeviceOffline(deviceId);
             }
         }
     }
-
-    private void handleDeviceOnline(JSONObject json, String ip, PrintWriter out) {
+    
+    private void handleDeviceOnline(JSONObject json, String ip, PrintWriter out)
+    {
         String deviceId = json.optString("id", "");
         log.debug("设备上线: {}, IP: {}", deviceId, ip);
         
         Device device = envMapper.selectDeviceById(deviceId);
-        if (device == null) {
+        if(device == null)
+        {
             device = new Device();
             device.setId(deviceId);
-            device.setName("环境监测设备-" + deviceId);
+            device.setName(StringFormatter.format("环境监测设备-{}", deviceId));
             device.setIp(ip);
             device.setOnLine(1);
             device.setDeviceType("环境监测");
-            device.setTemperature(25.0f);
+            device.setTemperature(25F);
             device.setHumidity(60);
             device.setLightIntensity(10000);
             //初始化路灯相关字段
             device.setLampStatus(json.optInt("lampStatus", 0));
             device.setBrightness(json.optInt("brightness", 80));
             device.setFaultStatus(0);
-            device.setPowerConsumption(0.0f);
+            device.setPowerConsumption(0F);
             envMapper.insertDevice(device);
-        } else {
+        }
+        else
+        {
             device.setIp(ip);
             device.setOnLine(1);
             //更新路灯相关字段
-            if (json.has("lampStatus")) {
+            if(json.has("lampStatus"))
                 device.setLampStatus(json.optInt("lampStatus", device.getLampStatus()));
-            }
-            if (json.has("brightness")) {
+            if(json.has("brightness"))
                 device.setBrightness(json.optInt("brightness", device.getBrightness()));
-            }
             envMapper.updateDevice(device);
         }
         
@@ -149,10 +157,10 @@ public class TCPServer implements CommandLineRunner {
         if (device == null) {
             device = new Device();
             device.setId(deviceId);
-            device.setName("环境监测设备-" + deviceId);
+            device.setName(StringFormatter.format("环境监测设备-{}", deviceId));
             device.setDeviceType("环境监测");
         }
-        
+
         device.setIp(json.optString("ip", ip));
         device.setOnLine(json.optInt("onlineStatus", 1));
         
@@ -217,8 +225,8 @@ public class TCPServer implements CommandLineRunner {
         out.println(cmd);
     }
 
-    public static boolean sendCommandToDevice(String deviceId, String command) {
-        PrintWriter writer = deviceWriters.get(deviceId);
+    public static boolean sendCommandToDevice(@Nonnull String deviceId, @Nonnull String command) {
+        PrintWriter writer = DEVICE_WRITERS.get(deviceId);
         if (writer != null) {
             writer.println(command);
             log.debug("发送命令到设备 {}: {}", deviceId, command);
@@ -228,42 +236,42 @@ public class TCPServer implements CommandLineRunner {
         return false;
     }
 
-    public static boolean isDeviceConnected(String deviceId) {
-        return deviceSockets.containsKey(deviceId);
+    public static boolean isDeviceConnected(@Nonnull String deviceId) {
+        return DEVICE_SOCKETS.containsKey(deviceId);
     }
 
-    public static void setDeviceAutoMonitor(String deviceId, boolean autoOn) {
+    public static void setDeviceAutoMonitor(@Nonnull String deviceId, boolean autoOn) {
         JSONObject cmd = new JSONObject();
         cmd.put("cmd", autoOn ? "AUTO_ON" : "AUTO_OFF");
         sendCommandToDevice(deviceId, cmd.toString());
     }
 
-    public static void setDeviceReportInterval(String deviceId, int interval) {
+    public static void setDeviceReportInterval(@Nonnull String deviceId, int interval) {
         JSONObject cmd = new JSONObject();
         cmd.put("cmd", "SET");
         cmd.put("interval", interval);
         sendCommandToDevice(deviceId, cmd.toString());
     }
 
-    public static void requestDeviceReport(String deviceId) {
+    public static void requestDeviceReport(@Nonnull String deviceId) {
         JSONObject cmd = new JSONObject();
         cmd.put("cmd", "REPORT");
         sendCommandToDevice(deviceId, cmd.toString());
     }
 
-    public static boolean turnOnLamp(String deviceId) {
+    public static boolean turnOnLamp(@Nonnull String deviceId) {
         JSONObject cmd = new JSONObject();
         cmd.put("cmd", "LAMP_ON");
         return sendCommandToDevice(deviceId, cmd.toString());
     }
 
-    public static boolean turnOffLamp(String deviceId) {
+    public static boolean turnOffLamp(@Nonnull String deviceId) {
         JSONObject cmd = new JSONObject();
         cmd.put("cmd", "LAMP_OFF");
         return sendCommandToDevice(deviceId, cmd.toString());
     }
 
-    public static boolean setLampBrightness(String deviceId, int brightness) {
+    public static boolean setLampBrightness(@Nonnull String deviceId, int brightness) {
         JSONObject cmd = new JSONObject();
         cmd.put("cmd", "LAMP_BRIGHTNESS");
         cmd.put("brightness", brightness);

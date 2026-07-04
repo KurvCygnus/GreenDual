@@ -2,15 +2,14 @@ package com.wenhua.tcpservice.pojo.dev;
 
 
 import lombok.Data;
-import org.json.JSONObject;
+import lombok.ToString;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.Objects;
 
 @Data
+@ToString
 //设备类
-public class Device {
+public final class Device {
 
     // 私有成员变量
     private String id;//编号
@@ -29,13 +28,13 @@ public class Device {
 
     //是否繁忙
     private int isBusy;
-    public static int IS_BUSY_ON = 1;
-    public static int IS_BUSY_OFF = 0;
+    public static final int IS_BUSY_ON = 1;
+    public static final int IS_BUSY_OFF = 0;
 
     //及其特殊:是否损坏
     private int isBroken;
-    public static int IS_BROKEN = 1;
-    public static int IS_NOT_BROKEN = 0;
+    public static final int IS_BROKEN = 1;
+    public static final int IS_NOT_BROKEN = 0;
 
     //路灯相关字段
     private Integer lampStatus;//路灯开关状态: 0-关, 1-开
@@ -47,10 +46,10 @@ public class Device {
     private Integer faultStatus;//故障状态: 0-正常, 1-故障
 
     //路灯状态常量
-    public static int LAMP_OFF = 0;
-    public static int LAMP_ON = 1;
-    public static int FAULT_NORMAL = 0;
-    public static int FAULT_ERROR = 1;
+    public static final int LAMP_OFF = 0;
+    public static final int LAMP_ON = 1;
+    public static final int FAULT_NORMAL = 0;
+    public static final int FAULT_ERROR = 1;
 
     // 静态成员变量
     public static final String ID = "id";
@@ -74,46 +73,6 @@ public class Device {
         return (id == null || id.isEmpty()) && (ip == null || ip.isEmpty());
     }
 
-    //toString方法
-    @Override
-    public String toString() {
-        JSONObject jsonObject = new JSONObject();
-
-        // 获取当前对象的Class对象
-        Class<?> clazz = this.getClass();
-
-        // 获取所有声明的字段（包括私有字段）
-        Field[] fields = clazz.getDeclaredFields();
-
-        try {
-            // 遍历所有字段
-            for (Field field : fields) {
-                // 检查字段是否是静态的，如果是则跳过
-                if (Modifier.isStatic(field.getModifiers())) {
-                    continue;
-                }
-
-                // 设置字段为可访问，以便访问私有字段
-                field.setAccessible(true);
-
-                // 获取字段的值
-                Object value = field.get(this);
-
-                // 如果值不为null，则将其添加到JSON对象中
-                if (value != null) {
-                    jsonObject.put(field.getName(), value);
-                }
-            }
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-            // 可以选择抛出异常或返回null，取决于你的错误处理策略
-            return null;
-        }
-
-        // 返回JSON字符串表示
-        return jsonObject.toString();
-    }
-
     /* 只要ip和id相同就会判定为一个设备 */
 
     // 重写equals方法
@@ -135,8 +94,4 @@ public class Device {
         // 使用Objects.hash方法生成哈希码，该方法能够处理null值
         return Objects.hash(id, ip);
     }
-
-    ///////////////////
-
-
 }

@@ -9,6 +9,9 @@ import com.wenhua.tcpservice.pojo.Result;
 import com.wenhua.tcpservice.pojo.User;
 import com.wenhua.tcpservice.service.LogService;
 import com.wenhua.tcpservice.utils.JwtUtils;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.annotation.Nonnull;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,14 +25,15 @@ import java.util.List;
 @Slf4j
 @RestController
 @AllArgsConstructor
-@CrossOrigin(origins = GlobalConfiguration.ORIGINS)//必须带上这个前端才能获取数据
-public class MaintenanceLogController {
+@CrossOrigin(origins = GlobalConfiguration.ORIGINS)
+@Tag(name = "维修日志", description = "维修日志CRUD接口")
+public final class MaintenanceLogController {
 
     private LogService logService;
     private LogMapper logMapper;
     private UserMapper userMapper;
 
-    //添加日志
+    @Operation(summary = "添加维修日志")
     @PostMapping(GlobalConfiguration.LOG_REQUEST_PREFIX + "/add")
     public Result addMaintenanceLog(@RequestBody MaintenanceLog maintenanceLog) {
         log.debug(maintenanceLog.toString());
@@ -37,7 +41,7 @@ public class MaintenanceLogController {
         return Result.success();
     }
 
-    //查询日志
+    @Operation(summary = "查询维修日志")
     @PostMapping(GlobalConfiguration.LOG_REQUEST_PREFIX + "/select")
     public Result selectMaintenanceLog(@RequestBody QueryParameter queryParameter) {
         //交给服务
@@ -51,8 +55,7 @@ public class MaintenanceLogController {
         return result;
     }
 
-    //删除日志
-    /* <<<需要管理员权限>>> */
+    @Operation(summary = "删除维修日志", description = "需要管理员权限")
     @PostMapping(GlobalConfiguration.LOG_REQUEST_PREFIX + "/delete")
     public Result deleteMaintenanceLog(@RequestBody List<Integer> ids, HttpServletRequest request){
         if (!isRoot(request)){

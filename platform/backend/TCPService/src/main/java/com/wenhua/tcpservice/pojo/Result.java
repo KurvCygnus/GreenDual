@@ -1,5 +1,6 @@
 package com.wenhua.tcpservice.pojo;
 
+import com.wenhua.tcpservice.utils.StringFormatter;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -8,7 +9,7 @@ import lombok.Setter;
 @AllArgsConstructor*/
 @Setter
 @Getter
-public class Result {
+public final class Result {
     /**
      * -- GETTER --
      *  获取
@@ -102,7 +103,7 @@ public class Result {
     }
 
     //查询 成功响应
-    public static Result success(Object data,Integer totalPages){
+    public static Result success(Object data, Integer totalPages){
         return new Result(1,"success",data,totalPages);
     }
 
@@ -122,7 +123,7 @@ public class Result {
     
     
     public String toString() {
-        return "Result{code = " + code + ", msg = " + msg + ", data = " + data + "}";
+        return StringFormatter.format("Result{code = {}, msg = {}, data = {}}", code, msg, data);
     }
     
 }

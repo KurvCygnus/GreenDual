@@ -4,48 +4,69 @@ import com.wenhua.tcpservice.mapper.UserMapper;
 import com.wenhua.tcpservice.pojo.QueryParameter;
 import com.wenhua.tcpservice.pojo.User;
 import com.wenhua.tcpservice.service.UserService;
+import com.wenhua.tcpservice.utils.PasswordUtils;
+import jakarta.annotation.Nonnull;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @AllArgsConstructor
-public class UserServiceImpl implements UserService {
-    private UserMapper userMapper;
+public final class UserServiceImpl implements UserService {
+    private final UserMapper userMapper;
 
     @Override
     public User selectUser(String username, String password) {
+        // 通过用户名查找用户（不比较密码，因为密码是哈希存储的）
+        User user = userMapper.selectUserByUsername(username);
+        if (user == null) {
+            return null;
+        }
 
-        //调用mapper层方法
-        /* 实际上这里要处理麻麻加密等东西,现在测试省略了 */
-        
-        return userMapper.selectUserByUsernameAndPasswordHash(username, password);
+        // 验证密码（兼容明文和哈希）
+        if (PasswordUtils.matches(password, username, user.getPassword())) {
+            // 如果旧密码是明文，自动升级为哈希存储
+            if (!user.getPassword().matches("[0-9a-f]{64}")) {
+                String hashed = PasswordUtils.encode(password, username);
+                userMapper.updatePassword(user.getUserId(), hashed);
+                log.info("用户 {} 的密码已自动升级为哈希存储", username);
+            }
+            return user;
+        }
+
+        return null;
     }
 
-    @Override
-    public List<User> selectUsers(QueryParameter queryParameter) {
-        //查询一群用户
+    @Override @Nonnull
+    public List<User> selectUsers(@Nonnull QueryParameter queryParameter) {
         queryParameter.calculateOffset();
-
         return userMapper.selectUsers(queryParameter);
     }
 
-    //修改用户
     @Override
-    public void updateUser(User user) {
-        //调用mapper
+    public void updateUser(@Nonnull User user) {
+        if (user.getPassword() != null && !user.getPassword().isEmpty()) {
+            // 需要用户名作为盐值，从数据库获取
+            User existing = userMapper.selectUserById(user.getUserId());
+            String salt = existing != null
+                ? existing.getUsername()
+                : (user.getUsername() != null ? user.getUsername() : "");
+            user.setPassword(PasswordUtils.encode(user.getPassword(), salt));
+        }
         userMapper.updateUser(user);
     }
 
-    //添加用户
     @Override
-    public void addUser(User user) {
+    public void addUser(@Nonnull User user) {
+        user.setPassword(PasswordUtils.encode(user.getPassword(), user.getUsername()));
         userMapper.addUser(user);
     }
 
     @Override
-    public void deleteUser(User user) {
+    public void deleteUser(@Nonnull User user) {
         userMapper.deleteUser(user);
     }
 }

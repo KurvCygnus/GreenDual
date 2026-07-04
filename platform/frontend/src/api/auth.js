@@ -1,8 +1,7 @@
 import axios from "axios";
 
-//const api = "http://localhost:18081";
-//服务器ip   8.130.125.122
-const api = "http://8.130.125.122:18081";
+// 从环境变量读取 API 基础地址（vite 替换后为字符串，不会 undefined）
+const api = import.meta.env.VITE_API_BASE_URL || "http://localhost:18081";
 
 // 请求拦截器 - 添加token
 axios.interceptors.request.use(
@@ -154,60 +153,21 @@ export function deleteDeviceType(id) {
   return axios.post(api + "/user/deviceType/delete", { id });
 }
 
-// ========== AI功能API ==========
+// ========== AI功能API — 通过后端代理，不再直接调用 DeepSeek ==========
 
-const DEEPSEEK_API_KEY = "sk-d3447a51c4c349c7bd269d1c9654cb25";
-const DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions";
-
+/**
+ * AI 对话 — 调用后端 /ai/chat 接口，由后端转发到 DeepSeek.
+ * API Key 仅存在于后端配置中，前端不持有任何 AI Key.
+ */
 export async function aiChat(sessionId, message) {
   try {
-    const response = await fetch(DEEPSEEK_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "deepseek-chat",
-        messages: [
-          {
-            role: "system",
-            content: `你是一个环境监测和智能路灯控制系统的AI助手。你的职责是：
-1. 分析环境数据（温度、湿度、光照强度）
-2. 提供路灯控制建议（基于光照、天气状况）
-3. 生成节能优化方案
-4. 诊断设备故障和提供维护建议
-5. 基于真实监测数据给出实用建议
-
-请用专业、简洁的语言回答用户问题，提供具体的数值分析和可行的建议。`,
-          },
-          {
-            role: "user",
-            content: message,
-          },
-        ],
-        temperature: 0.7,
-        max_tokens: 2000,
-      }),
+    const response = await axios.post(api + "/ai/chat", {
+      sessionId,
+      message,
     });
-
-    if (!response.ok) {
-      throw new Error(`DeepSeek API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const aiResponse = data.choices[0].message.content;
-
-    return {
-      data: {
-        code: 1,
-        data: {
-          response: aiResponse,
-        },
-      },
-    };
+    return response;
   } catch (error) {
-    console.error("DeepSeek API调用失败:", error);
+    console.error("AI对话调用失败:", error);
     throw error;
   }
 }

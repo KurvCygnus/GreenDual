@@ -9,6 +9,9 @@ import com.wenhua.tcpservice.pojo.dev.Device;
 import com.wenhua.tcpservice.service.campus.EnergyBillService;
 import com.wenhua.tcpservice.service.campus.SmartLightingEngine;
 import com.wenhua.tcpservice.service.campus.TeachingCaseService;
+import com.wenhua.tcpservice.utils.StringFormatter;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -21,13 +24,15 @@ import java.util.Map;
 @RequestMapping("/campus")
 @Slf4j
 @AllArgsConstructor
-public class CampusEnergyController
+@Tag(name = "校园能源", description = "校园能源管理、智能照明、教学案例接口")
+public final class CampusEnergyController
 {
     private SmartLightingEngine smartLightingEngine;
     private EnergyBillService energyBillService;
     private TeachingCaseService teachingCaseService;
     private EnvMapper envMapper;
     
+    @Operation(summary = "智能调光", description = "智能路灯调光优化，支持单个和批量")
     @PostMapping("/lighting/optimize")
     public Result optimizeLighting(@RequestBody Map<String, Object> params)
     {
@@ -55,10 +60,11 @@ public class CampusEnergyController
         catch(Exception e)
         {
             log.error("智能调光失败: {}", e.getMessage());
-            return Result.error("智能调光失败: " + e.getMessage());
+            return Result.error(StringFormatter.format("智能调光失败: {}", e.getMessage()));
         }
     }
     
+    @Operation(summary = "应用优化方案")
     @PostMapping("/lighting/apply")
     public Result applyOptimization(@RequestBody Map<String, Object> params)
     {
@@ -96,10 +102,11 @@ public class CampusEnergyController
         catch(Exception e)
         {
             log.error("应用优化方案失败: ", e);
-            return Result.error("应用优化方案失败: " + e.getMessage());
+            return Result.error(StringFormatter.format("应用优化方案失败: {}", e.getMessage()));
         }
     }
     
+    @Operation(summary = "获取能源统计")
     @GetMapping("/energy/statistics")
     public Result getEnergyStatistics(@RequestParam(required = false) String areaId)
     {
@@ -111,10 +118,11 @@ public class CampusEnergyController
         catch(Exception e)
         {
             log.error("获取能源统计失败: ", e);
-            return Result.error("获取能源统计失败: " + e.getMessage());
+            return Result.error(StringFormatter.format("获取能源统计失败: {}", e.getMessage()));
         }
     }
     
+    @Operation(summary = "生成能耗账单")
     @PostMapping("/energy/bill/generate")
     public Result generateBill(@RequestBody Map<String, Object> params)
     {
@@ -129,10 +137,11 @@ public class CampusEnergyController
         catch(Exception e)
         {
             log.error("生成能耗账单失败: ", e);
-            return Result.error("生成能耗账单失败: " + e.getMessage());
+            return Result.error(StringFormatter.format("生成能耗账单失败: {}", e.getMessage()));
         }
     }
     
+    @Operation(summary = "获取账单历史")
     @GetMapping("/energy/bill/history")
     public Result getBillHistory(@RequestParam(required = false) String areaId,
         @RequestParam(defaultValue = "6") int months)
@@ -145,10 +154,11 @@ public class CampusEnergyController
         catch(Exception e)
         {
             log.error("获取账单历史失败: ", e);
-            return Result.error("获取账单历史失败: " + e.getMessage());
+            return Result.error(StringFormatter.format("获取账单历史失败: {}", e.getMessage()));
         }
     }
     
+    @Operation(summary = "获取能源仪表盘")
     @GetMapping("/energy/dashboard")
     public Result getEnergyDashboard(@RequestParam(required = false) String areaId)
     {
@@ -160,10 +170,11 @@ public class CampusEnergyController
         catch(Exception e)
         {
             log.error("获取能源仪表盘失败: ", e);
-            return Result.error("获取能源仪表盘失败: " + e.getMessage());
+            return Result.error(StringFormatter.format("获取能源仪表盘失败: {}", e.getMessage()));
         }
     }
     
+    @Operation(summary = "能耗对比", description = "与基线数据进行能耗对比")
     @GetMapping("/energy/compare")
     public Result compareWithBaseline(@RequestParam(required = false) String areaId)
     {
@@ -175,10 +186,11 @@ public class CampusEnergyController
         catch(Exception e)
         {
             log.error("能耗对比失败: ", e);
-            return Result.error("能耗对比失败: " + e.getMessage());
+            return Result.error(StringFormatter.format("能耗对比失败: {}", e.getMessage()));
         }
     }
     
+    @Operation(summary = "创建教学案例")
     @PostMapping("/teaching/case/create")
     public Result createTeachingCase(@RequestBody Map<String, Object> params)
     {
@@ -204,10 +216,11 @@ public class CampusEnergyController
         catch(Exception e)
         {
             log.error("创建教学案例失败: ", e);
-            return Result.error("创建教学案例失败: " + e.getMessage());
+            return Result.error(StringFormatter.format("创建教学案例失败: {}", e.getMessage()));
         }
     }
     
+    @Operation(summary = "获取教学案例列表")
     @GetMapping("/teaching/cases")
     public Result getTeachingCases(@RequestParam(required = false) String course)
     {
@@ -227,10 +240,11 @@ public class CampusEnergyController
         catch(Exception e)
         {
             log.error("获取教学案例失败: ", e);
-            return Result.error("获取教学案例失败: " + e.getMessage());
+            return Result.error(StringFormatter.format("获取教学案例失败: {}", e.getMessage()));
         }
     }
     
+    @Operation(summary = "获取教学统计")
     @GetMapping("/teaching/statistics")
     public Result getTeachingStatistics()
     {
@@ -242,10 +256,11 @@ public class CampusEnergyController
         catch(Exception e)
         {
             log.error("获取教学统计失败: ", e);
-            return Result.error("获取教学统计失败: " + e.getMessage());
+            return Result.error(StringFormatter.format("获取教学统计失败: {}", e.getMessage()));
         }
     }
     
+    @Operation(summary = "获取校园概览")
     @GetMapping("/overview")
     public Result getCampusOverview()
     {
@@ -286,7 +301,7 @@ public class CampusEnergyController
         catch(Exception e)
         {
             log.error("获取校园概览失败: ", e);
-            return Result.error("获取校园概览失败: " + e.getMessage());
+            return Result.error(StringFormatter.format("获取校园概览失败: {}", e.getMessage()));
         }
     }
 }

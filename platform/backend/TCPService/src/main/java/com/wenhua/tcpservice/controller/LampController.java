@@ -5,6 +5,9 @@ import com.wenhua.tcpservice.mapper.EnvMapper;
 import com.wenhua.tcpservice.pojo.Result;
 import com.wenhua.tcpservice.pojo.dev.Device;
 import com.wenhua.tcpservice.service.EnvService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.annotation.Nonnull;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -18,14 +21,13 @@ import java.util.Map;
 @CrossOrigin(origins = GlobalConfiguration.ORIGINS)
 @RequestMapping("/lamp")
 @AllArgsConstructor
-public class LampController {
+@Tag(name = "路灯控制", description = "智能路灯控制、调光、统计接口")
+public final class LampController {
 
     private EnvService envService;
     private EnvMapper envMapper;
 
-    /**
-     * 获取所有路灯列表
-     */
+    @Operation(summary = "获取路灯列表")
     @GetMapping("/list")
     public Result getLampList() {
         log.debug("获取路灯列表请求");
@@ -33,9 +35,7 @@ public class LampController {
         return Result.success(lamps);
     }
 
-    /**
-     * 控制路灯开关
-     */
+    @Operation(summary = "控制路灯开关")
     @PostMapping("/control")
     public Result controlLamp(@RequestBody Map<String, Object> params) {
         String deviceId = (String) params.get("deviceId");
@@ -65,9 +65,7 @@ public class LampController {
         }
     }
 
-    /**
-     * 调节路灯亮度
-     */
+    @Operation(summary = "调节路灯亮度")
     @PostMapping("/brightness")
     public Result adjustBrightness(@RequestBody Map<String, Object> params) {
         String deviceId = (String) params.get("deviceId");
@@ -103,9 +101,7 @@ public class LampController {
         }
     }
 
-    /**
-     * 批量控制路灯
-     */
+    @Operation(summary = "批量控制路灯")
     @PostMapping("/batchControl")
     public Result batchControl(@RequestBody Map<String, Object> params) {
         List<String> deviceIds = (List<String>) params.get("deviceIds");
@@ -136,9 +132,7 @@ public class LampController {
         return Result.success(result);
     }
 
-    /**
-     * 获取路灯统计信息
-     */
+    @Operation(summary = "获取路灯统计")
     @GetMapping("/stats")
     public Result getLampStats() {
         log.debug("获取路灯统计请求");
@@ -186,9 +180,7 @@ public class LampController {
         return Result.success(stats);
     }
 
-    /**
-     * 获取故障路灯列表
-     */
+    @Operation(summary = "获取故障路灯列表")
     @GetMapping("/faults")
     public Result getFaultLamps() {
         log.debug("获取故障路灯请求");
@@ -196,10 +188,7 @@ public class LampController {
         return Result.success(faultLamps);
     }
 
-    /**
-     * 智能调光 - 根据环境光照自动调节
-     * 支持单个路灯调光（deviceId）和批量调光（deviceIds）
-     */
+    @Operation(summary = "智能调光", description = "根据环境光照自动调节路灯亮度")
     @PostMapping("/smartAdjust")
     public Result smartAdjust(@RequestBody Map<String, Object> params) {
         String deviceId = (String) params.get("deviceId");

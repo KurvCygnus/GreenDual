@@ -3,6 +3,8 @@ package com.wenhua.tcpservice.service.campus;
 import com.wenhua.tcpservice.mapper.EnvMapper;
 import com.wenhua.tcpservice.pojo.campus.EnergyBill;
 import com.wenhua.tcpservice.pojo.dev.Device;
+import com.wenhua.tcpservice.utils.StringFormatter;
+import jakarta.annotation.Nonnull;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -15,15 +17,16 @@ import java.util.*;
 @Service
 @Slf4j
 @AllArgsConstructor
-public class EnergyBillService
+public final class EnergyBillService
 {
-    private EnvMapper envMapper;
+    private final EnvMapper envMapper;
     
     private static final double ELECTRICITY_PRICE = 0.6;
     private static final double AVG_LAMP_POWER = 0.15;
     private static final double AVG_DAILY_HOURS = 10;
     
-    public EnergyBill generateMonthlyBill(String areaId, String billMonth)
+    @Nonnull
+    public EnergyBill generateMonthlyBill(@Nonnull String areaId, @Nonnull String billMonth)
     {
         EnergyBill bill = new EnergyBill();
         bill.setBillMonth(billMonth);
@@ -109,12 +112,12 @@ public class EnergyBillService
         
         if(highBrightnessCount > devices.size() * 0.5)
         {
-            analysis.append("发现").append(highBrightnessCount).append("盏路灯长期高亮度运行，建议优化调光策略；");
+            analysis.append(StringFormatter.format("发现{}盏路灯长期高亮度运行，建议优化调光策略；", highBrightnessCount));
         }
-        
+
         if(lowEfficiencyCount > 0)
         {
-            analysis.append("发现").append(lowEfficiencyCount).append("盏路灯在光照充足时仍保持较高亮度，存在能源浪费；");
+            analysis.append(StringFormatter.format("发现{}盏路灯在光照充足时仍保持较高亮度，存在能源浪费；", lowEfficiencyCount));
         }
         
         if(analysis.length() == 0)
@@ -146,7 +149,8 @@ public class EnergyBillService
         return suggestions.toString();
     }
     
-    public List<EnergyBill> getBillHistory(String areaId, int months)
+    @Nonnull
+    public List<EnergyBill> getBillHistory(@Nonnull String areaId, int months)
     {
         List<EnergyBill> bills = new ArrayList<>();
         YearMonth currentMonth = YearMonth.now();
@@ -162,7 +166,8 @@ public class EnergyBillService
         return bills;
     }
     
-    public Map<String, Object> getEnergyDashboard(String areaId)
+    @Nonnull
+    public Map<String, Object> getEnergyDashboard(@Nonnull String areaId)
     {
         Map<String, Object> dashboard = new HashMap<>();
         
@@ -212,7 +217,8 @@ public class EnergyBillService
         return dashboard;
     }
     
-    public Map<String, Object> compareWithBaseline(String areaId)
+    @Nonnull
+    public Map<String, Object> compareWithBaseline(@Nonnull String areaId)
     {
         Map<String, Object> comparison = new HashMap<>();
         

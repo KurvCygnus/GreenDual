@@ -5,6 +5,9 @@ import com.wenhua.tcpservice.pojo.Result;
 import com.wenhua.tcpservice.pojo.User;
 import com.wenhua.tcpservice.service.UserService;
 import com.wenhua.tcpservice.utils.JwtUtils;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.annotation.Nonnull;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -19,11 +22,12 @@ import java.util.Map;
 @RestController
 @CrossOrigin(origins = GlobalConfiguration.ORIGINS)
 @AllArgsConstructor
-public class LoginController {
+@Tag(name = "登录认证", description = "用户登录、令牌获取接口")
+public final class LoginController {
 
     private UserService userService;
 
-    //登录
+    @Operation(summary = "用户登录", description = "用户名密码登录，返回JWT令牌")
     @PostMapping("/login")
     public Result login(@RequestBody User user){
         log.debug("等登录请求");

@@ -6,6 +6,8 @@ import com.wenhua.tcpservice.pojo.QueryParameter;
 import com.wenhua.tcpservice.pojo.Result;
 import com.wenhua.tcpservice.pojo.dev.Device;
 import com.wenhua.tcpservice.service.EnvService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -14,18 +16,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-//前缀 /device
 @RestController
 @Slf4j
 @AllArgsConstructor
-@CrossOrigin(origins = GlobalConfiguration.ORIGINS)//必须带上这个前端才能获取数据
-public class EnvController {
+@CrossOrigin(origins = GlobalConfiguration.ORIGINS)
+@Tag(name = "环境监测", description = "环境监测设备CRUD、状态查询接口")
+public final class EnvController {
 
-    //环境监测相关
-    private EnvService envService;
-    private EnvMapper envMapper;
+    private final EnvService envService;
+    private final EnvMapper envMapper;
 
-    //查询设备列表(传入查询参数)
+    @Operation(summary = "查询设备列表", description = "分页查询环境监测设备")
     @PostMapping(GlobalConfiguration.DEVICE_REQUEST_PREFIX + "/select")
     public Result queryDevices(@RequestBody QueryParameter queryParameter) {
         log.debug("接受到了设备查询请求: {}", queryParameter.toString());
@@ -46,7 +47,7 @@ public class EnvController {
         return result;
     }
 
-    //添加设备
+    @Operation(summary = "添加设备")
     @PostMapping(GlobalConfiguration.DEVICE_REQUEST_PREFIX+"/add")
     public Result addDevice(@RequestBody Device device){
         log.debug("接受到了添加设备请求");
@@ -54,7 +55,7 @@ public class EnvController {
         return new Result(b);
     }
 
-    //修改设备
+    @Operation(summary = "修改设备")
     @PostMapping(GlobalConfiguration.DEVICE_REQUEST_PREFIX+"/update")
     public Result updateDevice(@RequestBody Device device){
         log.debug("接受到了修改设备请求: {}", device.toString());
@@ -62,7 +63,7 @@ public class EnvController {
         return new Result(b);
     }
 
-    //删除设备
+    @Operation(summary = "删除设备")
     @PostMapping(GlobalConfiguration.DEVICE_REQUEST_PREFIX+"/delete")
     public Result deleteDevice(@RequestBody List<String> ids){
         log.debug("接受到了删除设备请求: {}", ids.toString());
@@ -70,7 +71,7 @@ public class EnvController {
         return new Result(b);
     }
 
-    //获取设备统计数据
+    @Operation(summary = "获取设备统计数据")
     @GetMapping(GlobalConfiguration.DEVICE_REQUEST_PREFIX+"/stats")
     public Result getDeviceStats() {
         log.debug("接受到了获取设备统计数据请求");
@@ -105,7 +106,7 @@ public class EnvController {
         return Result.success(stats);
     }
 
-    //获取设备详情
+    @Operation(summary = "获取设备详情")
     @GetMapping(GlobalConfiguration.DEVICE_REQUEST_PREFIX+"/detail/{id}")
     public Result getDeviceDetail(@PathVariable String id) {
         log.debug("接受到了获取设备详情请求: {}", id);
@@ -117,7 +118,7 @@ public class EnvController {
         }
     }
 
-    //更新设备状态（在线/离线）
+    @Operation(summary = "更新设备状态")
     @PostMapping(GlobalConfiguration.DEVICE_REQUEST_PREFIX+"/status")
     public Result updateDeviceStatus(@RequestBody Map<String, Object> params) {
         log.debug("接受到了更新设备状态请求");
@@ -127,7 +128,7 @@ public class EnvController {
         return new Result(b);
     }
 
-    //批量更新设备状态
+    @Operation(summary = "批量更新设备状态")
     @PostMapping(GlobalConfiguration.DEVICE_REQUEST_PREFIX+"/status/batch")
     public Result batchUpdateDeviceStatus(@RequestBody Map<String, Object> params) {
         log.debug("接受到了批量更新设备状态请求");

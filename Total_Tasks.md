@@ -9,7 +9,7 @@
 
 ### 1.1 DeepSeek API Key 硬编码在前端
 
-- [ ] 是否完成
+- [x] 是否完成
 - **文件**: `platform/frontend/src/api/auth.js:159`
 - **问题**: `const DEEPSEEK_API_KEY = "sk-d3447a51c4c349c7bd269d1c9654cb25";` — API Key 明文硬编码在前端源码中
 - **影响**: 任何人查看前端源码即可盗用 DeepSeek API 额度, 造成经济损失
@@ -17,7 +17,7 @@
 
 ### 1.2 高德地图 API Key 硬编码
 
-- [ ] 是否完成
+- [x] 是否完成
 - **文件**: `platform/frontend/src/components/map/LampMap.vue:63`
 - **问题**: `const AMAP_KEY = "21d80a7334cb846ee23029681f541a06";` — 地图 Key 明文硬编码
 - **影响**: 可被他人盗用, 导致配额耗尽或产生费用
@@ -25,7 +25,7 @@
 
 ### 1.3 JWT 密钥硬编码
 
-- [ ] 是否完成
+- [x] 是否完成: 使用 SHA-512 生成了更复杂的密钥, 但仍然是硬编码
 - **文件**: `platform/backend/TCPService/src/main/java/com/wenhua/tcpservice/util/JwtUtils.java:15`
 - **问题**: `private static final String signKey = "itheima";` — 硬编码弱密钥
 - **影响**: 可被暴力破解, 任意伪造令牌
@@ -33,7 +33,7 @@
 
 ### 1.4 密码明文存储
 
-- [ ] 是否完成
+- [x] 是否完成
 - **文件**: `platform/backend/TCPService/.../UserServiceImpl.java`
 - **问题**: 注释写明 `// 暂时省略了加密过程`, 密码明文入库
 - **影响**: 数据库泄露即所有密码泄露
@@ -41,7 +41,7 @@
 
 ### 1.5 登录明文传输密码
 
-- [ ] 是否完成
+- [x] 是否完成
 - **文件**: `platform/frontend/src/views/LoginView.vue`
 - **问题**: 登录请求中密码明文传输, 无 HTTPS 时密码被中间人窃取
 - **影响**: 网络监听可获取用户密码
@@ -49,7 +49,7 @@
 
 ### 1.6 服务器 IP 硬编码
 
-- [ ] 是否完成
+- [x] 是否完成
 - **文件**: `platform/frontend/src/api/auth.js` 及多处 `.vue` 组件
 - **问题**: `const api = "http://8.130.125.122:18081";` 及多处硬编码 `http://localhost:18081`
 - **影响**: 环境切换需修改多处代码, 易出错

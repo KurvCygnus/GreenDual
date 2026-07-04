@@ -10,8 +10,8 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 @AllArgsConstructor
 public class WebConfig implements WebMvcConfigurer {
-    
-    private LoginCheckInterceptor loginCheckInterceptor;
+
+    private final LoginCheckInterceptor loginCheckInterceptor;
 
     //注册拦截器
     @Override

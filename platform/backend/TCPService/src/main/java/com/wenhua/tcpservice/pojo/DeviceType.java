@@ -4,7 +4,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-public class DeviceType {
+public final class DeviceType {
     private Integer id;
     private String name;
     private String type;

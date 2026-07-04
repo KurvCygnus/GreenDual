@@ -4,7 +4,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-public class MonitorRecord {
+public final class MonitorRecord {
     private Integer id;
     private String deviceId;
     private String deviceName;

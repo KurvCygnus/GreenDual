@@ -1,10 +1,16 @@
 package com.wenhua.tcpservice.pojo.campus;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDateTime;
 
 @Data
-public class TeachingCase {
+@AllArgsConstructor
+@NoArgsConstructor
+public final class TeachingCase {
+    //? FIX: 该字段未使用.
     private Integer id;
     private String caseName;
     private String caseType;

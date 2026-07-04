@@ -7,6 +7,10 @@ import com.wenhua.tcpservice.pojo.Result;
 import com.wenhua.tcpservice.pojo.User;
 import com.wenhua.tcpservice.service.UserService;
 import com.wenhua.tcpservice.utils.JwtUtils;
+import com.wenhua.tcpservice.utils.PasswordUtils;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.annotation.Nonnull;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,11 +27,13 @@ import java.util.Map;
 @CrossOrigin(origins = GlobalConfiguration.ORIGINS)
 @AllArgsConstructor
 @Slf4j
-public class UserController {
+@Tag(name = "用户管理", description = "用户CRUD、权限控制接口")
+public final class UserController {
 
     private UserService userService;
     private UserMapper userMapper;
 
+    @Operation(summary = "查询用户列表")
     @PostMapping(GlobalConfiguration.USER_REQUEST_PREFIX + "/select")
     public Result selectUser(@RequestBody QueryParameter queryParameter, HttpServletRequest request) {
         if (!isRoot(request)) {
@@ -41,6 +47,7 @@ public class UserController {
         return result;
     }
 
+    @Operation(summary = "更新用户信息")
     @PostMapping(GlobalConfiguration.USER_REQUEST_PREFIX + "/update")
     public Result updateUser(@RequestBody User user, HttpServletRequest request) {
         if (!isRoot(request)) {
@@ -51,6 +58,7 @@ public class UserController {
         return Result.success();
     }
 
+    @Operation(summary = "添加用户")
     @PostMapping(GlobalConfiguration.USER_REQUEST_PREFIX + "/add")
     public Result addUser(@RequestBody User user, HttpServletRequest request) {
         if (!isRoot(request)) {
@@ -65,6 +73,7 @@ public class UserController {
         return Result.success();
     }
 
+    @Operation(summary = "删除用户")
     @PostMapping(GlobalConfiguration.USER_REQUEST_PREFIX + "/delete")
     public Result deleteUser(@RequestBody User user, HttpServletRequest request) {
         if (!isRoot(request)) {
@@ -78,6 +87,7 @@ public class UserController {
         return Result.success();
     }
 
+    @Operation(summary = "重置用户密码")
     @PostMapping(GlobalConfiguration.USER_REQUEST_PREFIX + "/resetPassword")
     public Result resetPassword(@RequestBody Map<String, Object> params, HttpServletRequest request) {
         if (!isRoot(request)) {
@@ -90,8 +100,12 @@ public class UserController {
             if (userId == null || newPassword == null || newPassword.isEmpty()) {
                 return Result.error("参数错误");
             }
-            
-            userMapper.updatePassword(userId, newPassword);
+
+            // 查询用户名作为盐值，对密码进行哈希
+            User target = userMapper.selectUserById(userId);
+            String salt = target != null ? target.getUsername() : "";
+            String hashedPassword = PasswordUtils.encode(newPassword, salt);
+            userMapper.updatePassword(userId, hashedPassword);
             return Result.success("密码重置成功");
         } catch (Exception e) {
             log.error("重置密码失败: {}", e.getMessage());
@@ -99,6 +113,7 @@ public class UserController {
         }
     }
 
+    @Operation(summary = "获取用户统计")
     @PostMapping(GlobalConfiguration.USER_REQUEST_PREFIX + "/stats")
     public Result getUserStats(HttpServletRequest request) {
         try {

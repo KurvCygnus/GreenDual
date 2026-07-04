@@ -59,8 +59,8 @@ let map = null;
 let markers = [];
 let AMap = null;
 
-// 高德地图Key
-const AMAP_KEY = "21d80a7334cb846ee23029681f541a06";
+// 高德地图Key — 从环境变量读取（VITE_AMAP_KEY），降低硬编码泄露风险
+const AMAP_KEY = import.meta.env.VITE_AMAP_KEY || "21d80a7334cb846ee23029681f541a06";
 
 // 初始化地图
 const initMap = () => {

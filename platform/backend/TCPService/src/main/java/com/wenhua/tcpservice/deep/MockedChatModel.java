@@ -18,13 +18,13 @@ public final class MockedChatModel implements ChatModel
         {
             final String[][] buildLookup =
                 {
-                    {"environment", "环境", "analyze"},
-                    {"temperature", "温度"},
-                    {"humidity", "湿度"},
-                    {"lightintensity", "光照"},
-                    {"路灯", "照明", "亮度"},
-                    {"节能", "省电", "能耗"},
-                    {"predict", "趋势", "预测"}
+                    { "environment",    "环境",  "analyze"},
+                    { "temperature",    "温度"},
+                    { "humidity",       "湿度"},
+                    { "lightintensity", "光照"},
+                    { "路灯",             "照明",  "亮度"},
+                    { "节能",             "省电",  "能耗"},
+                    { "predict",        "趋势",  "预测"}
                 };
             
             final String[] mockResponse =
@@ -121,15 +121,15 @@ public final class MockedChatModel implements ChatModel
                 };
             
             for(int index = 0; index < buildLookup.length; index++)
-                for(final String keyword: buildLookup[index])
+                for(final var keyword: buildLookup[index])
                     map.put(keyword.toLowerCase(), mockResponse[index]);
         }
     );
     
     @Override public @NonNull ChatResponse call(@NonNull Prompt prompt)
     {
-        String userMessage = prompt.getContents();
-        String mockContent = generateMockResponse(userMessage);
+        final var userMessage = prompt.getContents();
+        final var mockContent = generateMockResponse(userMessage);
         
         return new ChatResponse(List.of(new Generation(mockContent)));
     }

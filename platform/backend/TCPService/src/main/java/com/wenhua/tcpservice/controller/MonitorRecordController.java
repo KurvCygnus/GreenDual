@@ -4,6 +4,9 @@ import com.wenhua.tcpservice.config.GlobalConfiguration;
 import com.wenhua.tcpservice.mapper.MonitorRecordMapper;
 import com.wenhua.tcpservice.pojo.MonitorRecord;
 import com.wenhua.tcpservice.pojo.Result;
+import com.wenhua.tcpservice.utils.StringFormatter;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,10 +22,12 @@ import java.util.Map;
 @RequestMapping(GlobalConfiguration.USER_REQUEST_PREFIX + "/record")
 @AllArgsConstructor
 @Slf4j
-public class MonitorRecordController {
+@Tag(name = "监测记录", description = "环境监测记录查询、统计接口")
+public final class MonitorRecordController {
 
     private MonitorRecordMapper monitorRecordMapper;
 
+    @Operation(summary = "获取监测记录列表")
     @PostMapping("/list")
     public Result getRecordList(@RequestBody Map<String, Object> params, HttpServletRequest request) {
         try {
@@ -55,6 +60,7 @@ public class MonitorRecordController {
         }
     }
 
+    @Operation(summary = "获取监测记录统计")
     @PostMapping("/stats")
     public Result getRecordStats(HttpServletRequest request) {
         try {
@@ -70,6 +76,7 @@ public class MonitorRecordController {
         }
     }
 
+    @Operation(summary = "获取监测记录详情")
     @PostMapping("/detail")
     public Result getRecordDetail(@RequestBody Map<String, Object> params) {
         try {
@@ -85,6 +92,7 @@ public class MonitorRecordController {
         }
     }
 
+    @Operation(summary = "删除监测记录")
     @PostMapping("/delete")
     public Result deleteRecord(@RequestBody Map<String, Object> params, HttpServletRequest request) {
         try {
@@ -97,6 +105,7 @@ public class MonitorRecordController {
         }
     }
 
+    @Operation(summary = "添加监测记录")
     @PostMapping("/add")
     public Result addRecord(@RequestBody Map<String, Object> params, HttpServletRequest request) {
         try {
@@ -130,7 +139,7 @@ public class MonitorRecordController {
             return Result.success("添加成功");
         } catch (Exception e) {
             log.error("添加记录失败: {}", e.getMessage());
-            return Result.error("添加记录失败: %s".formatted(e.getMessage()));
+            return Result.error(StringFormatter.format("添加记录失败: {}", e.getMessage()));
         }
     }
 }

@@ -4,7 +4,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-public class EnergyBill {
+public final class EnergyBill {
     private Integer id;
     private Integer areaId;
     private String areaName;

@@ -2,6 +2,7 @@ package com.wenhua.tcpservice.service.campus;
 
 import com.wenhua.tcpservice.mapper.EnvMapper;
 import com.wenhua.tcpservice.pojo.dev.Device;
+import jakarta.annotation.Nonnull;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -15,16 +16,17 @@ import java.util.Map;
 @Service
 @Slf4j
 @AllArgsConstructor
-public class SmartLightingEngine {
+public final class SmartLightingEngine {
 
-    private EnvMapper envMapper;
+    private final EnvMapper envMapper;
 
     private static final int MIN_BRIGHTNESS = 20;
     private static final int MAX_BRIGHTNESS = 100;
     private static final int LIGHT_THRESHOLD_HIGH = 500;
     private static final int LIGHT_THRESHOLD_LOW = 100;
 
-    public Map<String, Object> calculateOptimalBrightness(Device device) {
+    @Nonnull
+    public Map<String, Object> calculateOptimalBrightness(@Nonnull Device device) {
         Map<String, Object> result = new HashMap<>();
         
         Integer currentLightIntensity = device.getLightIntensity();
@@ -128,7 +130,8 @@ public class SmartLightingEngine {
         return reason.toString();
     }
 
-    public Map<String, Object> batchOptimize(List<Device> devices) {
+    @Nonnull
+    public Map<String, Object> batchOptimize(@Nonnull List<Device> devices) {
         Map<String, Object> result = new HashMap<>();
         int totalDevices = devices.size();
         int adjustedDevices = 0;
@@ -167,7 +170,8 @@ public class SmartLightingEngine {
         return dailySaving * 30;
     }
 
-    public Map<String, Object> getEnergyStatistics(String areaId) {
+    @Nonnull
+    public Map<String, Object> getEnergyStatistics(@Nonnull String areaId) {
         Map<String, Object> stats = new HashMap<>();
         
         List<Device> devices = envMapper.selectAllDevice();
