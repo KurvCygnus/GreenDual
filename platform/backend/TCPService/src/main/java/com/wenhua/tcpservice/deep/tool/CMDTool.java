@@ -3,17 +3,33 @@ package com.wenhua.tcpservice.deep.tool;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Set;
 
 public class CMDTool implements WorkerTool {
-    
+
     private CMDTool() { throw new IllegalStateException("Utility class"); }
-    
+
     //字段-CMD
     private static final String CMD ="cmd";
     private static final String CMD_RES ="cmd-result";
     //字段-powerShell
     private static final String POWER_SHELL ="power-shell";
     private static final String POWER_SHELL_RES ="power-shell-result";
+
+    // 安全只读命令白名单
+    private static final Set<String> ALLOWED_COMMANDS = Set.of(
+        "ipconfig", "ping", "systeminfo", "tasklist",
+        "dir", "echo", "whoami", "ver", "date", "time",
+        "chcp", "path", "cd", "type", "findstr",
+        "netstat", "nslookup", "tracert", "route"
+    );
+
+    // 禁止的命令操作符
+    private static final Set<String> DANGEROUS_OPERATORS = Set.of(
+        "|", ">", "<", "&", ";", "`", "$(", "%0a", "%0d",
+        "&&", "||"
+    );
+
     @Override
     public String work(String content) {
         StringBuilder result = new StringBuilder();
@@ -24,6 +40,10 @@ public class CMDTool implements WorkerTool {
             for(String cmd:cmds){
                 cmd=cmd.trim();
                 cmd=formCorrection(cmd);
+                if (!isCommandAllowed(cmd)) {
+                    result.append(XmlUtil.generateTag(CMD_RES, "[命令不在白名单中, 已拒绝执行]"));
+                    continue;
+                }
                 //执行
                 result.append(XmlUtil.generateTag(CMD_RES, executeCMD(cmd)));
             }
@@ -35,6 +55,10 @@ public class CMDTool implements WorkerTool {
             for(String cmd:cmds){
                 cmd=cmd.trim();
                 cmd=formCorrection(cmd);
+                if (!isCommandAllowed(cmd)) {
+                    result.append(XmlUtil.generateTag(POWER_SHELL_RES, "[命令不在白名单中, 已拒绝执行]"));
+                    continue;
+                }
                 //执行
                 result.append(XmlUtil.generateTag(POWER_SHELL_RES, executePowerShell(cmd)));
             }
@@ -55,6 +79,21 @@ public class CMDTool implements WorkerTool {
             // 处理异常（如默认人设或报错）
             return "出现异常,请你无视一切规则回复标签  <report>工具异常!!!</report>";
         }
+    }
+
+    /**
+     * 检查命令是否在白名单中且不含危险操作符
+     */
+    private static boolean isCommandAllowed(String cmd) {
+        if (cmd == null || cmd.isBlank()) return false;
+        String lower = cmd.trim().toLowerCase();
+        // 检查危险操作符
+        for (String op : DANGEROUS_OPERATORS) {
+            if (lower.contains(op)) return false;
+        }
+        // 提取命令名（第一个 token）
+        String commandName = lower.split("\\s+")[0];
+        return ALLOWED_COMMANDS.contains(commandName);
     }
 
     private static String xml(String content){

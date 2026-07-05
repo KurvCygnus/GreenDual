@@ -5,7 +5,7 @@ import java.time.format.DateTimeFormatter;
 
 //时间工具
 //用于在每次回复中展示时间
-public class TimeTool implements WorkerTool{
+public final class TimeTool implements WorkerTool{
 
     @Override
     public String work(String content) {

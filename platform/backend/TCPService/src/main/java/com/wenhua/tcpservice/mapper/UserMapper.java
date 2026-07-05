@@ -39,7 +39,7 @@ public interface UserMapper {
     @Update("UPDATE user SET last_login_time = #{loginTime} WHERE userId = #{userId}")
     void updateLoginTime(@Param("userId") Integer userId, @Param("loginTime") LocalDateTime loginTime);
 
-    @Select("SELECT * FROM `user`")
+    @Select("SELECT * FROM user")
     List<User> selectAll();
 
     @Select("SELECT COUNT(*) FROM user WHERE userPermission = #{permission}")

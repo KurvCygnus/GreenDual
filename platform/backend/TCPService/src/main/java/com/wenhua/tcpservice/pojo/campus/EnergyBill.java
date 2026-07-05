@@ -88,9 +88,15 @@ public final class EnergyBill
      */
     EnergyBill() { }
     
-    String getWasteAnalysis() { return wasteAnalysis; }
+    /**
+     * @deprecated 仅被Mybatis使用, 因为这个傻逼框架连 <u>{@link Optional}</u> 都不知道怎么处理, 杂鱼
+     */
+    @Deprecated String getWasteAnalysis() { return wasteAnalysis; }
     
-    String getOptimizationSuggestions() { return optimizationSuggestions; }
+    /**
+     * @deprecated 仅被Mybatis使用, 因为这个傻逼框架连 <u>{@link Optional}</u> 都不知道怎么处理, 杂鱼
+     */
+    @Deprecated String getOptimizationSuggestions() { return optimizationSuggestions; }
     
     void setId(Integer id) { this.id = id; }
     

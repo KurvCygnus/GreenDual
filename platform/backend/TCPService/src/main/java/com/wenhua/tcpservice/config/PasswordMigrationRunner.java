@@ -2,6 +2,7 @@ package com.wenhua.tcpservice.config;
 
 import com.wenhua.tcpservice.mapper.UserMapper;
 import com.wenhua.tcpservice.utils.PasswordUtils;
+import jakarta.annotation.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -27,13 +28,14 @@ public final class PasswordMigrationRunner implements CommandLineRunner
         userMapper.selectAll().stream().mapToInt(
             user ->
             {
-                final var password = user.getPassword();
+                final @Nullable var name = user.getUsername();
+                final @Nullable var password = user.getPassword();
                 
                 // 跳过已经是 64 字符 hex 哈希的用户
-                if(password == null || (password.length() == 64 && PASSWORD_REGEX.matcher(password).matches()))
+                if(password == null || name == null || (password.length() == 64 && PASSWORD_REGEX.matcher(password).matches()))
                     return 0;
                 
-                final var hashed = PasswordUtils.encode(password, user.getUsername());
+                final var hashed = PasswordUtils.encode(password, name);
                 userMapper.updatePassword(user.getUserId(), hashed);
                 
                 return 1;

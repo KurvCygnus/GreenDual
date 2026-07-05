@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Slf4j
-public class ThreadSafeStringStorage {
+public final class ThreadSafeStringStorage {
     // 使用 AtomicReference 存储字符串，保证原子性和可见性
     private final AtomicReference<String> storage = new AtomicReference<>("");
 

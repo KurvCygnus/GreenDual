@@ -2,8 +2,12 @@ package com.wenhua.tcpservice.controller;
 
 import com.wenhua.tcpservice.config.GlobalConfiguration;
 import com.wenhua.tcpservice.mapper.DeviceTypeMapper;
+import com.wenhua.tcpservice.mapper.UserMapper;
 import com.wenhua.tcpservice.pojo.DeviceType;
+import com.wenhua.tcpservice.pojo.PermissionLevel;
 import com.wenhua.tcpservice.pojo.Result;
+import com.wenhua.tcpservice.pojo.User;
+import com.wenhua.tcpservice.utils.JwtUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Nonnull;
@@ -24,6 +28,7 @@ import java.util.Map;
 public final class DeviceTypeController {
 
     private final DeviceTypeMapper deviceTypeMapper;
+    private final UserMapper userMapper;
 
     @Operation(summary = "获取设备类型列表")
     @PostMapping("/list")
@@ -40,6 +45,9 @@ public final class DeviceTypeController {
     @Operation(summary = "添加设备类型")
     @PostMapping("/add")
     public Result addDeviceType(@RequestBody DeviceType deviceType, HttpServletRequest request) {
+        if (!isAdmin(request)) {
+            return Result.error("权限不足");
+        }
         try {
             DeviceType existing = deviceTypeMapper.selectByType(deviceType.getType());
             if (existing != null) {
@@ -68,6 +76,9 @@ public final class DeviceTypeController {
     @Operation(summary = "更新设备类型")
     @PostMapping("/update")
     public Result updateDeviceType(@RequestBody DeviceType deviceType, HttpServletRequest request) {
+        if (!isAdmin(request)) {
+            return Result.error("权限不足");
+        }
         try {
             DeviceType existing = deviceTypeMapper.selectById(deviceType.getId());
             if (existing == null) {
@@ -84,6 +95,9 @@ public final class DeviceTypeController {
     @Operation(summary = "切换设备类型状态")
     @PostMapping("/toggleStatus")
     public Result toggleStatus(@RequestBody Map<String, Object> params, HttpServletRequest request) {
+        if (!isAdmin(request)) {
+            return Result.error("权限不足");
+        }
         try {
             Integer id = (Integer) params.get("id");
             DeviceType deviceType = deviceTypeMapper.selectById(id);
@@ -102,6 +116,9 @@ public final class DeviceTypeController {
     @Operation(summary = "删除设备类型")
     @PostMapping("/delete")
     public Result deleteDeviceType(@RequestBody Map<String, Object> params, HttpServletRequest request) {
+        if (!isAdmin(request)) {
+            return Result.error("权限不足");
+        }
         try {
             Integer id = (Integer) params.get("id");
             deviceTypeMapper.deleteById(id);
@@ -110,5 +127,12 @@ public final class DeviceTypeController {
             log.error("删除设备类型失败: {}", e.getMessage());
             return Result.error("删除设备类型失败");
         }
+    }
+
+    private boolean isAdmin(HttpServletRequest request) {
+        Integer userId = JwtUtils.getUserId(request);
+        if (userId == null) return false;
+        User user = userMapper.selectUserById(userId);
+        return user != null && user.getPermissionLevel().hasPermission(PermissionLevel.ADMIN);
     }
 }

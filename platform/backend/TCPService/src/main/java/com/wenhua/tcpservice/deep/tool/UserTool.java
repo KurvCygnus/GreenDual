@@ -6,7 +6,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 //和用户交互的工具
-public class UserTool implements WorkerTool{
+public final class UserTool implements WorkerTool{
     //报告
     public static final String REPORT="report";
 
