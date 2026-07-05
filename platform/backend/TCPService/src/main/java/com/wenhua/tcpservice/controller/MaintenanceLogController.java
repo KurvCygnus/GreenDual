@@ -49,10 +49,8 @@ public final class MaintenanceLogController {
 
         //数量也查
         int i = logMapper.selectCount(queryParameter);
-        Result result = Result.success(select);
-        result.setTotalPages(i);
         log.debug("页面数量: {}", i);
-        return result;
+        return Result.success(select, i);
     }
 
     @Operation(summary = "删除维修日志", description = "需要管理员权限")

@@ -42,7 +42,6 @@ public final class UserServiceImpl implements UserService {
 
     @Override @Nonnull
     public List<User> selectUsers(@Nonnull QueryParameter queryParameter) {
-        queryParameter.calculateOffset();
         return userMapper.selectUsers(queryParameter);
     }
 

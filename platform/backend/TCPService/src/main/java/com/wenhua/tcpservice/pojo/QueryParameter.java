@@ -1,40 +1,91 @@
 package com.wenhua.tcpservice.pojo;
 
-import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.annotation.Nullable;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.ToString;
 
-//查询参数类
-@Data
-public final class QueryParameter {
-    //当前页
-    private Integer currentPage = 1;
-    //每页条数
-    private Integer pageSize = 10;
-    //排序方式(升序降序)
-    private String sort;
-    //匹配字符串
-    private String match;
-    //用户名搜索
-    private String username;
-    //特殊:查询条件
-    private Integer query = QUERY_ALL;
-    //权限筛选
-    private Integer permission;
-    //偏移量(需要后期计算)
-    private Integer offset;
-    //查询在线
-    public static final Integer QUERY_ONLINE = 1;
-    //查询离线
-    public static final Integer QUERY_OFFLINE = 2;
-    //查询全部(默认就是)
-    public static final Integer QUERY_ALL = 0;
+import java.util.Objects;
+import java.util.Optional;
 
-    //计算偏移量
-    public void calculateOffset(){
-        this.offset = (this.currentPage - 1) * this.pageSize;
+@ToString
+public final class QueryParameter
+{
+    // ========== 查询类型枚举 ==========
+    public enum QueryType
+    {
+        ALL(0), ONLINE(1), OFFLINE(2);
+        
+        public final int value;
+        
+        QueryType(int value) { this.value = value; }
+        
+        public static QueryType fromValue(int value)
+        {
+            for(QueryType t: values())
+                if(t.value == value)
+                    return t;
+            return ALL;
+        }
     }
-
-    //常量
+    
+    // ========== 排序常量（供 MyBatis XML 引用） ==========
     public static final String DESC = "desc";
     public static final String ASC = "asc";
-
+    
+    // ========== 字段 ==========
+    @Getter private final int currentPage;
+    @Getter private final int pageSize;
+    @Getter private final int offset;           // (currentPage-1) * pageSize
+    @Getter private final String sort;             // null → 不排序
+    @Getter private final String match;            // null → 不模糊匹配
+    @Getter private final String username;         // null → 不按用户名筛选
+    @Getter private final QueryType query;
+    private final @Nullable Integer permission; // null → 不按权限筛选
+    
+    // ========== 构造 ==========
+    
+    /**
+     * JSON 反序列化入口，所有装箱参数均提供空安全默认值。
+     */
+    @JsonCreator
+    public QueryParameter(
+        @JsonProperty("currentPage") Integer currentPage,
+        @JsonProperty("pageSize") Integer pageSize,
+        @JsonProperty("sort") String sort,
+        @JsonProperty("match") String match,
+        @JsonProperty("username") String username,
+        @JsonProperty("query") QueryType query,
+        @JsonProperty("permission") @Nullable Integer permission
+    )
+    {
+        this.currentPage = Objects.requireNonNullElse(currentPage, 1);
+        this.pageSize = Objects.requireNonNullElse(pageSize, 10);
+        this.offset = (this.currentPage - 1) * this.pageSize;
+        this.sort = sort;
+        this.match = match;
+        this.username = username;
+        this.query = query != null ? query : QueryType.ALL;
+        this.permission = permission;
+    }
+    
+    // ========== 只读 getter ==========
+    public @NonNull Optional<Integer> getPermission() { return Optional.ofNullable(permission); }
+    
+    @Override public boolean equals(Object o)
+    {
+        if(this == o) return true;
+        if(!(o instanceof QueryParameter that)) return false;
+        return currentPage == that.currentPage
+            && pageSize == that.pageSize
+            && Objects.equals(sort, that.sort)
+            && Objects.equals(match, that.match)
+            && Objects.equals(username, that.username)
+            && query == that.query
+            && Objects.equals(permission, that.permission);
+    }
+    
+    @Override public int hashCode() { return Objects.hash(currentPage, pageSize, sort, match, username, query, permission); }
 }

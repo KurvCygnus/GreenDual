@@ -51,9 +51,7 @@ public final class MonitorRecordController {
             List<MonitorRecord> records = monitorRecordMapper.selectRecords(queryParams);
             int total = monitorRecordMapper.countRecords(queryParams);
 
-            Result result = Result.success(records);
-            result.setTotalPages(total);
-            return result;
+            return Result.success(records).totalPages(total);
         } catch (Exception e) {
             log.error("获取监测记录失败: {}", e.getMessage());
             return Result.error("获取监测记录失败");
@@ -109,32 +107,33 @@ public final class MonitorRecordController {
     @PostMapping("/add")
     public Result addRecord(@RequestBody Map<String, Object> params, HttpServletRequest request) {
         try {
-            MonitorRecord record = new MonitorRecord();
-            record.setDeviceId((String) params.get("deviceId"));
-            record.setDeviceName((String) params.get("deviceName"));
-            record.setDataType((String) params.get("dataType"));
-            record.setValue(params.get("value") != null ? Double.parseDouble(params.get("value").toString()) : 0.0);
-            record.setStatus((String) params.get("status"));
-            record.setRemark((String) params.get("remark"));
-            
-            // 手动解析日期时间
             String recordTimeStr = (String) params.get("recordTime");
+            LocalDateTime recordTime;
             if (recordTimeStr != null && !recordTimeStr.isEmpty()) {
                 try {
-                    // 尝试解析 yyyy-MM-dd HH:mm:ss 格式
                     java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-                    record.setRecordTime(LocalDateTime.parse(recordTimeStr, formatter));
+                    recordTime = LocalDateTime.parse(recordTimeStr, formatter);
                 } catch (Exception e) {
-                    // 如果解析失败，使用当前时间
-                    record.setRecordTime(LocalDateTime.now());
+                    recordTime = LocalDateTime.now();
                 }
             } else {
-                record.setRecordTime(LocalDateTime.now());
+                recordTime = LocalDateTime.now();
             }
-            
-            if (record.getStatus() == null) {
-                record.setStatus("normal");
-            }
+
+            String status = (String) params.get("status");
+            if (status == null) status = "normal";
+
+            MonitorRecord record = new MonitorRecord(
+                    null,
+                    (String) params.get("deviceId"),
+                    (String) params.get("deviceName"),
+                    recordTime,
+                    (String) params.get("dataType"),
+                    params.get("value") != null ? Double.parseDouble(params.get("value").toString()) : 0.0,
+                    status,
+                    (String) params.get("remark"),
+                    null
+            );
             monitorRecordMapper.insertRecord(record);
             return Result.success("添加成功");
         } catch (Exception e) {

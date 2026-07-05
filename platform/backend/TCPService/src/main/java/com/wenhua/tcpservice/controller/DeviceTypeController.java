@@ -45,12 +45,18 @@ public final class DeviceTypeController {
             if (existing != null) {
                 return Result.error("类型标识已存在");
             }
-            if (deviceType.getStatus() == null) {
-                deviceType.setStatus("active");
-            }
-            if (deviceType.getDeviceCount() == null) {
-                deviceType.setDeviceCount(0);
-            }
+            deviceType = new DeviceType(
+                deviceType.getId(),
+                deviceType.getName(),
+                deviceType.getType(),
+                deviceType.getSensors(),
+                deviceType.getDeviceCount() != null ? deviceType.getDeviceCount() : 0,
+                deviceType.getStatus() != null ? deviceType.getStatus() : "active",
+                deviceType.getColor(),
+                deviceType.getDescription(),
+                deviceType.getCreatedAt(),
+                deviceType.getUpdatedAt()
+            );
             deviceTypeMapper.insert(deviceType);
             return Result.success("添加成功");
         } catch (Exception e) {

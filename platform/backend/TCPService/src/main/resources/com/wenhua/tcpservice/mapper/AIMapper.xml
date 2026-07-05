@@ -54,10 +54,10 @@
 
             <!-- 状态筛选条件 -->
             <choose>
-                <when test="query == @com.wenhua.tcpservice.pojo.QueryParameter@QUERY_ONLINE">
-                    AND online_status = 1  <!-- 假设存在在线状态字段 -->
+                <when test="query.name() == 'ONLINE'">
+                    AND online_status = 1
                 </when>
-                <when test="query == @com.wenhua.tcpservice.pojo.QueryParameter@QUERY_OFFLINE">
+                <when test="query.name() == 'OFFLINE'">
                     AND online_status = 0
                 </when>
             </choose>
@@ -65,11 +65,11 @@
         <!-- 排序处理 -->
         ORDER BY ai_id
         <choose>
-            <when test="sort == @com.wenhua.tcpservice.pojo.QueryParameter@DESC">
+            <when test="sort == 'desc'">
                 DESC
             </when>
             <otherwise>
-                `ASC`
+                ASC
             </otherwise>
         </choose>
         <!-- 分页处理 -->
@@ -86,10 +86,10 @@
 
             <!-- 状态筛选条件 -->
             <choose>
-                <when test="query == @com.wenhua.tcpservice.pojo.QueryParameter@QUERY_ONLINE">
+                <when test="query.name() == 'ONLINE'">
                     AND online_status = 1
                 </when>
-                <when test="query == @com.wenhua.tcpservice.pojo.QueryParameter@QUERY_OFFLINE">
+                <when test="query.name() == 'OFFLINE'">
                     AND online_status = 0
                 </when>
             </choose>
@@ -118,18 +118,16 @@
         <!-- 如果 query 不为 QUERY_ALL，则根据条件过滤 -->
         <if test="query != null">
             <choose>
-                <when test="query == @com.wenhua.tcpservice.pojo.QueryParameter@QUERY_ONLINE">
-                    -- 在线查询条件（根据实际字段调整）
+                <when test="query.name() == 'ONLINE'">
                     AND 1=1
                 </when>
-                <when test="query == @com.wenhua.tcpservice.pojo.QueryParameter@QUERY_OFFLINE">
-                    -- 离线查询条件（根据实际字段调整）
+                <when test="query.name() == 'OFFLINE'">
                     AND 1=0
                 </when>
             </choose>
         </if>
         <!-- 排序 -->
-        <if test="sort != null and (sort == @com.wenhua.tcpservice.pojo.QueryParameter@ASC or sort == @com.wenhua.tcpservice.pojo.QueryParameter@DESC)">
+        <if test="sort != null and (sort == 'asc' or sort == 'desc')">
             ORDER BY action_time ${sort}
         </if>
         <!-- 分页 -->
@@ -149,12 +147,10 @@
         </if>
         <if test="query != null">
             <choose>
-                <when test="query == @com.wenhua.tcpservice.pojo.QueryParameter@QUERY_ONLINE">
-                    -- 在线查询条件（根据实际字段调整）
+                <when test="query.name() == 'ONLINE'">
                     AND 1=1
                 </when>
-                <when test="query == @com.wenhua.tcpservice.pojo.QueryParameter@QUERY_OFFLINE">
-                    -- 离线查询条件（根据实际字段调整）
+                <when test="query.name() == 'OFFLINE'">
                     AND 1=0
                 </when>
             </choose>

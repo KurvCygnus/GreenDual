@@ -23,8 +23,8 @@ public final class AIController
 {
     /**
      * @implNote <span style="color: red">
-     *     这里不建议, 也不应该使用 <u>{@link org.springframework.beans.factory.annotation.Autowired Autowired}</u> 或者
-     *      <u>{@link lombok.AllArgsConstructor AllArgsConstructor}</u> 来注入字段.
+     * 这里不建议, 也不应该使用 <u>{@link org.springframework.beans.factory.annotation.Autowired Autowired}</u> 或者
+     * <u>{@link lombok.AllArgsConstructor AllArgsConstructor}</u> 来注入字段.
      * </span><br>
      * Spring AI 将 <u>{@link org.springframework.ai.chat.model.ChatModel ChatModel}</u>
      * 设计为单例, 这代表着其是<b>有状态的, 可定制的, 是AI后端的连接池, 因此Spring Bean不提供默认的Bean来注入.</b>
@@ -41,19 +41,20 @@ public final class AIController
             build();
         this.chatMemory = chatMemory;
     }
-
+    
     @Operation(summary = "AI对话", description = "发送消息给AI助手并获取回复")
     @PostMapping(GlobalConfiguration.AI_REQUEST_PREFIX + "/chat")
-    public Result chat(@RequestBody Map<String, Object> params) {
+    public Result chat(@RequestBody Map<String, Object> params)
+    {
         log.debug("接收到AI对话请求");
-        try {
-            String tempId = (String) params.get("sessionId");
-            final String sessionId = tempId == null || tempId.isEmpty() ? "default" : tempId;
-            String message = (String) params.get("message");
+        try
+        {
+            final var tempId = (String) params.get("sessionId");
+            final var sessionId = tempId == null || tempId.isEmpty() ? "default" : tempId;
+            final var message = (String) params.get("message");
             
-            if (message == null || message.isEmpty()) {
+            if(message == null || message.isEmpty())
                 return Result.error("消息不能为空");
-            }
             
             String response = chatClient.prompt().
                 user(message).
@@ -61,12 +62,14 @@ public final class AIController
                 call().
                 content();
             
-            Map<String, Object> result = new HashMap<>();
+            final var result = new HashMap<String, Object>();
             result.put("response", response);
             result.put("sessionId", tempId);
             
             return Result.success(result);
-        } catch (Exception e) {
+        }
+        catch(Exception e)
+        {
             log.error("AI对话失败: {}", e.getMessage(), e);
             return Result.error(StringFormatter.format("AI对话失败: {}", e.getMessage()));
         }
@@ -78,7 +81,7 @@ public final class AIController
     {
         try
         {
-            String sessionId = (String) params.getOrDefault("sessionId", "default");
+            final var sessionId = (String) params.getOrDefault("sessionId", "default");
             chatMemory.clear(sessionId);
             return Result.success(StringFormatter.format("会话 [{}] 历史已清空", sessionId));
         }
@@ -91,7 +94,7 @@ public final class AIController
     {
         try
         {
-            String sessionId = (String) params.getOrDefault("sessionId", "default");
+            final var sessionId = (String) params.getOrDefault("sessionId", "default");
             return Result.success(chatMemory.get(sessionId, 100));
         }
         catch(Exception e) { return Result.error("获取历史失败"); }
@@ -104,7 +107,7 @@ public final class AIController
         log.debug("接收到环境分析请求");
         try
         {
-            String dataContext = params.entrySet().stream().
+            final var dataContext = params.entrySet().stream().
                 filter(entry -> List.of("temperature", "humidity", "lightIntensity").contains(entry.getKey())).
                 map(entry -> StringFormatter.format("{}:{}", entry.getKey(), entry.getValue())).
                 collect(Collectors.joining(", "));
@@ -112,7 +115,7 @@ public final class AIController
             if(dataContext.isEmpty())
                 return Result.error("缺少环境参数");
             
-            String response = chatClient.prompt().
+            final var response = chatClient.prompt().
                 user(StringFormatter.format("分析数据：{}", dataContext)).
                 call().
                 content();
@@ -138,16 +141,20 @@ public final class AIController
         log.debug("接收到趋势预测请求");
         try
         {
-            String sessionId = params.getOrDefault("sessionId", "predict").toString();
-            String predictType = (String) params.getOrDefault("predictType", "综合");
-            Object hours = params.getOrDefault("hours", 24);
+            final var sessionId = params.getOrDefault("sessionId", "predict").toString();
+            final var predictType = (String) params.getOrDefault("predictType", "综合");
+            final Object hours = params.getOrDefault("hours", 24);
             
             @SuppressWarnings("unchecked") List<Map<String, Object>> historicalData = (List<Map<String, Object>>) params.get("historicalData");
-            String historySummary = (historicalData != null) ? historicalData.toString() : "暂无历史数据";
+            final var historySummary = (historicalData != null) ? historicalData.toString() : "暂无历史数据";
             
-            String response = chatClient.prompt().
-                user(StringFormatter.format("预测类型：{}, 预测时长：{}小时, 历史参考数据：{}",
-                    predictType, hours, historySummary)).
+            final var response = chatClient.prompt().
+                user(
+                    StringFormatter.format(
+                        "预测类型：{}, 预测时长：{}小时, 历史参考数据：{}",
+                        predictType, hours, historySummary
+                    )
+                ).
                 call().
                 content();
             

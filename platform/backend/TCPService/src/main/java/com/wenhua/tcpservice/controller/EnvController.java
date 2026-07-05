@@ -29,22 +29,13 @@ public final class EnvController {
     @Operation(summary = "查询设备列表", description = "分页查询环境监测设备")
     @PostMapping(GlobalConfiguration.DEVICE_REQUEST_PREFIX + "/select")
     public Result queryDevices(@RequestBody QueryParameter queryParameter) {
-        log.debug("接受到了设备查询请求: {}", queryParameter.toString());
-        // 设置默认值并计算偏移量
-        if (queryParameter.getCurrentPage() == null) {
-            queryParameter.setCurrentPage(1);
-        }
-        if (queryParameter.getPageSize() == null) {
-            queryParameter.setPageSize(10);
-        }
-        queryParameter.calculateOffset();
+        log.debug("接受到了设备查询请求: {}", queryParameter);
         List<Device> devices = envService.queryDevices(queryParameter);
         //还要查询目标数量
         int i = envMapper.selectDeviceCount(queryParameter);
         log.debug("查询结果为: {}", devices.toString());
         Result result = Result.success(devices);
-        result.setTotalPages(i);
-        return result;
+        return result.totalPages(i);
     }
 
     @Operation(summary = "添加设备")
@@ -52,7 +43,7 @@ public final class EnvController {
     public Result addDevice(@RequestBody Device device){
         log.debug("接受到了添加设备请求");
         boolean b = envService.addDevice(device);
-        return new Result(b);
+        return Result.of(b);
     }
 
     @Operation(summary = "修改设备")
@@ -60,7 +51,7 @@ public final class EnvController {
     public Result updateDevice(@RequestBody Device device){
         log.debug("接受到了修改设备请求: {}", device.toString());
         boolean b = envService.updateDevice(device);
-        return new Result(b);
+        return Result.of(b);
     }
 
     @Operation(summary = "删除设备")
@@ -68,7 +59,7 @@ public final class EnvController {
     public Result deleteDevice(@RequestBody List<String> ids){
         log.debug("接受到了删除设备请求: {}", ids.toString());
         boolean b = envService.deleteDevices(ids);
-        return new Result(b);
+        return Result.of(b);
     }
 
     @Operation(summary = "获取设备统计数据")
@@ -125,7 +116,7 @@ public final class EnvController {
         String id = (String) params.get("id");
         Integer onLine = (Integer) params.get("onLine");
         boolean b = envService.updateDeviceStatus(id, onLine);
-        return new Result(b);
+        return Result.of(b);
     }
 
     @Operation(summary = "批量更新设备状态")
@@ -135,6 +126,6 @@ public final class EnvController {
         List<String> ids = (List<String>) params.get("ids");
         Integer onLine = (Integer) params.get("onLine");
         boolean b = envService.batchUpdateDeviceStatus(ids, onLine);
-        return new Result(b);
+        return Result.of(b);
     }
 }

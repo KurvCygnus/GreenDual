@@ -19,20 +19,13 @@ public class LogServiceImpl implements LogService {
 
     @Override
     public void addLog(MaintenanceLog maintenanceLog) {
-        //添加日志
-        //更新时间
-        maintenanceLog.updateTimeToCurrent();
-
-        //然后可以加入了
         logMapper.addLog(maintenanceLog);
     }
 
     //查询
     @Override
     public List<MaintenanceLog> select(QueryParameter queryParameter) {
-        log.info(queryParameter.toString());
-        log.info("---------------------");
-        queryParameter.calculateOffset();
+        log.info("查询维修日志，参数: {}", queryParameter);
         return logMapper.select(queryParameter);
     }
 

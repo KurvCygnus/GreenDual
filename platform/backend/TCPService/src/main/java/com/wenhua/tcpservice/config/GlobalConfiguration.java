@@ -5,22 +5,25 @@ public final class GlobalConfiguration
 {
     private GlobalConfiguration() { throw new IllegalAccessError("Class \"GlobalConfiguration\" is not meant to be instantized!"); }
     
-    //前端origins - 支持多个端口
     public static final String ORIGINS = "http://localhost:5173,http://localhost:5174,http://localhost:5175,http://8.130.125.122:8088";
-    //public static final String ORIGINS="*";
 
-    //TCP服务端口号
+    /**
+     * TCP服务端口号
+     */
     public static final int TCP_PORT = 8888;
-    //环境监测设备请求前缀
+
+    /**
+     * 环境监测设备请求前缀
+     */
     public static final String DEVICE_REQUEST_PREFIX = "/device";
 
-    //监测记录请求前缀
+    /**
+     * 监测记录请求前缀
+     */
     public static final String LOG_REQUEST_PREFIX = "/log";
 
-    //用户请求前缀
     public static final String USER_REQUEST_PREFIX = "/user";
     
-    //ai
     public static final String AI_REQUEST_PREFIX = "/ai";
 
     //环境数据阈值配置

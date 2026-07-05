@@ -1,6 +1,9 @@
 package com.wenhua.tcpservice.utils;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
+import lombok.NonNull;
+
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -24,8 +27,7 @@ public final class PasswordUtils
      * @param username    用户名（作为盐值的一部分）
      * @return 64 字符十六进制哈希字符串
      */
-    @Nonnull
-    public static String encode(@Nonnull String rawPassword, @Nonnull String username)
+    @Nonnull public static String encode(@Nonnull String rawPassword, @Nonnull String username)
     {
         try
         {
@@ -48,7 +50,7 @@ public final class PasswordUtils
      * @param encodedPassword 数据库中存储的密码
      * @return 是否匹配
      */
-    public static boolean matches(String rawPassword, String username, String encodedPassword)
+    public static boolean matches(@Nullable String rawPassword, @NonNull String username, @Nullable String encodedPassword)
     {
         if(encodedPassword == null || rawPassword == null)
             return false;
@@ -61,12 +63,12 @@ public final class PasswordUtils
         return rawPassword.equals(encodedPassword);
     }
 
-    private static String bytesToHex(byte[] bytes)
+    private static @NonNull String bytesToHex(byte @NonNull [] bytes)
     {
-        char[] hexChars = new char[bytes.length * 2];
+        final var hexChars = new char[bytes.length * 2];
         for(int i = 0; i < bytes.length; i++)
         {
-            int v = bytes[i] & 0xFF;
+            final int v = bytes[i] & 0xFF;
             hexChars[i * 2]     = HEX[v >>> 4];
             hexChars[i * 2 + 1] = HEX[v & 0x0F];
         }

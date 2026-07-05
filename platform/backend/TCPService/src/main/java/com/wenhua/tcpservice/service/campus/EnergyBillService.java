@@ -28,32 +28,27 @@ public final class EnergyBillService
     @Nonnull
     public EnergyBill generateMonthlyBill(@Nonnull String areaId, @Nonnull String billMonth)
     {
-        EnergyBill bill = new EnergyBill();
-        bill.setBillMonth(billMonth);
-        bill.setCreateTime(LocalDateTime.now());
-        bill.setStatus(1);
-        
         List<Device> devices = envMapper.selectAllDevice();
-        
+
         double totalConsumption = 0;
         double peakConsumption = 0;
         double offPeakConsumption = 0;
         double savedConsumption = 0;
-        
+
         for(Device device: devices)
         {
             if(device.getLampStatus() != null && device.getLampStatus() == 1)
             {
                 int brightness = device.getBrightness() != null ? device.getBrightness() : 100;
-                
+
                 double dailyConsumption = AVG_LAMP_POWER * AVG_DAILY_HOURS * (brightness / 100.0);
                 double monthlyConsumption = dailyConsumption * 30;
-                
+
                 totalConsumption += monthlyConsumption;
-                
+
                 double baselineConsumption = AVG_LAMP_POWER * AVG_DAILY_HOURS * 30;
                 savedConsumption += (baselineConsumption - monthlyConsumption);
-                
+
                 int hour = LocalDateTime.now().getHour();
                 if(hour >= 18 && hour <= 22)
                 {
@@ -65,19 +60,22 @@ public final class EnergyBillService
                 }
             }
         }
-        
-        bill.setTotalConsumption(totalConsumption);
-        bill.setTotalCost(totalConsumption * ELECTRICITY_PRICE);
-        bill.setSavedConsumption(savedConsumption);
-        bill.setSavedCost(savedConsumption * ELECTRICITY_PRICE);
-        bill.setSavingRate(totalConsumption > 0 ? (savedConsumption / (totalConsumption + savedConsumption)) * 100 : 0);
-        bill.setPeakConsumption(peakConsumption);
-        bill.setOffPeakConsumption(offPeakConsumption);
-        bill.setAverageDailyConsumption(totalConsumption / 30);
-        
-        bill.setWasteAnalysis(generateWasteAnalysis(devices));
-        bill.setOptimizationSuggestions(generateOptimizationSuggestions(bill));
-        
+
+        double totalCost = totalConsumption * ELECTRICITY_PRICE;
+        double savedCost = savedConsumption * ELECTRICITY_PRICE;
+        double savingRate = totalConsumption > 0 ? (savedConsumption / (totalConsumption + savedConsumption)) * 100 : 0;
+        double averageDailyConsumption = totalConsumption / 30;
+
+        String wasteAnalysis = generateWasteAnalysis(devices);
+
+        EnergyBill bill = new EnergyBill(
+            null, null, null, billMonth,
+            totalConsumption, totalCost, savedConsumption, savedCost, savingRate,
+            peakConsumption, offPeakConsumption, averageDailyConsumption,
+            null, 1, LocalDateTime.now(),
+            wasteAnalysis, generateOptimizationSuggestions(savingRate, peakConsumption, totalConsumption)
+        );
+
         log.debug("生成月度能耗账单: {}, 总能耗: {}kWh", billMonth, totalConsumption);
         return bill;
     }
@@ -128,16 +126,16 @@ public final class EnergyBillService
         return analysis.toString();
     }
     
-    private String generateOptimizationSuggestions(EnergyBill bill)
+    private String generateOptimizationSuggestions(double savingRate, double peakConsumption, double totalConsumption)
     {
         StringBuilder suggestions = new StringBuilder();
-        
-        if(bill.getSavingRate() < 20)
+
+        if(savingRate < 20)
         {
             suggestions.append("建议启用AI智能调光功能，预计可提升节能率15-20%；\n");
         }
-        
-        if(bill.getPeakConsumption() > bill.getTotalConsumption() * 0.5)
+
+        if(peakConsumption > totalConsumption * 0.5)
         {
             suggestions.append("高峰时段能耗占比较高，建议实施分时段差异化调光；\n");
         }

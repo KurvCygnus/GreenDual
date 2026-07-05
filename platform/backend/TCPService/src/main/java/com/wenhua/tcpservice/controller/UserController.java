@@ -42,9 +42,7 @@ public final class UserController {
         log.debug("{}", queryParameter);
         List<User> users = userService.selectUsers(queryParameter);
         log.debug("查询到了用户: {}", users);
-        Result result = Result.success(users);
-        result.setTotalPages(userMapper.selectUserCount(queryParameter));
-        return result;
+        return Result.success(users, userMapper.selectUserCount(queryParameter));
     }
 
     @Operation(summary = "更新用户信息")

@@ -2,26 +2,20 @@ package com.wenhua.tcpservice.config;
 
 import com.wenhua.tcpservice.interceptor.LoginCheckInterceptor;
 import lombok.AllArgsConstructor;
+import lombok.NonNull;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-//配置类
-@Configuration
-@AllArgsConstructor
-public class WebConfig implements WebMvcConfigurer {
-
+@Configuration @AllArgsConstructor
+public class WebConfig implements WebMvcConfigurer
+{
     private final LoginCheckInterceptor loginCheckInterceptor;
 
-    //注册拦截器
-    @Override
-    public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(loginCheckInterceptor)
-                .addPathPatterns("/**") //拦截所有请求
-                .excludePathPatterns(
-                        "/login" //放行登录请求
-                        );
-
-
+    @Override public void addInterceptors(@NonNull InterceptorRegistry registry)
+    {
+        registry.addInterceptor(loginCheckInterceptor).
+            addPathPatterns("/**").
+            excludePathPatterns("/login");
     }
 }

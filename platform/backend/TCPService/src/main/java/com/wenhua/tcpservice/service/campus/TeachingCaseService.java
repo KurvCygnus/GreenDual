@@ -24,52 +24,54 @@ public final class TeachingCaseService
     @Nonnull
     public TeachingCase createTeachingCase(@Nonnull Device device, @Nonnull String caseType)
     {
-        //? FIX: 缺少字段`id`
-        final TeachingCase teachingCase = new TeachingCase();
-        teachingCase.setCaseName(generateCaseName(device, caseType));
-        teachingCase.setCaseType(caseType);
-        teachingCase.setDeviceId(device.getId());
-        teachingCase.setDeviceName(device.getName());
-        teachingCase.setCreateTime(LocalDateTime.now());
-        teachingCase.setUpdateTime(LocalDateTime.now());
-        teachingCase.setStatus(1);
-        teachingCase.setUseCount(0);
-        
+        String caseName = generateCaseName(device, caseType);
+        String description;
+        String teachingContent;
+        String experimentGuide;
+        String relatedCourse;
+
         switch(caseType)
         {
             case "lighting_control" ->
             {
-                teachingCase.setDescription("智能路灯控制实验案例");
-                teachingCase.setTeachingContent(generateLightingTeachingContent(device));
-                teachingCase.setExperimentGuide(generateLightingExperimentGuide());
-                teachingCase.setRelatedCourse("物联网技术基础、嵌入式系统设计");
+                description = "智能路灯控制实验案例";
+                teachingContent = generateLightingTeachingContent(device);
+                experimentGuide = generateLightingExperimentGuide();
+                relatedCourse = "物联网技术基础、嵌入式系统设计";
             }
             case "environment_monitor" ->
             {
-                teachingCase.setDescription("环境监测数据采集实验案例");
-                teachingCase.setTeachingContent(generateEnvironmentTeachingContent(device));
-                teachingCase.setExperimentGuide(generateEnvironmentExperimentGuide());
-                teachingCase.setRelatedCourse("传感器技术、数据采集与处理");
+                description = "环境监测数据采集实验案例";
+                teachingContent = generateEnvironmentTeachingContent(device);
+                experimentGuide = generateEnvironmentExperimentGuide();
+                relatedCourse = "传感器技术、数据采集与处理";
             }
             case "energy_saving" ->
             {
-                teachingCase.setDescription("智能节能控制实验案例");
-                teachingCase.setTeachingContent(generateEnergySavingTeachingContent(device));
-                teachingCase.setExperimentGuide(generateEnergySavingExperimentGuide());
-                teachingCase.setRelatedCourse("智能控制、能源管理");
+                description = "智能节能控制实验案例";
+                teachingContent = generateEnergySavingTeachingContent(device);
+                experimentGuide = generateEnergySavingExperimentGuide();
+                relatedCourse = "智能控制、能源管理";
             }
             default ->
             {
-                teachingCase.setDescription("物联网综合应用案例");
-                teachingCase.setTeachingContent(generateGeneralTeachingContent(device));
-                teachingCase.setExperimentGuide(generateGeneralExperimentGuide());
-                teachingCase.setRelatedCourse("物联网工程导论");
+                description = "物联网综合应用案例";
+                teachingContent = generateGeneralTeachingContent(device);
+                experimentGuide = generateGeneralExperimentGuide();
+                relatedCourse = "物联网工程导论";
             }
         }
-        
-        teachingCase.setDataPreview(generateDataPreview(device));
-        teachingCase.setAnalysisResult(generateAnalysisResult(device, caseType));
-        teachingCase.setDataSource("实时设备数据");
+
+        LocalDateTime now = LocalDateTime.now();
+        String dataPreview = generateDataPreview(device);
+        String analysisResult = generateAnalysisResult(device, caseType);
+
+        final TeachingCase teachingCase = new TeachingCase(
+            null, caseName, caseType, description,
+            device.getId(), device.getName(), "实时设备数据",
+            teachingContent, experimentGuide, relatedCourse,
+            0, 1, now, now, dataPreview, analysisResult
+        );
         
         log.debug("创建教学案例: {}", teachingCase.getCaseName());
         return teachingCase;

@@ -14,10 +14,14 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "jwt")
 public final class JwtConfigInitializer
 {
-    /** JWT 签名密钥 */
+    /**
+     *  JWT 签名密钥
+     */
     private String signKey;
 
-    /** JWT 过期时间（毫秒） */
+    /**
+     *  JWT 过期时间（毫秒）
+     */
     private long expire;
 
     @PostConstruct public void init()
