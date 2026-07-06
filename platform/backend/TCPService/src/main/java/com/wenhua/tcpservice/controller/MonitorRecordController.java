@@ -4,9 +4,7 @@ import com.wenhua.tcpservice.config.GlobalConfiguration;
 import com.wenhua.tcpservice.mapper.MonitorRecordMapper;
 import com.wenhua.tcpservice.mapper.UserMapper;
 import com.wenhua.tcpservice.pojo.MonitorRecord;
-import com.wenhua.tcpservice.pojo.PermissionLevel;
 import com.wenhua.tcpservice.pojo.Result;
-import com.wenhua.tcpservice.pojo.User;
 import com.wenhua.tcpservice.utils.JwtUtils;
 import com.wenhua.tcpservice.utils.StringFormatter;
 import io.swagger.v3.oas.annotations.Operation;
@@ -98,7 +96,7 @@ public final class MonitorRecordController {
     @Operation(summary = "删除监测记录")
     @PostMapping("/delete")
     public Result deleteRecord(@RequestBody Map<String, Object> params, HttpServletRequest request) {
-        if (!isAdmin(request)) {
+        if (!JwtUtils.isAdmin(request, userMapper::selectUserById)) {
             return Result.error("权限不足");
         }
         try {
@@ -114,7 +112,7 @@ public final class MonitorRecordController {
     @Operation(summary = "添加监测记录")
     @PostMapping("/add")
     public Result addRecord(@RequestBody Map<String, Object> params, HttpServletRequest request) {
-        if (!isAdmin(request)) {
+        if (!JwtUtils.isAdmin(request, userMapper::selectUserById)) {
             return Result.error("权限不足");
         }
         try {
@@ -151,12 +149,5 @@ public final class MonitorRecordController {
             log.error("添加记录失败: {}", e.getMessage());
             return Result.error(StringFormatter.format("添加记录失败: {}", e.getMessage()));
         }
-    }
-
-    private boolean isAdmin(HttpServletRequest request) {
-        Integer userId = JwtUtils.getUserId(request);
-        if (userId == null) return false;
-        User user = userMapper.selectUserById(userId);
-        return user != null && user.getPermissionLevel().hasPermission(PermissionLevel.ADMIN);
     }
 }

@@ -857,8 +857,8 @@ const saveConfig = () => {
   if (!cloudFormRef.value) return;
   cloudFormRef.value.validate((valid) => {
     if (valid) {
-      localStorage.setItem("cloudConfig", JSON.stringify(cloudForm));
-      ElMessage.success("配置保存成功");
+      //! 凭据仅保存在内存中，不写入 localStorage，防止 XSS 窃取云平台 AccessKey/SecretKey
+      ElMessage.success("配置已保存（凭据仅在本次会话中有效）");
     }
   });
 };
@@ -1129,10 +1129,17 @@ const updateChart = () => {
 };
 
 const initConfig = () => {
+  //! 不再从 localStorage 加载云凭据（accessKey / secretKey），防止 XSS 窃取
+  // 仅恢复非敏感配置信息（平台类型、区域等），敏感字段需用户重新输入
   const savedConfig = localStorage.getItem("cloudConfig");
   if (savedConfig) {
     try {
-      Object.assign(cloudForm, JSON.parse(savedConfig));
+      const parsed = JSON.parse(savedConfig);
+      // 仅恢复非敏感字段
+      if (parsed.platform) cloudForm.platform = parsed.platform;
+      if (parsed.region) cloudForm.region = parsed.region;
+      if (parsed.productKey) cloudForm.productKey = parsed.productKey;
+      if (parsed.deviceName) cloudForm.deviceName = parsed.deviceName;
     } catch {}
   }
 };

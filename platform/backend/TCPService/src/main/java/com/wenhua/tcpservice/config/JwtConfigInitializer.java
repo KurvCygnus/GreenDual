@@ -3,7 +3,7 @@ package com.wenhua.tcpservice.config;
 import com.wenhua.tcpservice.utils.JwtUtils;
 import jakarta.annotation.PostConstruct;
 import lombok.Setter;
-import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 /**
@@ -11,25 +11,27 @@ import org.springframework.stereotype.Component;
  */
 @Setter
 @Component
-@ConfigurationProperties(prefix = "jwt")
 public final class JwtConfigInitializer
 {
     /**
      *  JWT 签名密钥
      */
-    private String signKey;
+    private @Value("${jwt.sign-key}") String signKey;
 
     /**
      *  JWT 过期时间（毫秒）
      */
-    private long expire;
+    private @Value("${jwt.expire}") long expire;
+
+    /**
+     *  刷新令牌过期时间（毫秒）
+     */
+    private @Value("${jwt.refresh-expire}") long refreshExpire;
 
     @PostConstruct public void init()
     {
-        if(signKey != null && !signKey.isBlank())
-            JwtUtils.setSignKey(signKey);
-
-        if(expire > 0)
-            JwtUtils.setExpire(expire);
+        JwtUtils.setSignKey(signKey);
+        JwtUtils.setExpire(expire);
+        JwtUtils.setRefreshExpire(refreshExpire);
     }
 }

@@ -12,7 +12,7 @@ import java.util.List;
 
 @Service @Slf4j
 @AllArgsConstructor
-public class EnvServiceImpl implements EnvService {
+public final class EnvServiceImpl implements EnvService {
 
     private EnvMapper envMapper;
 

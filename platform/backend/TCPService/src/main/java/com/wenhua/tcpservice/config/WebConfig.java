@@ -18,6 +18,7 @@ public class WebConfig implements WebMvcConfigurer
             addPathPatterns("/**").
             excludePathPatterns(
                 "/login",
+                "/refresh",
                 "/error",
                 "/swagger-ui/**",
                 "/v3/api-docs/**",

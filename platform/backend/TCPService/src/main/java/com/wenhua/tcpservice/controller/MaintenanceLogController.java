@@ -4,10 +4,8 @@ import com.wenhua.tcpservice.config.GlobalConfiguration;
 import com.wenhua.tcpservice.mapper.LogMapper;
 import com.wenhua.tcpservice.mapper.UserMapper;
 import com.wenhua.tcpservice.pojo.MaintenanceLog;
-import com.wenhua.tcpservice.pojo.PermissionLevel;
 import com.wenhua.tcpservice.pojo.QueryParameter;
 import com.wenhua.tcpservice.pojo.Result;
-import com.wenhua.tcpservice.pojo.User;
 import com.wenhua.tcpservice.service.LogService;
 import com.wenhua.tcpservice.utils.JwtUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -22,14 +20,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-@Slf4j
-@RestController
-@AllArgsConstructor
+@Slf4j @RestController @AllArgsConstructor
 @CrossOrigin(origins = GlobalConfiguration.ORIGINS)
 @Tag(name = "维修日志", description = "维修日志CRUD接口")
 public final class MaintenanceLogController
 {
-    
     private LogService logService;
     private LogMapper logMapper;
     private UserMapper userMapper;
@@ -60,18 +55,9 @@ public final class MaintenanceLogController
     @PostMapping(GlobalConfiguration.LOG_REQUEST_PREFIX + "/delete")
     public Result deleteMaintenanceLog(@RequestBody List<Integer> ids, HttpServletRequest request)
     {
-        if(!isRoot(request))
+        if(!JwtUtils.isAdmin(request, userMapper::selectUserById))
             return Result.error("权限不足");
         logService.deleteLog(ids);
         return Result.success();
-    }
-    
-    //查询用户是否是管理员方法
-    private boolean isRoot(HttpServletRequest request)
-    {
-        Integer userId = JwtUtils.getUserId(request);
-        User user = userMapper.selectUserById(userId);
-        log.info("用户权位: {}", user.getUserPermission());
-        return user.getPermissionLevel().hasPermission(PermissionLevel.ADMIN);
     }
 }

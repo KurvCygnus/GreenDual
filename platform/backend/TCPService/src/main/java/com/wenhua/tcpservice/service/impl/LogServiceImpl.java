@@ -13,26 +13,19 @@ import java.util.List;
 @Service
 @AllArgsConstructor
 @Slf4j
-public class LogServiceImpl implements LogService {
-
+public final class LogServiceImpl implements LogService
+{
+    
     private LogMapper logMapper;
-
-    @Override
-    public void addLog(MaintenanceLog maintenanceLog) {
-        logMapper.addLog(maintenanceLog);
-    }
-
+    
+    @Override public void addLog(MaintenanceLog maintenanceLog) { logMapper.addLog(maintenanceLog); }
+    
     //查询
-    @Override
-    public List<MaintenanceLog> select(QueryParameter queryParameter) {
+    @Override public List<MaintenanceLog> select(QueryParameter queryParameter)
+    {
         log.info("查询维修日志，参数: {}", queryParameter);
         return logMapper.select(queryParameter);
     }
-
-    @Override
-    public void deleteLog(List<Integer> ids) {
-        ids.forEach(logMapper::deleteLog);
-    }
-
-
+    
+    @Override public void deleteLog(List<Integer> ids) { ids.forEach(logMapper::deleteLog); }
 }

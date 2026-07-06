@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
+import { ElMessage } from "element-plus";
 import LoginView from "../views/LoginView.vue";
 import HomeView from "../views/HomeView.vue";
 import TestView from "../views/TestView.vue";
@@ -26,6 +27,28 @@ const router = createRouter({
       component: TestView,
     },
   ],
+});
+
+// 全局前置守卫 — 未登录用户重定向到 /login
+const WHITE_LIST = ["/login"];
+router.beforeEach((to, from, next) => {
+  const token = localStorage.getItem("token");
+
+  if (WHITE_LIST.includes(to.path)) {
+    // 已登录用户访问登录页 → 跳首页
+    if (token && to.path === "/login") {
+      return next("/home");
+    }
+    return next();
+  }
+
+  // 访问受保护页面但没有 token → 跳登录
+  if (!token) {
+    ElMessage.warning("请先登录");
+    return next("/login");
+  }
+
+  next();
 });
 
 export default router;

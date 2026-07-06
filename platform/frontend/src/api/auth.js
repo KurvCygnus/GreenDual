@@ -17,6 +17,21 @@ axios.interceptors.request.use(
   },
 );
 
+// 响应拦截器 — 统一处理 401 未授权（token 过期/无效）
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      localStorage.clear();
+      // 避免在登录页原地刷新
+      if (window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
+    }
+    return Promise.reject(error);
+  },
+);
+
 export function login(data) {
   return axios.post(api + "/login", data);
 }

@@ -9,7 +9,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 /**
- * 密码加密工具 — 使用 SHA-256 + 用户名盐值，无外部依赖.
+ * 密码加密工具 — 使用 SHA-256 + 用户名盐值.
  * <p>
  * 格式: {@code SHA-256(username + "::GreenDual::" + rawPassword)} 的十六进制字符串 (64 字符).<br>
  * 兼容旧数据: 数据库中仍为明文的密码在验证通过后自动升级为哈希存储.

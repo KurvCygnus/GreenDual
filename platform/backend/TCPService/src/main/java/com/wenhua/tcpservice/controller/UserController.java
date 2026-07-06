@@ -2,7 +2,6 @@ package com.wenhua.tcpservice.controller;
 
 import com.wenhua.tcpservice.config.GlobalConfiguration;
 import com.wenhua.tcpservice.mapper.UserMapper;
-import com.wenhua.tcpservice.pojo.PermissionLevel;
 import com.wenhua.tcpservice.pojo.QueryParameter;
 import com.wenhua.tcpservice.pojo.Result;
 import com.wenhua.tcpservice.pojo.User;
@@ -11,7 +10,6 @@ import com.wenhua.tcpservice.utils.JwtUtils;
 import com.wenhua.tcpservice.utils.PasswordUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.annotation.Nonnull;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +35,7 @@ public final class UserController {
     @Operation(summary = "查询用户列表")
     @PostMapping(GlobalConfiguration.USER_REQUEST_PREFIX + "/select")
     public Result selectUser(@RequestBody QueryParameter queryParameter, HttpServletRequest request) {
-        if (!isRoot(request)) {
+        if (!JwtUtils.isAdmin(request, userMapper::selectUserById)) {
             return Result.error("权限不足");
         }
         log.debug("{}", queryParameter);
@@ -49,7 +47,7 @@ public final class UserController {
     @Operation(summary = "更新用户信息")
     @PostMapping(GlobalConfiguration.USER_REQUEST_PREFIX + "/update")
     public Result updateUser(@RequestBody User user, HttpServletRequest request) {
-        if (!isRoot(request)) {
+        if (!JwtUtils.isAdmin(request, userMapper::selectUserById)) {
             return Result.error("权限不足");
         }
         log.debug("{}", user);
@@ -60,7 +58,7 @@ public final class UserController {
     @Operation(summary = "添加用户")
     @PostMapping(GlobalConfiguration.USER_REQUEST_PREFIX + "/add")
     public Result addUser(@RequestBody User user, HttpServletRequest request) {
-        if (!isRoot(request)) {
+        if (!JwtUtils.isAdmin(request, userMapper::selectUserById)) {
             return Result.error("权限不足");
         }
         User existing = userMapper.selectUserByUsername(user.getUsername());
@@ -75,7 +73,7 @@ public final class UserController {
     @Operation(summary = "删除用户")
     @PostMapping(GlobalConfiguration.USER_REQUEST_PREFIX + "/delete")
     public Result deleteUser(@RequestBody User user, HttpServletRequest request) {
-        if (!isRoot(request)) {
+        if (!JwtUtils.isAdmin(request, userMapper::selectUserById)) {
             return Result.error("权限不足");
         }
         if (user.getUserId() == 1) {
@@ -89,7 +87,7 @@ public final class UserController {
     @Operation(summary = "重置用户密码")
     @PostMapping(GlobalConfiguration.USER_REQUEST_PREFIX + "/resetPassword")
     public Result resetPassword(@RequestBody Map<String, Object> params, HttpServletRequest request) {
-        if (!isRoot(request)) {
+        if (!JwtUtils.isAdmin(request, userMapper::selectUserById)) {
             return Result.error("权限不足");
         }
         try {
@@ -125,12 +123,5 @@ public final class UserController {
             log.error("获取用户统计失败: {}", e.getMessage());
             return Result.error("获取用户统计失败");
         }
-    }
-
-    private boolean isRoot(HttpServletRequest request) {
-        Integer userId = JwtUtils.getUserId(request);
-        User user = userMapper.selectUserById(userId);
-        log.info("用户权位: {}", user.getUserPermission());
-        return user.getPermissionLevel().hasPermission(PermissionLevel.ADMIN);
     }
 }

@@ -41,6 +41,7 @@ public final class LoginController {
 
             // 生成JWT令牌
             String jwt = JwtUtils.generateJwt(claims);
+            String refreshToken = JwtUtils.generateRefreshToken(claims);
 
             // 构造响应
             Map<String, Object> response = new HashMap<>();
@@ -48,6 +49,7 @@ public final class LoginController {
             response.put("id", u.getUserId());//返回用户id
             response.put("roleId", u.getUserPermission());//返回用户职务
             response.put("token", jwt);
+            response.put("refreshToken", refreshToken);
 
             log.info("""
                 用户信息
@@ -71,5 +73,42 @@ public final class LoginController {
 
         return Result.error("USERNAME_OR_PASSWORD_ERROR");
 
+    }
+
+    @Operation(summary = "刷新令牌", description = "使用刷新令牌获取新的访问令牌")
+    @PostMapping("/refresh")
+    public Result refresh(@RequestBody Map<String, String> request)
+    {
+        String refreshToken = request.get("refreshToken");
+        if(refreshToken == null || refreshToken.isBlank())
+            return Result.error("REFRESH_TOKEN_REQUIRED");
+
+        try
+        {
+            var claims = JwtUtils.parseRefreshToken(refreshToken);
+            Integer userId = claims.get("userId", Integer.class);
+            if(userId == null)
+                return Result.error("INVALID_TOKEN");
+
+            Map<String, Object> newClaims = new HashMap<>();
+            newClaims.put("userId", userId);
+
+            String newToken = JwtUtils.generateJwt(newClaims);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("token", newToken);
+
+            return Result.success(response);
+        }
+        catch(io.jsonwebtoken.ExpiredJwtException e)
+        {
+            log.info("刷新令牌已过期");
+            return Result.error("REFRESH_TOKEN_EXPIRED");
+        }
+        catch(Exception e)
+        {
+            log.info("刷新令牌无效");
+            return Result.error("INVALID_REFRESH_TOKEN");
+        }
     }
 }
