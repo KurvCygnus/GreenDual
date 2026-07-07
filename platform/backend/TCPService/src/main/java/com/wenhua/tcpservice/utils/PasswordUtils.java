@@ -18,8 +18,10 @@ public final class PasswordUtils
 {
     private static final String SALT_PREFIX = "::GreenDual::";
     private static final char[] HEX = "0123456789abcdef".toCharArray();
-
-    private PasswordUtils() { throw new IllegalAccessError("Utility class"); }
+    
+    private static final MessageDigest SHA_256_ALGORITHM = initAlgorithm();
+    
+    private PasswordUtils() { throw new IllegalAccessError("Class \"PasswordUtils\" is not meant to be instantized!"); }
 
     /**
      * 对明文密码进行 SHA-256 加盐哈希.
@@ -29,14 +31,9 @@ public final class PasswordUtils
      */
     @Nonnull public static String encode(@Nonnull String rawPassword, @Nonnull String username)
     {
-        try
-        {
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            String salted = username + SALT_PREFIX + rawPassword;
-            byte[] hash = md.digest(salted.getBytes(StandardCharsets.UTF_8));
-            return bytesToHex(hash);
-        }
-        catch(NoSuchAlgorithmException e) { throw new RuntimeException("SHA-256 not available", e); }
+        final var salted = username + SALT_PREFIX + rawPassword;
+        final var hash = SHA_256_ALGORITHM.digest(salted.getBytes(StandardCharsets.UTF_8));
+        return bytesToHex(hash);
     }
 
     /**
@@ -59,19 +56,23 @@ public final class PasswordUtils
         if(encodedPassword.length() == 64 && encodedPassword.matches("[0-9a-f]{64}"))
             return encode(rawPassword, username).equals(encodedPassword);
 
-        // 旧数据兼容：存储值为明文
         return rawPassword.equals(encodedPassword);
     }
-
-    private static @NonNull String bytesToHex(byte @NonNull [] bytes)
+    public static @NonNull String bytesToHex(byte @NonNull ... bytes)
     {
         final var hexChars = new char[bytes.length * 2];
-        for(int i = 0; i < bytes.length; i++)
+        for(var i = 0; i < bytes.length; i++)
         {
-            final int v = bytes[i] & 0xFF;
+            final var v = bytes[i] & 0xFF;
             hexChars[i * 2]     = HEX[v >>> 4];
             hexChars[i * 2 + 1] = HEX[v & 0x0F];
         }
         return new String(hexChars);
+    }
+    
+    private static @NonNull MessageDigest initAlgorithm()
+    {
+        try { return MessageDigest.getInstance("SHA-256"); }
+        catch(NoSuchAlgorithmException e) { throw new AssertionError("Impossible case"); }
     }
 }

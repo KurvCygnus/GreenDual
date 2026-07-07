@@ -147,39 +147,44 @@
 
 ## 第四天：数据库与数据完整性
 
-### 4.1 数据库名称不一致
+### 后注
 
-- [ ] 是否完成
+Day4的多数问题大概率已经失效. 在Day3, 该项目的数据库初始化脚本就已经被重构和优化, 仅存在`init_schema.sql`, `init_samples.sql`.
+这两个问题都默认初始化或创建`light`架构. 在核对剩下的问题是否存在时, 请查看这些文件.
+
+### 4.1 数据库名称不一致 (已在Day3重构中解决, init_schema.sql/application.properties 均已统一使用 `light`)
+
+- [x] 是否完成
 - **文件**: `init.sql` vs `application.properties`
 - **问题**: `init.sql` 使用数据库 `envsense`, `application.properties` 连接 `jdbc:mysql://localhost:3306/light`
 - **影响**: 部署时直接失败
 - **修复**: 统一为 `light`, 修正 `init.sql` 首行
 
-### 4.2 init.sql 与 Mapper XML 字段不匹配
+### 4.2 init.sql 与 Mapper XML 字段不匹配 (已在Day3重构中解决, monitor_record 字段已统一为 data_type/value/create_time)
 
-- [ ] 是否完成
+- [x] 是否完成
 - **问题**: `init.sql` 的 `monitor_record` 表使用旧字段(`temperature`/`humidity`/`lightIntensity`/`record_time`), 但 Mapper XML 和代码中使用新字段(`data_type`/`value`/`create_time`)
 - **影响**: 查询/插入数据全部报错
 - **修复**: 同步 schema 或提供迁移脚本
 
 ### 4.3 批量操作 N+1 查询
 
-- [ ] 是否完成
+- [x] 是否完成
 - **文件**: `platform/backend/TCPService/.../service/EnvServiceImpl.java`
 - **问题**: 批量新增/删除/更新使用 `for` 循环调用单条 SQL
 - **影响**: 100 条数据 = 101 次数据库交互, 性能极差
-- **修复**: 使用 MyBatis `<foreach>` 批量操作
+- **修复**: EnvMapper 新增 `batchDeleteDevices`/`batchUpdateDeviceStatus` 方法(`<foreach>`), EnvServiceImpl 改用批量调用
 
 ### 4.4 缺少事务管理
 
-- [ ] 是否完成
+- [x] 是否完成
 - **问题**: 多处需要事务的操作(点位批量创建、级联删除)未标注 `@Transactional`
 - **影响**: 中间失败导致数据不一致
-- **修复**: 在 Service 层添加 `@Transactional(rollbackFor = Exception.class)`
+- **修复**: 在 EnvServiceImpl 批量操作方法上添加 `@Transactional(rollbackFor = Exception.class)`
 
 ### 4.5 EnvMapper.deleteDevice 使用错误注解
 
-- [ ] 是否完成
+- [x] 是否完成
 - **文件**: `platform/backend/TCPService/.../mapper/EnvMapper.java`
 - **问题**: `@Update` — 应该使用 `@Delete`
 - **影响**: 语义错误, MyBatis 可能拒绝执行

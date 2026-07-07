@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.NonNull;
 
 import javax.crypto.spec.SecretKeySpec;
+import java.lang.StackWalker.Option;
 import java.security.Key;
 import java.util.Date;
 import java.util.HexFormat;
@@ -26,7 +27,7 @@ public final class JwtUtils
 {
     private JwtUtils() { throw new IllegalAccessError("Class \"JwtUtils\" is not meant to be instantized!"); }
     
-    private static final StackWalker STACK_WALKER = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE);
+    private static final StackWalker STACK_WALKER = StackWalker.getInstance(Option.RETAIN_CLASS_REFERENCE);
     
     public static final Function<String, Key> STR_2_KEY = key -> new SecretKeySpec(HexFormat.of().parseHex(key), "HmacSHA512");
     
@@ -38,7 +39,7 @@ public final class JwtUtils
         //! 该值用于fallback, 除非Jwt在Spring Boot的初始化周期尚未完成时就被调用, 否则该值永远都不会被使用.
         STR_2_KEY.apply("c9c3f12534894b8cbb94d61971415cd80145a3e6d5c8e2748161798abc9e1cc69ddc7418f1d252d6cfd94a6bad0a5674fe270794ea5d1c82d58f3a130210bc6f");
     private static long EXPIRE = 43200000L;
-    private static long REFRESH_EXPIRE = 604800000L; // 7 天
+    private static long REFRESH_EXPIRE = 604800000L; // 等于 7 天
 
     /**
      * 在应用启动时由 Spring 调用，将配置的签名密钥注入到静态字段.
@@ -86,7 +87,7 @@ public final class JwtUtils
     }
     
     //? 额, 职责不太清晰. 但反正这不是我的项目, 也比四个Controller里重复写isAdmin好 UwU.
-    public static boolean isAdmin(@NonNull HttpServletRequest request, @NonNull Function<Integer, User> userTransformer)
+    public static boolean isAdmin(@NonNull HttpServletRequest request, @NonNull Function<? super Integer, User> userTransformer)
     {
         return getUserId(request).
             map(userTransformer).
@@ -169,11 +170,11 @@ public final class JwtUtils
      * @param token 刷新令牌字符串
      * @return 令牌中包含的 claims
      * @throws io.jsonwebtoken.ExpiredJwtException 令牌已过期
-     * @throws io.jsonwebtoken.JwtException 签名无效或格式错误
+     * @throws JwtException 签名无效或格式错误
      */
     @Nonnull public static Claims parseRefreshToken(@Nonnull String token)
     {
-        var claims = Jwts.parserBuilder().
+        final var claims = Jwts.parserBuilder().
             setSigningKey(SIGN_KEY).
             build().
             parseClaimsJws(token).
@@ -192,7 +193,7 @@ public final class JwtUtils
     {
         try
         {
-            var claims = Jwts.parserBuilder().
+            final var claims = Jwts.parserBuilder().
                 setSigningKey(SIGN_KEY).
                 build().
                 parseClaimsJws(token).

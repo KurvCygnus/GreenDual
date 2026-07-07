@@ -28,47 +28,41 @@ public final class EnergyBillService
     @Nonnull
     public EnergyBill generateMonthlyBill(@Nonnull String areaId, @Nonnull String billMonth)
     {
-        List<Device> devices = envMapper.selectAllDevice();
+        final var devices = envMapper.selectAllDevice();
 
         double totalConsumption = 0;
         double peakConsumption = 0;
         double offPeakConsumption = 0;
         double savedConsumption = 0;
 
-        for(Device device: devices)
-        {
+        for(final var device: devices)
             if(device.getLampStatus() != null && device.getLampStatus() == 1)
             {
-                int brightness = device.getBrightness() != null ? device.getBrightness() : 100;
-
-                double dailyConsumption = AVG_LAMP_POWER * AVG_DAILY_HOURS * (brightness / 100.0);
-                double monthlyConsumption = dailyConsumption * 30;
-
+                final var brightness = device.getBrightness() != null ? device.getBrightness() : 100;
+                
+                final var dailyConsumption = AVG_LAMP_POWER * AVG_DAILY_HOURS * (brightness / 100.0);
+                final var monthlyConsumption = dailyConsumption * 30;
+                
                 totalConsumption += monthlyConsumption;
-
-                double baselineConsumption = AVG_LAMP_POWER * AVG_DAILY_HOURS * 30;
+                
+                final var baselineConsumption = AVG_LAMP_POWER * AVG_DAILY_HOURS * 30;
                 savedConsumption += (baselineConsumption - monthlyConsumption);
-
-                int hour = LocalDateTime.now().getHour();
+                
+                final var hour = LocalDateTime.now().getHour();
                 if(hour >= 18 && hour <= 22)
-                {
                     peakConsumption += dailyConsumption * 0.4;
-                }
                 else
-                {
                     offPeakConsumption += dailyConsumption * 0.6;
-                }
             }
-        }
 
-        double totalCost = totalConsumption * ELECTRICITY_PRICE;
-        double savedCost = savedConsumption * ELECTRICITY_PRICE;
-        double savingRate = totalConsumption > 0 ? (savedConsumption / (totalConsumption + savedConsumption)) * 100 : 0;
-        double averageDailyConsumption = totalConsumption / 30;
+        final var totalCost = totalConsumption * ELECTRICITY_PRICE;
+        final var savedCost = savedConsumption * ELECTRICITY_PRICE;
+        final var savingRate = totalConsumption > 0 ? (savedConsumption / (totalConsumption + savedConsumption)) * 100 : 0;
+        final var averageDailyConsumption = totalConsumption / 30;
 
-        String wasteAnalysis = generateWasteAnalysis(devices);
+        final var wasteAnalysis = generateWasteAnalysis(devices);
 
-        EnergyBill bill = new EnergyBill(
+        final var bill = new EnergyBill(
             null, null, null, billMonth,
             totalConsumption, totalCost, savedConsumption, savedCost, savingRate,
             peakConsumption, offPeakConsumption, averageDailyConsumption,
@@ -82,63 +76,47 @@ public final class EnergyBillService
     
     private String generateWasteAnalysis(List<Device> devices)
     {
-        StringBuilder analysis = new StringBuilder();
+        final var analysis = new StringBuilder();
         
-        int highBrightnessCount = 0;
-        int lowEfficiencyCount = 0;
-        int alwaysOnCount = 0;
+        var highBrightnessCount = 0;
+        var lowEfficiencyCount = 0;
+        var alwaysOnCount = 0;
         
-        for(Device device: devices)
-        {
+        for(final var device: devices)
             if(device.getLampStatus() != null && device.getLampStatus() == 1)
             {
-                int brightness = device.getBrightness() != null ? device.getBrightness() : 100;
+                final var brightness = device.getBrightness() != null ? device.getBrightness() : 100;
                 
                 if(brightness >= 90)
-                {
                     highBrightnessCount++;
-                }
                 
                 if(device.getLightIntensity() != null && device.getLightIntensity() > 500 && brightness > 50)
-                {
                     lowEfficiencyCount++;
-                }
                 
                 alwaysOnCount++;
             }
-        }
         
         if(highBrightnessCount > devices.size() * 0.5)
-        {
             analysis.append(StringFormatter.format("发现{}盏路灯长期高亮度运行，建议优化调光策略；", highBrightnessCount));
-        }
 
         if(lowEfficiencyCount > 0)
-        {
             analysis.append(StringFormatter.format("发现{}盏路灯在光照充足时仍保持较高亮度，存在能源浪费；", lowEfficiencyCount));
-        }
         
-        if(analysis.length() == 0)
-        {
+        if(analysis.isEmpty())
             analysis.append("整体能源利用效率良好，未发现明显浪费现象。");
-        }
         
         return analysis.toString();
     }
     
     private String generateOptimizationSuggestions(double savingRate, double peakConsumption, double totalConsumption)
     {
-        StringBuilder suggestions = new StringBuilder();
+        final var suggestions = new StringBuilder();
 
         if(savingRate < 20)
-        {
             suggestions.append("建议启用AI智能调光功能，预计可提升节能率15-20%；\n");
-        }
 
         if(peakConsumption > totalConsumption * 0.5)
-        {
             suggestions.append("高峰时段能耗占比较高，建议实施分时段差异化调光；\n");
-        }
         
         suggestions.append("建议对老旧高能耗灯具进行LED改造，可进一步降低能耗；\n");
         suggestions.append("建议安装光照传感器和人流传感器，实现精准按需照明；\n");
@@ -150,14 +128,14 @@ public final class EnergyBillService
     @Nonnull
     public List<EnergyBill> getBillHistory(@Nonnull String areaId, int months)
     {
-        List<EnergyBill> bills = new ArrayList<>();
-        YearMonth currentMonth = YearMonth.now();
+        final List<EnergyBill> bills = new ArrayList<>();
+        final var currentMonth = YearMonth.now();
         
-        for(int i = 0; i < months; i++)
+        for(var i = 0; i < months; i++)
         {
-            YearMonth targetMonth = currentMonth.minusMonths(i);
-            String billMonth = targetMonth.format(DateTimeFormatter.ofPattern("yyyy-MM"));
-            EnergyBill bill = generateMonthlyBill(areaId, billMonth);
+            final var targetMonth = currentMonth.minusMonths(i);
+            final var billMonth = targetMonth.format(DateTimeFormatter.ofPattern("yyyy-MM"));
+            final var bill = generateMonthlyBill(areaId, billMonth);
             bills.add(bill);
         }
         
@@ -167,22 +145,20 @@ public final class EnergyBillService
     @Nonnull
     public Map<String, Object> getEnergyDashboard(@Nonnull String areaId)
     {
-        Map<String, Object> dashboard = new HashMap<>();
+        final Map<String, Object> dashboard = new HashMap<>();
         
-        EnergyBill currentBill = generateMonthlyBill(areaId,
-            YearMonth.now().format(DateTimeFormatter.ofPattern("yyyy-MM"))
-        );
+        final var currentBill = generateMonthlyBill(areaId, YearMonth.now().format(DateTimeFormatter.ofPattern("yyyy-MM")));
         
         dashboard.put("currentMonth", currentBill);
         
-        List<Map<String, Object>> monthlyTrend = new ArrayList<>();
-        for(int i = 5; i >= 0; i--)
+        final List<Map<String, Object>> monthlyTrend = new ArrayList<>();
+        for(var i = 5; i >= 0; i--)
         {
-            YearMonth targetMonth = YearMonth.now().minusMonths(i);
-            String billMonth = targetMonth.format(DateTimeFormatter.ofPattern("yyyy-MM"));
-            EnergyBill bill = generateMonthlyBill(areaId, billMonth);
+            final var targetMonth = YearMonth.now().minusMonths(i);
+            final var billMonth = targetMonth.format(DateTimeFormatter.ofPattern("yyyy-MM"));
+            final var bill = generateMonthlyBill(areaId, billMonth);
             
-            Map<String, Object> monthData = new HashMap<>();
+            final Map<String, Object> monthData = new HashMap<>();
             monthData.put("month", billMonth);
             monthData.put("consumption", bill.getTotalConsumption());
             monthData.put("cost", bill.getTotalCost());
@@ -192,23 +168,23 @@ public final class EnergyBillService
         }
         dashboard.put("monthlyTrend", monthlyTrend);
         
-        List<Device> devices = envMapper.selectAllDevice();
-        Map<String, Double> areaConsumption = new HashMap<>();
+        final var devices = envMapper.selectAllDevice();
+        final Map<String, Double> areaConsumption = new HashMap<>();
         
-        for(Device device: devices)
+        for(final var device: devices)
         {
-            String area = device.getName() != null ? device.getName().split("-")[0] : "未知区域";
+            final var area = device.getName() != null ? device.getName().split("-")[0] : "未知区域";
             if(device.getLampStatus() != null && device.getLampStatus() == 1)
             {
-                int brightness = device.getBrightness() != null ? device.getBrightness() : 100;
-                double consumption = AVG_LAMP_POWER * AVG_DAILY_HOURS * (brightness / 100.0) * 30;
+                final var brightness = device.getBrightness() != null ? device.getBrightness() : 100;
+                final var consumption = AVG_LAMP_POWER * AVG_DAILY_HOURS * (brightness / 100.0) * 30;
                 areaConsumption.merge(area, consumption, Double::sum);
             }
         }
         dashboard.put("areaConsumption", areaConsumption);
         
-        double yearlyProjection = currentBill.getTotalCost() * 12;
-        double yearlySaving = currentBill.getSavedCost() * 12;
+        final var yearlyProjection = currentBill.getTotalCost() * 12;
+        final var yearlySaving = currentBill.getSavedCost() * 12;
         dashboard.put("yearlyProjection", yearlyProjection);
         dashboard.put("yearlySaving", yearlySaving);
         
@@ -218,10 +194,10 @@ public final class EnergyBillService
     @Nonnull
     public Map<String, Object> compareWithBaseline(@Nonnull String areaId)
     {
-        Map<String, Object> comparison = new HashMap<>();
+        final Map<String, Object> comparison = new HashMap<>();
         
-        double baselineConsumption = calculateBaselineConsumption();
-        EnergyBill currentBill = generateMonthlyBill(areaId,
+        final var baselineConsumption = calculateBaselineConsumption();
+        final var currentBill = generateMonthlyBill(areaId,
             YearMonth.now().format(DateTimeFormatter.ofPattern("yyyy-MM"))
         );
         
@@ -236,16 +212,12 @@ public final class EnergyBillService
     
     private double calculateBaselineConsumption()
     {
-        List<Device> devices = envMapper.selectAllDevice();
-        int lampCount = 0;
+        final var devices = envMapper.selectAllDevice();
+        var lampCount = 0;
         
-        for(Device device: devices)
-        {
+        for(final var device: devices)
             if("lamp".equals(device.getDeviceType()))
-            {
                 lampCount++;
-            }
-        }
         
         return lampCount * AVG_LAMP_POWER * AVG_DAILY_HOURS * 30;
     }

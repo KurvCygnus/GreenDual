@@ -11,9 +11,9 @@ public final class FunctionalUtils
 {
     private FunctionalUtils() { throw new IllegalAccessError(); }
     
-    public static <K, V> @NonNull Map<K, V> buildImmutableMap(@NonNull Consumer<Map<K, V>> consumer)
+    public static <K, V> @NonNull Map<K, V> buildImmutableMap(@NonNull Consumer<? super Map<K, V>> consumer)
     {
-        final HashMap<K, V> map = new HashMap<>();
+        final var map = new HashMap<K, V>();
         consumer.accept(map);
         return Collections.unmodifiableMap(map);
     }

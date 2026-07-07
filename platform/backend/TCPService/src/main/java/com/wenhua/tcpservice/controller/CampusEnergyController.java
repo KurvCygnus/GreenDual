@@ -16,6 +16,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -250,7 +251,7 @@ public final class CampusEnergyController
     {
         try
         {
-            Map<String, Object> stats = teachingCaseService.getTeachingStatistics();
+            final var stats = teachingCaseService.getTeachingStatistics();
             return Result.success(stats);
         }
         catch(Exception e)
@@ -266,7 +267,7 @@ public final class CampusEnergyController
     {
         try
         {
-            Map<String, Object> overview = new java.util.HashMap<>();
+            Map<String, Object> overview = new HashMap<>();
             
             Map<String, Object> energyStats = smartLightingEngine.getEnergyStatistics(null);
             overview.put("energy", energyStats);

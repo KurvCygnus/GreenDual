@@ -43,10 +43,10 @@ public final class MaintenanceLogController
     public Result selectMaintenanceLog(@RequestBody QueryParameter queryParameter)
     {
         //交给服务
-        List<MaintenanceLog> select = logService.select(queryParameter);
+        final var select = logService.select(queryParameter);
         
         //数量也查
-        int i = logMapper.selectCount(queryParameter);
+        final var i = logMapper.selectCount(queryParameter);
         log.debug("页面数量: {}", i);
         return Result.success(select, i);
     }

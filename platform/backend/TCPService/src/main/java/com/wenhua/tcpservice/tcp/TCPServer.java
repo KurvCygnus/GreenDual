@@ -56,7 +56,7 @@ public final class TCPServer implements CommandLineRunner
     
     private void handleClient(Socket socket)
     {
-        String deviceIp = socket.getInetAddress().getHostAddress();
+        final var deviceIp = socket.getInetAddress().getHostAddress();
         String deviceId = null;
         
         try(
@@ -74,8 +74,8 @@ public final class TCPServer implements CommandLineRunner
                 
                 try
                 {
-                    JSONObject json = new JSONObject(inputLine);
-                    String returnIntent = json.optString("returnIntent", "");
+                    final var json = new JSONObject(inputLine);
+                    final var returnIntent = json.optString("returnIntent", "");
                     deviceId = json.optString("id", "");
                     
                     if(!deviceId.isEmpty())
@@ -113,10 +113,10 @@ public final class TCPServer implements CommandLineRunner
     
     private void handleDeviceOnline(JSONObject json, String ip, PrintWriter out)
     {
-        String deviceId = json.optString("id", "");
+        final var deviceId = json.optString("id", "");
         log.debug("设备上线: {}, IP: {}", deviceId, ip);
         
-        Device device = envMapper.selectDeviceById(deviceId);
+        var device = envMapper.selectDeviceById(deviceId);
         if(device == null)
         {
             device = new Device();
@@ -151,9 +151,9 @@ public final class TCPServer implements CommandLineRunner
     }
 
     private void handleDeviceReport(JSONObject json, String ip) {
-        String deviceId = json.optString("id", "");
+        final var deviceId = json.optString("id", "");
         
-        Device device = envMapper.selectDeviceById(deviceId);
+        var device = envMapper.selectDeviceById(deviceId);
         if (device == null) {
             device = new Device();
             device.setId(deviceId);
@@ -164,35 +164,27 @@ public final class TCPServer implements CommandLineRunner
         device.setIp(json.optString("ip", ip));
         device.setOnLine(json.optInt("onlineStatus", 1));
         
-        if (json.has("temperature")) {
+        if(json.has("temperature"))
             device.setTemperature((float) json.optDouble("temperature", 25.0));
-        }
-        if (json.has("humidity")) {
+        if(json.has("humidity"))
             device.setHumidity(json.optInt("humidity", 60));
-        }
-        if (json.has("lightIntensity")) {
+        if(json.has("lightIntensity"))
             device.setLightIntensity(json.optInt("lightIntensity", 10000));
-        }
         
         //处理路灯相关字段
-        if (json.has("lampStatus")) {
+        if(json.has("lampStatus"))
             device.setLampStatus(json.optInt("lampStatus", 0));
-        }
-        if (json.has("brightness")) {
+        if(json.has("brightness"))
             device.setBrightness(json.optInt("brightness", 80));
-        }
-        if (json.has("faultStatus")) {
+        if(json.has("faultStatus"))
             device.setFaultStatus(json.optInt("faultStatus", 0));
-        }
-        if (json.has("powerConsumption")) {
+        if(json.has("powerConsumption"))
             device.setPowerConsumption((float) json.optDouble("powerConsumption", 0.0));
-        }
         
-        if (envMapper.selectDeviceById(deviceId) == null) {
+        if(envMapper.selectDeviceById(deviceId) == null)
             envMapper.insertDevice(device);
-        } else {
+        else
             envMapper.updateDevice(device);
-        }
         
         log.debug(
             "设备数据更新: {}, 温度: {}, 湿度: {}, 光照: {}, 路灯状态: {}, 亮度: {}",
@@ -206,12 +198,12 @@ public final class TCPServer implements CommandLineRunner
     }
 
     private void handleDeviceSetResponse(JSONObject json) {
-        String deviceId = json.optString("id", "");
+        final var deviceId = json.optString("id", "");
         log.debug("设备设置响应: {}", deviceId);
     }
 
     private void updateDeviceOffline(String deviceId) {
-        Device device = envMapper.selectDeviceById(deviceId);
+        final var device = envMapper.selectDeviceById(deviceId);
         if (device != null) {
             device.setOnLine(0);
             envMapper.updateDevice(device);
@@ -220,13 +212,13 @@ public final class TCPServer implements CommandLineRunner
     }
 
     private void sendCommand(PrintWriter out, String key, String value) {
-        JSONObject cmd = new JSONObject();
+        final var cmd = new JSONObject();
         cmd.put(key, value);
         out.println(cmd);
     }
 
     public static boolean sendCommandToDevice(@Nonnull String deviceId, @Nonnull String command) {
-        PrintWriter writer = DEVICE_WRITERS.get(deviceId);
+        final var writer = DEVICE_WRITERS.get(deviceId);
         if (writer != null) {
             writer.println(command);
             log.debug("发送命令到设备 {}: {}", deviceId, command);
@@ -241,38 +233,38 @@ public final class TCPServer implements CommandLineRunner
     }
 
     public static void setDeviceAutoMonitor(@Nonnull String deviceId, boolean autoOn) {
-        JSONObject cmd = new JSONObject();
+        final var cmd = new JSONObject();
         cmd.put("cmd", autoOn ? "AUTO_ON" : "AUTO_OFF");
         sendCommandToDevice(deviceId, cmd.toString());
     }
 
     public static void setDeviceReportInterval(@Nonnull String deviceId, int interval) {
-        JSONObject cmd = new JSONObject();
+        final var cmd = new JSONObject();
         cmd.put("cmd", "SET");
         cmd.put("interval", interval);
         sendCommandToDevice(deviceId, cmd.toString());
     }
 
     public static void requestDeviceReport(@Nonnull String deviceId) {
-        JSONObject cmd = new JSONObject();
+        final var cmd = new JSONObject();
         cmd.put("cmd", "REPORT");
         sendCommandToDevice(deviceId, cmd.toString());
     }
 
     public static boolean turnOnLamp(@Nonnull String deviceId) {
-        JSONObject cmd = new JSONObject();
+        final var cmd = new JSONObject();
         cmd.put("cmd", "LAMP_ON");
         return sendCommandToDevice(deviceId, cmd.toString());
     }
 
     public static boolean turnOffLamp(@Nonnull String deviceId) {
-        JSONObject cmd = new JSONObject();
+        final var cmd = new JSONObject();
         cmd.put("cmd", "LAMP_OFF");
         return sendCommandToDevice(deviceId, cmd.toString());
     }
 
     public static boolean setLampBrightness(@Nonnull String deviceId, int brightness) {
-        JSONObject cmd = new JSONObject();
+        final var cmd = new JSONObject();
         cmd.put("cmd", "LAMP_BRIGHTNESS");
         cmd.put("brightness", brightness);
         return sendCommandToDevice(deviceId, cmd.toString());

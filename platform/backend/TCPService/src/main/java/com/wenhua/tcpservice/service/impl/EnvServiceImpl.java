@@ -7,12 +7,13 @@ import com.wenhua.tcpservice.service.EnvService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service @Slf4j
 @AllArgsConstructor
-public final class EnvServiceImpl implements EnvService {
+public class EnvServiceImpl implements EnvService {
 
     private EnvMapper envMapper;
 
@@ -53,13 +54,11 @@ public final class EnvServiceImpl implements EnvService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean deleteDevices(List<String> ids) {
         log.debug("删除设备，ID列表: {}", ids.toString());
         try {
-            int result = 0;
-            for (String id : ids) {
-                result += envMapper.deleteDevice(id);
-            }
+            int result = envMapper.batchDeleteDevices(ids);
             return result > 0;
         } catch (Exception e) {
             log.error("删除设备失败: {}", e.getMessage());
@@ -80,13 +79,11 @@ public final class EnvServiceImpl implements EnvService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean batchUpdateDeviceStatus(List<String> ids, Integer onLine) {
         log.debug("批量更新设备状态，ID列表: {}, 状态: {}", ids.toString(), onLine);
         try {
-            int result = 0;
-            for (String id : ids) {
-                result += envMapper.updateDeviceStatus(id, onLine);
-            }
+            int result = envMapper.batchUpdateDeviceStatus(ids, onLine);
             return result > 0;
         } catch (Exception e) {
             log.error("批量更新设备状态失败: {}", e.getMessage());

@@ -56,8 +56,13 @@ public interface EnvMapper {
     int isDeviceExist(String id);
 
     //删除设备
-    @Update("delete from device where id = #{id}")
+    @Delete("delete from device where id = #{id}")
     int deleteDevice(String id);
+
+    //批量删除设备
+    @Delete("<script>delete from device where id in " +
+            "<foreach collection='ids' item='id' open='(' separator=',' close=')'>#{id}</foreach></script>")
+    int batchDeleteDevices(@Param("ids") List<String> ids);
 
     //查询所有设备
     @Select("select * from device")
@@ -89,6 +94,11 @@ public interface EnvMapper {
     //更新设备状态
     @Update("update device set onLine = #{onLine} where id = #{id}")
     int updateDeviceStatus(String id, Integer onLine);
+
+    //批量更新设备状态
+    @Update("<script>update device set onLine = #{onLine} where id in " +
+            "<foreach collection='ids' item='id' open='(' separator=',' close=')'>#{id}</foreach></script>")
+    int batchUpdateDeviceStatus(@Param("ids") List<String> ids, @Param("onLine") int onLine);
 
     // ========== 路灯相关方法 ==========
 
