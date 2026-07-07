@@ -196,7 +196,7 @@ Day4的多数问题大概率已经失效. 在Day3, 该项目的数据库初始�
 
 ### 5.1 无心跳超时机制
 
-- [ ] 是否完成
+- [x] 是否完成
 - **文件**: `platform/backend/TCPService/.../tcp/TCPServer.java`
 - **问题**: `client.setSoTimeout(0)` 表示无限等待, 断线只靠 IO 异常检测；无定期心跳检测
 - **影响**: 已断开但未触发的 TCP 半开连接永久占用资源, 最终 OOM
@@ -204,7 +204,7 @@ Day4的多数问题大概率已经失效. 在Day3, 该项目的数据库初始�
 
 ### 5.2 原始线程管理
 
-- [ ] 是否完成
+- [x] 是否完成
 - **文件**: `platform/backend/TCPService/.../tcp/TCPServer.java:52`
 - **问题**: `new Thread(clientHandler).start()` — 无线程池, 无线程复用
 - **影响**: 1000+ 设备并发时创建大量线程, 系统资源耗尽
@@ -212,7 +212,7 @@ Day4的多数问题大概率已经失效. 在Day3, 该项目的数据库初始�
 
 ### 5.3 JSON 解析无异常保护
 
-- [ ] 是否完成
+- [x] 是否完成
 - **文件**: `platform/backend/TCPService/.../tcp/TCPServer.java`
 - **问题**: `JSONObject.parseObject()` 可能抛出异常, 未被 try-catch 包裹
 - **影响**: 畸形数据导致客户端处理线程崩溃
@@ -307,11 +307,12 @@ Day4的多数问题大概率已经失效. 在Day3, 该项目的数据库初始�
 
 ### 7.3 `Result` POJO 未使用 @Data
 
-- [ ] 是否完成
+- [x] 是否完成
 - **文件**: `platform/backend/TCPService/.../pojo/Result.java`
 - **问题**: 手动编写 getter/setter
 - **影响**: 维护成本高
 - **修复**: 改用 Lombok `@Data`
+- **后记**: 该文件在commit "a3a6052081e9227d28cf348756faee9886cd256f", DTO清理中被调整和优化, 无需`@Data`.
 
 ### 7.4 缺省连接池配置
 
@@ -657,9 +658,10 @@ Day4的多数问题大概率已经失效. 在Day3, 该项目的数据库初始�
 
 ### 15.6 缺少 API 文档生成
 
-- [ ] 是否完成
+- [x] 是否完成
 - **问题**: 未集成 SpringDoc OpenAPI / Swagger
 - **影响**: 前端对接需要手动查看代码
+- **后记**: 已追加
 
 ### 15.7 数据库版本迁移缺失
 

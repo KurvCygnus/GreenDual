@@ -13,7 +13,7 @@ import java.util.List;
 @Service
 @AllArgsConstructor
 @Slf4j
-public final class LogServiceImpl implements LogService
+public class LogServiceImpl implements LogService
 {
     
     private LogMapper logMapper;

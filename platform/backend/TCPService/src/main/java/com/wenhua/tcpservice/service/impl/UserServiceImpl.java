@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Slf4j @Service @AllArgsConstructor
-public final class UserServiceImpl implements UserService
+public class UserServiceImpl implements UserService
 {
     private final UserMapper userMapper;
     

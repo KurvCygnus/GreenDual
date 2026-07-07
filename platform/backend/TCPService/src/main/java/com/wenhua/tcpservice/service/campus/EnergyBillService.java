@@ -14,9 +14,7 @@ import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-@Service
-@Slf4j
-@AllArgsConstructor
+@Service @Slf4j @AllArgsConstructor
 public final class EnergyBillService
 {
     private final EnvMapper envMapper;
@@ -29,18 +27,18 @@ public final class EnergyBillService
     public EnergyBill generateMonthlyBill(@Nonnull String areaId, @Nonnull String billMonth)
     {
         final var devices = envMapper.selectAllDevice();
-
-        double totalConsumption = 0;
-        double peakConsumption = 0;
-        double offPeakConsumption = 0;
-        double savedConsumption = 0;
+        
+        var totalConsumption = .0;
+        var peakConsumption = .0;
+        var offPeakConsumption = .0;
+        var savedConsumption = .0;
 
         for(final var device: devices)
             if(device.getLampStatus() != null && device.getLampStatus() == 1)
             {
                 final var brightness = device.getBrightness() != null ? device.getBrightness() : 100;
                 
-                final var dailyConsumption = AVG_LAMP_POWER * AVG_DAILY_HOURS * (brightness / 100.0);
+                final var dailyConsumption = AVG_LAMP_POWER * AVG_DAILY_HOURS * (brightness / 100.);
                 final var monthlyConsumption = dailyConsumption * 30;
                 
                 totalConsumption += monthlyConsumption;
@@ -50,9 +48,9 @@ public final class EnergyBillService
                 
                 final var hour = LocalDateTime.now().getHour();
                 if(hour >= 18 && hour <= 22)
-                    peakConsumption += dailyConsumption * 0.4;
+                    peakConsumption += dailyConsumption * .4;
                 else
-                    offPeakConsumption += dailyConsumption * 0.6;
+                    offPeakConsumption += dailyConsumption * .6;
             }
 
         final var totalCost = totalConsumption * ELECTRICITY_PRICE;

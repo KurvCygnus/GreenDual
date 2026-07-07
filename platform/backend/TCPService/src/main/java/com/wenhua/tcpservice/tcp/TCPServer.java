@@ -5,8 +5,11 @@ import com.wenhua.tcpservice.mapper.EnvMapper;
 import com.wenhua.tcpservice.pojo.dev.Device;
 import com.wenhua.tcpservice.utils.StringFormatter;
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.PreDestroy;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
@@ -19,7 +22,15 @@ import java.net.Socket;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionHandler;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Component
 @Slf4j
@@ -29,61 +40,134 @@ public final class TCPServer implements CommandLineRunner
 
     private static final Map<String, Socket> DEVICE_SOCKETS = new ConcurrentHashMap<>();
     private static final Map<String, PrintWriter> DEVICE_WRITERS = new ConcurrentHashMap<>();
-    private final ExecutorService executorService = Executors.newCachedThreadPool();
-    
-    public TCPServer(EnvMapper envMapper) { this.envMapper = envMapper; }
-    
+    private static final Map<String, Long> DEVICE_LAST_ACTIVITY = new ConcurrentHashMap<>();
+
+    // 从 application.properties 注入线程池配置
+    @Value("${tcp.thread.pool.core-size:4}")
+    private int threadPoolCoreSize;
+
+    @Value("${tcp.thread.pool.max-size:200}")
+    private int threadPoolMaxSize;
+
+    @Value("${tcp.thread.pool.keep-alive:60}")
+    private int threadPoolKeepAlive;
+
+    @Value("${tcp.thread.pool.queue-capacity:1000}")
+    private int threadPoolQueueCapacity;
+
+    // 从 application.properties 注入心跳配置
+    @Value("${tcp.heartbeat.timeout:120}")
+    private long heartbeatTimeoutSeconds;
+
+    @Value("${tcp.heartbeat.interval:30}")
+    private long heartbeatIntervalSeconds;
+
+    private final ExecutorService executorService;
+    private final ScheduledExecutorService heartbeatExecutor = Executors.newSingleThreadScheduledExecutor(
+        r ->
+        {
+            final var thread = new Thread(r, "tcp-heartbeat");
+            thread.setDaemon(true);
+            return thread;
+        }
+    );
+
+    private volatile ServerSocket serverSocket;
+    private volatile boolean running = false;
+
+    public TCPServer(EnvMapper envMapper)
+    {
+        this.envMapper = envMapper;
+        this.executorService = createThreadPool();
+    }
+
+    private @NonNull ExecutorService createThreadPool()
+    {
+        final var threadFactory = new TCPThreadFactory();
+        final RejectedExecutionHandler rejectionHandler = new CallerRunsPolicy();
+
+        return new ThreadPoolExecutor(
+            threadPoolCoreSize,
+            threadPoolMaxSize,
+            threadPoolKeepAlive,
+            TimeUnit.SECONDS,
+            new LinkedBlockingQueue<>(threadPoolQueueCapacity),
+            threadFactory,
+            rejectionHandler
+        );
+    }
+
     @Override public void run(String... args)
     {
-        new Thread(
+        final var acceptThread = new Thread(
             () ->
             {
-                try(final var serverSocket = new ServerSocket(GlobalConfiguration.TCP_PORT))
+                try
                 {
-                    log.debug("TCP服务端启动，端口: {}", GlobalConfiguration.TCP_PORT);
-                    
-                    while(true)
-                    {
-                        final var clientSocket = serverSocket.accept();
-                        log.debug("新的设备连接: {}", clientSocket.getInetAddress().getHostAddress());
-                        executorService.submit(() -> handleClient(clientSocket));
-                    }
-                }
-                catch(IOException e) { log.error("TCP服务端启动失败: {}", e.getMessage()); }
-            }
-        ).start();
-    }
+                    serverSocket = new ServerSocket(GlobalConfiguration.TCP_PORT);
+                    running = true;
+                    log.info("TCP服务端启动，端口: {}", GlobalConfiguration.TCP_PORT);
     
-    private void handleClient(Socket socket)
+                    // 启动心跳检测
+                    heartbeatExecutor.scheduleAtFixedRate(
+                        this::checkDeviceHeartbeats,
+                        heartbeatIntervalSeconds,
+                        heartbeatIntervalSeconds,
+                        TimeUnit.SECONDS
+                    );
+    
+                    while(running)
+                        try
+                        {
+                            final var clientSocket = serverSocket.accept();
+                            log.debug("新的设备连接: {}", clientSocket.getInetAddress().getHostAddress());
+                            executorService.submit(() -> handleClient(clientSocket));
+                        }
+                        catch(IOException e) { if(running) log.error("接受设备连接失败: {}", e.getMessage()); }
+                }
+                catch (IOException e) { log.error("TCP服务端启动失败: {}", e.getMessage()); }
+            },
+            "tcp-accept"
+        );
+
+        acceptThread.setDaemon(true);
+        acceptThread.start();
+    }
+
+    private void handleClient(@NonNull Socket socket)
     {
         final var deviceIp = socket.getInetAddress().getHostAddress();
         String deviceId = null;
-        
+
         try(
             final var in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             final var out = new PrintWriter(socket.getOutputStream(), true)
         )
         {
-            
             socket.setSoTimeout(0);
             String inputLine;
-            
+
             while((inputLine = in.readLine()) != null)
             {
+                // 跳过空行
+                if(inputLine.isBlank())
+                    continue;
+
                 log.debug("收到设备数据: {}", inputLine);
-                
+
                 try
                 {
                     final var json = new JSONObject(inputLine);
                     final var returnIntent = json.optString("returnIntent", "");
                     deviceId = json.optString("id", "");
-                    
+
                     if(!deviceId.isEmpty())
                     {
                         DEVICE_SOCKETS.put(deviceId, socket);
                         DEVICE_WRITERS.put(deviceId, out);
+                        DEVICE_LAST_ACTIVITY.put(deviceId, System.currentTimeMillis());
                     }
-                    
+
                     switch(returnIntent)
                     {
                         case "online" -> handleDeviceOnline(json, deviceIp, out);
@@ -92,7 +176,7 @@ public final class TCPServer implements CommandLineRunner
                         default -> sendCommand(out, "cmd", "REPORT");
                     }
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     log.error("解析JSON失败: {}", e.getMessage());
                     out.println("{\"status\":\"error\",\"message\":\"Invalid JSON\"}");
@@ -106,16 +190,51 @@ public final class TCPServer implements CommandLineRunner
             {
                 DEVICE_SOCKETS.remove(deviceId);
                 DEVICE_WRITERS.remove(deviceId);
+                DEVICE_LAST_ACTIVITY.remove(deviceId);
                 updateDeviceOffline(deviceId);
             }
         }
     }
-    
+
+    /**
+     * 心跳检测：检查所有设备是否在超时时间内有数据活动，
+     * 超时设备强制关闭连接并清理资源。
+     */
+    private void checkDeviceHeartbeats()
+    {
+        final var now = System.currentTimeMillis();
+        final var timeoutMs = heartbeatTimeoutSeconds * 1000;
+
+        DEVICE_LAST_ACTIVITY.forEach(
+            (deviceId, lastTime) ->
+            {
+                if(now - lastTime > timeoutMs)
+                {
+                    log.warn("设备心跳超时，准备清理: {}", deviceId);
+                    cleanupStaleDevice(deviceId);
+                }
+            }
+        );
+    }
+
+    private void cleanupStaleDevice(String deviceId)
+    {
+        DEVICE_LAST_ACTIVITY.remove(deviceId);
+
+        final var socket = DEVICE_SOCKETS.remove(deviceId);
+        if(socket != null)
+            try { socket.close(); }
+            catch(IOException ignored) {}
+
+        DEVICE_WRITERS.remove(deviceId);
+        updateDeviceOffline(deviceId);
+    }
+
     private void handleDeviceOnline(JSONObject json, String ip, PrintWriter out)
     {
         final var deviceId = json.optString("id", "");
         log.debug("设备上线: {}, IP: {}", deviceId, ip);
-        
+
         var device = envMapper.selectDeviceById(deviceId);
         if(device == null)
         {
@@ -146,15 +265,17 @@ public final class TCPServer implements CommandLineRunner
                 device.setBrightness(json.optInt("brightness", device.getBrightness()));
             envMapper.updateDevice(device);
         }
-        
+
         sendCommand(out, "cmd", "REPORT");
     }
 
-    private void handleDeviceReport(JSONObject json, String ip) {
+    private void handleDeviceReport(JSONObject json, String ip)
+    {
         final var deviceId = json.optString("id", "");
-        
+
         var device = envMapper.selectDeviceById(deviceId);
-        if (device == null) {
+        if(device == null)
+        {
             device = new Device();
             device.setId(deviceId);
             device.setName(StringFormatter.format("环境监测设备-{}", deviceId));
@@ -197,29 +318,83 @@ public final class TCPServer implements CommandLineRunner
         );
     }
 
-    private void handleDeviceSetResponse(JSONObject json) {
+    private void handleDeviceSetResponse(JSONObject json)
+    {
         final var deviceId = json.optString("id", "");
         log.debug("设备设置响应: {}", deviceId);
     }
 
-    private void updateDeviceOffline(String deviceId) {
+    private void updateDeviceOffline(String deviceId)
+    {
         final var device = envMapper.selectDeviceById(deviceId);
-        if (device != null) {
+        if(device != null)
+        {
             device.setOnLine(0);
             envMapper.updateDevice(device);
             log.debug("设备离线: {}", deviceId);
         }
     }
 
-    private void sendCommand(PrintWriter out, String key, String value) {
+    @PreDestroy public void destroy()
+    {
+        log.info("TCP服务正在关闭...");
+        running = false;
+
+        // 关闭 ServerSocket，中断 accept 循环
+        if(serverSocket != null && !serverSocket.isClosed())
+            try { serverSocket.close(); }
+            catch(IOException e) { log.warn("关闭ServerSocket异常: {}", e.getMessage()); }
+
+        // 关闭所有设备连接
+        DEVICE_SOCKETS.forEach(
+            (deviceId, socket) ->
+            {
+                try { socket.close(); }
+                catch (IOException ignored) {}
+            }
+        );
+        DEVICE_SOCKETS.clear();
+        DEVICE_WRITERS.clear();
+        DEVICE_LAST_ACTIVITY.clear();
+
+        // 关闭线程池
+        shutdownExecutor(executorService, "handler");
+        shutdownExecutor(heartbeatExecutor, "heartbeat");
+
+        log.info("TCP服务已关闭");
+    }
+
+    private void shutdownExecutor(ExecutorService executor, String name)
+    {
+        executor.shutdown();
+        try
+        {
+            if(!executor.awaitTermination(5, TimeUnit.SECONDS))
+            {
+                log.warn("{}线程池未在5秒内关闭，强制终止", name);
+                executor.shutdownNow();
+            }
+        }
+        catch (InterruptedException e)
+        {
+            log.warn("{}线程池关闭被中断", name);
+            executor.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    private void sendCommand(PrintWriter out, String key, String value)
+    {
         final var cmd = new JSONObject();
         cmd.put(key, value);
         out.println(cmd);
     }
 
-    public static boolean sendCommandToDevice(@Nonnull String deviceId, @Nonnull String command) {
+    public static boolean sendCommandToDevice(@Nonnull String deviceId, @Nonnull String command)
+    {
         final var writer = DEVICE_WRITERS.get(deviceId);
-        if (writer != null) {
+        if(writer != null)
+        {
             writer.println(command);
             log.debug("发送命令到设备 {}: {}", deviceId, command);
             return true;
@@ -228,45 +403,61 @@ public final class TCPServer implements CommandLineRunner
         return false;
     }
 
-    public static boolean isDeviceConnected(@Nonnull String deviceId) {
-        return DEVICE_SOCKETS.containsKey(deviceId);
-    }
+    public static boolean isDeviceConnected(@Nonnull String deviceId) { return DEVICE_SOCKETS.containsKey(deviceId); }
 
-    public static void setDeviceAutoMonitor(@Nonnull String deviceId, boolean autoOn) {
+    public static void setDeviceAutoMonitor(@Nonnull String deviceId, boolean autoOn)
+    {
         final var cmd = new JSONObject();
         cmd.put("cmd", autoOn ? "AUTO_ON" : "AUTO_OFF");
         sendCommandToDevice(deviceId, cmd.toString());
     }
 
-    public static void setDeviceReportInterval(@Nonnull String deviceId, int interval) {
+    public static void setDeviceReportInterval(@Nonnull String deviceId, int interval)
+    {
         final var cmd = new JSONObject();
         cmd.put("cmd", "SET");
         cmd.put("interval", interval);
         sendCommandToDevice(deviceId, cmd.toString());
     }
 
-    public static void requestDeviceReport(@Nonnull String deviceId) {
+    public static void requestDeviceReport(@Nonnull String deviceId)
+    {
         final var cmd = new JSONObject();
         cmd.put("cmd", "REPORT");
         sendCommandToDevice(deviceId, cmd.toString());
     }
 
-    public static boolean turnOnLamp(@Nonnull String deviceId) {
+    public static boolean turnOnLamp(@Nonnull String deviceId)
+    {
         final var cmd = new JSONObject();
         cmd.put("cmd", "LAMP_ON");
         return sendCommandToDevice(deviceId, cmd.toString());
     }
 
-    public static boolean turnOffLamp(@Nonnull String deviceId) {
+    public static boolean turnOffLamp(@Nonnull String deviceId)
+    {
         final var cmd = new JSONObject();
         cmd.put("cmd", "LAMP_OFF");
         return sendCommandToDevice(deviceId, cmd.toString());
     }
 
-    public static boolean setLampBrightness(@Nonnull String deviceId, int brightness) {
+    public static boolean setLampBrightness(@Nonnull String deviceId, int brightness)
+    {
         final var cmd = new JSONObject();
         cmd.put("cmd", "LAMP_BRIGHTNESS");
         cmd.put("brightness", brightness);
         return sendCommandToDevice(deviceId, cmd.toString());
+    }
+}
+
+final class TCPThreadFactory implements ThreadFactory
+{
+    private final AtomicInteger counter = new AtomicInteger(1);
+    
+    @Override public @NonNull Thread newThread(@NonNull Runnable r)
+    {
+        final var thread = new Thread(r, "tcp-handler-" + counter.getAndIncrement());
+        thread.setDaemon(true);
+        return thread;
     }
 }

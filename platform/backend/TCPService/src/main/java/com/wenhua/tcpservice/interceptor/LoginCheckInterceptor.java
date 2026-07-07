@@ -1,7 +1,6 @@
 package com.wenhua.tcpservice.interceptor;
 
 import com.alibaba.fastjson.JSONObject;
-
 import com.wenhua.tcpservice.pojo.Result;
 import com.wenhua.tcpservice.utils.JwtUtils;
 import jakarta.servlet.http.HttpServletRequest;
@@ -12,8 +11,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
-
-import java.util.Enumeration;
 
 @Component @Slf4j
 public final class LoginCheckInterceptor implements HandlerInterceptor
@@ -38,21 +35,19 @@ public final class LoginCheckInterceptor implements HandlerInterceptor
         
         //这里校验
         //1.获取请求url
-        String url = req.getRequestURL().toString();
+        final var url = req.getRequestURL().toString();
         log.info("请求的url:{}", url);
 // 打印请求参数（对于GET请求）
-        Enumeration<String> parameterNames = req.getParameterNames();
-        while(parameterNames.hasMoreElements())
+        final var parameterNames = req.getParameterNames().asIterator();
+        while(parameterNames.hasNext())
         {
-            String parameterName = parameterNames.nextElement();
-            String[] parameterValues = req.getParameterValues(parameterName);
-            StringBuilder values = new StringBuilder();
-            for(String value: parameterValues)
+            final var parameterName = parameterNames.next();
+            final var parameterValues = req.getParameterValues(parameterName);
+            final var values = new StringBuilder();
+            for(final var value: parameterValues)
             {
                 if(!values.isEmpty())
-                {
                     values.append(", ");
-                }
                 values.append(value);
             }
             log.info("请求参数 {}: {}", parameterName, values);
