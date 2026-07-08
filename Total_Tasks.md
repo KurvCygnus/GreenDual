@@ -1,7 +1,7 @@
 # 智绿云控 全项目修复 Checklist
 
 > 基于 [设计文档](资料/智绿云控%20-%20AI%20协同的环境监测与智能节能管控平台.docx) 与前后端实际代码的差距分析 + 代码本身的健壮性/安全问题汇总。
-> 共 15 天任务, 按优先级排列。
+> 共 15 天任务, 按优先级排列。`
 
 ---
 
@@ -224,7 +224,7 @@ Day4的多数问题大概率已经失效. 在Day3, 该项目的数据库初始�
 
 ### 6.1 峰谷电计算使用当前时间
 
-- [ ] 是否完成
+- [x] 是否完成
 - **文件**: `platform/backend/TCPService/.../service/EnergyBillService.java`
 - **问题**: `LocalDateTime.now().getHour()` — 计算整月账单也使用调用时刻的 hour
 - **影响**: 每天 24 小时全用同一电价计算, 数据完全错误
@@ -232,7 +232,7 @@ Day4的多数问题大概率已经失效. 在Day3, 该项目的数据库初始�
 
 ### 6.2 账单数据未持久化
 
-- [ ] 是否完成
+- [x] 是否完成
 - **文件**: `platform/backend/TCPService/.../service/EnergyBillService.java`
 - **问题**: `generateMonthlyBill()` 生成 `EnergyBill` 对象返回, 但不调用 `CampusEnergyMapper.insertBill()`
 - **影响**: 每次获取账单都重新计算, 历史账单无法查询
@@ -240,14 +240,14 @@ Day4的多数问题大概率已经失效. 在Day3, 该项目的数据库初始�
 
 ### 6.3 硬编码电价
 
-- [ ] 是否完成
+- [x] 是否完成
 - **文件**: `platform/backend/TCPService/.../service/EnergyBillService.java`
 - **问题**: 峰/谷电价硬编码在代码中
 - **修复**: 提取到配置表或 `application.properties`
 
 ### 6.4 照明优化结果不持久化
 
-- [ ] 是否完成
+- [x] 是否完成
 - **文件**: `platform/backend/TCPService/.../ai/SmartLightingEngine.java`
 - **问题**: 调优方案仅返回 JSON string, 不写入 DB
 - **影响**: 每次请求重新计算, 无法追踪优化效果
@@ -255,7 +255,7 @@ Day4的多数问题大概率已经失效. 在Day3, 该项目的数据库初始�
 
 ### 6.5 能耗统计返回硬编码趋势
 
-- [ ] 是否完成
+- [x] 是否完成
 - **文件**: `platform/backend/TCPService/.../ai/SmartLightingEngine.java`
 - **问题**: 返回的月度趋势数据是硬编码的假数据
 - **影响**: 前端图表展示不真实数据
@@ -263,7 +263,7 @@ Day4的多数问题大概率已经失效. 在Day3, 该项目的数据库初始�
 
 ### 6.6 路灯功率计算不一致
 
-- [ ] 是否完成
+- [x] 是否完成
 - **文件**: `platform/backend/TCPService/.../ai/SmartLightingEngine.java`
 - **问题**: 一处使用 150W, 另一处使用 80W 作为单灯功率
 - **影响**: 节省能耗计算偏差
@@ -271,7 +271,7 @@ Day4的多数问题大概率已经失效. 在Day3, 该项目的数据库初始�
 
 ### 6.7 教学案例不同步到 DB
 
-- [ ] 是否完成
+- [x] 是否完成
 - **文件**: `platform/backend/TCPService/.../service/TeachingCaseService.java`
 - **问题**: `createTeachingCase()` 未调用 Mapper
 - **影响**: 教学案例创建后丢失
@@ -279,7 +279,7 @@ Day4的多数问题大概率已经失效. 在Day3, 该项目的数据库初始�
 
 ### 6.8 教学统计返回虚假数字
 
-- [ ] 是否完成
+- [x] 是否完成
 - **文件**: `platform/backend/TCPService/.../service/TeachingCaseService.java`
 - **问题**: `devices.size() * 3` 作为统计数据
 - **影响**: 统计数字无意义

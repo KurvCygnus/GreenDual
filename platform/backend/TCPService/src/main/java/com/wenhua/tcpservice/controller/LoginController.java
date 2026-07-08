@@ -25,7 +25,6 @@ import java.util.Map;
 @Tag(name = "登录认证", description = "用户登录、令牌获取接口")
 public final class LoginController
 {
-    
     private UserService userService;
     
     @Operation(summary = "用户登录", description = "用户名密码登录，返回JWT令牌")

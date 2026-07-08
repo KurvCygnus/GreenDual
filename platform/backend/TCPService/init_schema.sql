@@ -160,7 +160,22 @@ CREATE TABLE IF NOT EXISTS energy_bill (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='能耗账单表';
 
 -- ============================================================
--- 10. 教学案例表
+-- 10. 照明优化记录表
+-- ============================================================
+CREATE TABLE IF NOT EXISTS optimization_record (
+    id                      INT           PRIMARY KEY AUTO_INCREMENT  COMMENT '记录ID',
+    area_id                 INT                                       COMMENT '区域ID',
+    total_devices           INT           DEFAULT 0                   COMMENT '总设备数',
+    adjusted_devices        INT           DEFAULT 0                   COMMENT '已调优设备数',
+    average_saving_rate     DECIMAL(5,2)  DEFAULT 0                   COMMENT '平均节能率(%)',
+    estimated_monthly_saving DECIMAL(10,2) DEFAULT 0                  COMMENT '预计月度节省(元)',
+    status                  INT           DEFAULT 1                   COMMENT '状态',
+    create_time             DATETIME      DEFAULT CURRENT_TIMESTAMP   COMMENT '创建时间',
+    INDEX idx_area_id (area_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='照明优化记录表';
+
+-- ============================================================
+-- 11. 教学案例表
 -- ============================================================
 CREATE TABLE IF NOT EXISTS teaching_case (
     id                INT           PRIMARY KEY AUTO_INCREMENT  COMMENT '案例ID',

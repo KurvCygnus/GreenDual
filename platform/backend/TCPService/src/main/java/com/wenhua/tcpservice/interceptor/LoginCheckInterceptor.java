@@ -61,16 +61,16 @@ public final class LoginCheckInterceptor implements HandlerInterceptor
         }
         
         //3.获取请求头中的令牌(token)
-        String jwt = req.getHeader("token");
+        final var jwt = req.getHeader("token");
         log.info("jwt: {}", jwt);
         
         //4.判断令牌是否存在,如果不存在,返回错误
         if(!StringUtils.hasLength(jwt))
         {/*判断字符串是否有长度*/
             log.info("请求头token为空未登录");
-            Result error = Result.error("NOT_LOGIN");
+            final var error = Result.error("NOT_LOGIN");
             //手动转换成json
-            String notLoginStr = JSONObject.toJSONString(error);
+            final var notLoginStr = JSONObject.toJSONString(error);
             //写回去
             resp.getWriter().write(notLoginStr);
             //不放行
@@ -85,8 +85,8 @@ public final class LoginCheckInterceptor implements HandlerInterceptor
         catch(Exception e)
         {
             log.info("token解析失败");
-            Result error = Result.error("NOT_LOGIN");
-            String notLoginStr = JSONObject.toJSONString(error);
+            final var error = Result.error("NOT_LOGIN");
+            final var notLoginStr = JSONObject.toJSONString(error);
             resp.getWriter().write(notLoginStr);
             return false;
         }

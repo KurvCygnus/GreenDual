@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -27,99 +26,103 @@ import java.util.Map;
 @AllArgsConstructor
 @Slf4j
 @Tag(name = "用户管理", description = "用户CRUD、权限控制接口")
-public final class UserController {
-
+public final class UserController
+{
     private UserService userService;
     private UserMapper userMapper;
-
+    
     @Operation(summary = "查询用户列表")
     @PostMapping(GlobalConfiguration.USER_REQUEST_PREFIX + "/select")
-    public Result selectUser(@RequestBody QueryParameter queryParameter, HttpServletRequest request) {
-        if (!JwtUtils.isAdmin(request, userMapper::selectUserById)) {
+    public Result selectUser(@RequestBody QueryParameter queryParameter, HttpServletRequest request)
+    {
+        if(!JwtUtils.isAdmin(request, userMapper::selectUserById))
             return Result.error("权限不足");
-        }
         log.debug("{}", queryParameter);
-        List<User> users = userService.selectUsers(queryParameter);
+        final var users = userService.selectUsers(queryParameter);
         log.debug("查询到了用户: {}", users);
         return Result.success(users, userMapper.selectUserCount(queryParameter));
     }
-
+    
     @Operation(summary = "更新用户信息")
     @PostMapping(GlobalConfiguration.USER_REQUEST_PREFIX + "/update")
-    public Result updateUser(@RequestBody User user, HttpServletRequest request) {
-        if (!JwtUtils.isAdmin(request, userMapper::selectUserById)) {
+    public Result updateUser(@RequestBody User user, HttpServletRequest request)
+    {
+        if(!JwtUtils.isAdmin(request, userMapper::selectUserById))
             return Result.error("权限不足");
-        }
         log.debug("{}", user);
         userService.updateUser(user);
         return Result.success();
     }
-
+    
     @Operation(summary = "添加用户")
     @PostMapping(GlobalConfiguration.USER_REQUEST_PREFIX + "/add")
-    public Result addUser(@RequestBody User user, HttpServletRequest request) {
-        if (!JwtUtils.isAdmin(request, userMapper::selectUserById)) {
+    public Result addUser(@RequestBody User user, HttpServletRequest request)
+    {
+        if(!JwtUtils.isAdmin(request, userMapper::selectUserById))
             return Result.error("权限不足");
-        }
-        User existing = userMapper.selectUserByUsername(user.getUsername());
-        if (existing != null) {
+        final var existing = userMapper.selectUserByUsername(user.getUsername());
+        if(existing != null)
             return Result.error("用户名已存在");
-        }
         log.debug("{}", user);
         userService.addUser(user);
         return Result.success();
     }
-
+    
     @Operation(summary = "删除用户")
     @PostMapping(GlobalConfiguration.USER_REQUEST_PREFIX + "/delete")
-    public Result deleteUser(@RequestBody User user, HttpServletRequest request) {
-        if (!JwtUtils.isAdmin(request, userMapper::selectUserById)) {
+    public Result deleteUser(@RequestBody User user, HttpServletRequest request)
+    {
+        if(!JwtUtils.isAdmin(request, userMapper::selectUserById))
             return Result.error("权限不足");
-        }
-        if (user.getUserId() == 1) {
+        if(user.getUserId() == 1)
             return Result.error("不能删除管理员账户");
-        }
         log.debug("{}", user);
         userService.deleteUser(user);
         return Result.success();
     }
-
+    
     @Operation(summary = "重置用户密码")
     @PostMapping(GlobalConfiguration.USER_REQUEST_PREFIX + "/resetPassword")
-    public Result resetPassword(@RequestBody Map<String, Object> params, HttpServletRequest request) {
-        if (!JwtUtils.isAdmin(request, userMapper::selectUserById)) {
+    public Result resetPassword(@RequestBody Map<String, Object> params, HttpServletRequest request)
+    {
+        if(!JwtUtils.isAdmin(request, userMapper::selectUserById))
             return Result.error("权限不足");
-        }
-        try {
-            Integer userId = (Integer) params.get("userId");
-            String newPassword = (String) params.get("newPassword");
+        try
+        {
+            final var userId = (Integer) params.get("userId");
+            final var newPassword = (String) params.get("newPassword");
             
-            if (userId == null || newPassword == null || newPassword.isEmpty()) {
+            if(userId == null || newPassword == null || newPassword.isEmpty())
                 return Result.error("参数错误");
-            }
-
+            
             // 查询用户名作为盐值，对密码进行哈希
-            User target = userMapper.selectUserById(userId);
-            String salt = target != null ? target.getUsername() : "";
-            String hashedPassword = PasswordUtils.encode(newPassword, salt);
+            final var target = userMapper.selectUserById(userId);
+            final var salt = target != null ? target.getUsername() : "";
+            final var hashedPassword = PasswordUtils.encode(newPassword, salt);
             userMapper.updatePassword(userId, hashedPassword);
             return Result.success("密码重置成功");
-        } catch (Exception e) {
+        }
+        catch(Exception e)
+        {
             log.error("重置密码失败: {}", e.getMessage());
             return Result.error("重置密码失败");
         }
     }
-
+    
     @Operation(summary = "获取用户统计")
     @PostMapping(GlobalConfiguration.USER_REQUEST_PREFIX + "/stats")
-    public Result getUserStats(HttpServletRequest request) {
-        try {
-            Map<String, Object> stats = new HashMap<>();
+    public Result getUserStats(HttpServletRequest request)
+    {
+        try
+        {
+            final Map<String, Object> stats = new HashMap<>();
             stats.put("total", userMapper.countAll());
             stats.put("admin", userMapper.countByPermission(2));
             stats.put("normal", userMapper.countByPermission(1));
             return Result.success(stats);
-        } catch (Exception e) {
+        }
+        catch(Exception e)
+        {
             log.error("获取用户统计失败: {}", e.getMessage());
             return Result.error("获取用户统计失败");
         }

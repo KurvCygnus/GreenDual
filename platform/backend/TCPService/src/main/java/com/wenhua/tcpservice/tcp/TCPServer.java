@@ -20,20 +20,11 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.RejectedExecutionHandler;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.*;
 import java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@Component
-@Slf4j
+@Component @Slf4j
 public final class TCPServer implements CommandLineRunner
 {
     private final EnvMapper envMapper;
@@ -42,24 +33,10 @@ public final class TCPServer implements CommandLineRunner
     private static final Map<String, PrintWriter> DEVICE_WRITERS = new ConcurrentHashMap<>();
     private static final Map<String, Long> DEVICE_LAST_ACTIVITY = new ConcurrentHashMap<>();
 
-    // 从 application.properties 注入线程池配置
-    @Value("${tcp.thread.pool.core-size:4}")
-    private int threadPoolCoreSize;
-
-    @Value("${tcp.thread.pool.max-size:200}")
-    private int threadPoolMaxSize;
-
-    @Value("${tcp.thread.pool.keep-alive:60}")
-    private int threadPoolKeepAlive;
-
-    @Value("${tcp.thread.pool.queue-capacity:1000}")
-    private int threadPoolQueueCapacity;
-
-    // 从 application.properties 注入心跳配置
-    @Value("${tcp.heartbeat.timeout:120}")
+    @Value("${tcp.heartbeat.timeout}")
     private long heartbeatTimeoutSeconds;
 
-    @Value("${tcp.heartbeat.interval:30}")
+    @Value("${tcp.heartbeat.interval}")
     private long heartbeatIntervalSeconds;
 
     private final ExecutorService executorService;
@@ -74,26 +51,30 @@ public final class TCPServer implements CommandLineRunner
 
     private volatile ServerSocket serverSocket;
     private volatile boolean running = false;
-
-    public TCPServer(EnvMapper envMapper)
+    
+    /**
+     * @implNote 该构造方法不可被重构或优化.<br>
+     * 由于被 <u>{@link Value @Value}</u> 注解的字段是 <b>类本身先被构造, 字段再被注入</b> 的生命周期设计, 将 {@code coreSize}, {@code maxSize}, {@code keepAlive} 和
+     * {@code queueCapacity} 设计成字段会导致 <span style="color: f84b4b">这些字段全部在未被初始化时被使用, 程序崩溃</span>, 而将这些字段设计成构造参数, 使用 <u>{@link Value @Value}</u>
+     * 的注入生命周期是更早, 更稳定的, 因此这种实现是安全的.
+     */
+    public TCPServer(
+        @NonNull EnvMapper envMapper,
+        @Value("${tcp.thread.pool.core-size}") int coreSize,
+        @Value("${tcp.thread.pool.max-size}") int maxSize,
+        @Value("${tcp.thread.pool.keep-alive}") int keepAlive,
+        @Value("${tcp.thread.pool.queue-capacity}") int queueCapacity
+    )
     {
         this.envMapper = envMapper;
-        this.executorService = createThreadPool();
-    }
-
-    private @NonNull ExecutorService createThreadPool()
-    {
-        final var threadFactory = new TCPThreadFactory();
-        final RejectedExecutionHandler rejectionHandler = new CallerRunsPolicy();
-
-        return new ThreadPoolExecutor(
-            threadPoolCoreSize,
-            threadPoolMaxSize,
-            threadPoolKeepAlive,
+        this.executorService = new ThreadPoolExecutor(
+            coreSize,
+            maxSize,
+            keepAlive,
             TimeUnit.SECONDS,
-            new LinkedBlockingQueue<>(threadPoolQueueCapacity),
-            threadFactory,
-            rejectionHandler
+            new LinkedBlockingQueue<>(queueCapacity),
+            new TCPThreadFactory(),
+            new CallerRunsPolicy()
         );
     }
 
@@ -107,7 +88,7 @@ public final class TCPServer implements CommandLineRunner
                     serverSocket = new ServerSocket(GlobalConfiguration.TCP_PORT);
                     running = true;
                     log.info("TCP服务端启动，端口: {}", GlobalConfiguration.TCP_PORT);
-    
+
                     // 启动心跳检测
                     heartbeatExecutor.scheduleAtFixedRate(
                         this::checkDeviceHeartbeats,
@@ -115,13 +96,13 @@ public final class TCPServer implements CommandLineRunner
                         heartbeatIntervalSeconds,
                         TimeUnit.SECONDS
                     );
-    
+
                     while(running)
                         try
                         {
                             final var clientSocket = serverSocket.accept();
                             log.debug("新的设备连接: {}", clientSocket.getInetAddress().getHostAddress());
-                            executorService.submit(() -> handleClient(clientSocket));
+                            executorService.submit(() -> this.handleClient(clientSocket));
                         }
                         catch(IOException e) { if(running) log.error("接受设备连接失败: {}", e.getMessage()); }
                 }
@@ -188,7 +169,9 @@ public final class TCPServer implements CommandLineRunner
         {
             if(deviceId != null)
             {
+                //noinspection resource
                 DEVICE_SOCKETS.remove(deviceId);
+                //noinspection resource
                 DEVICE_WRITERS.remove(deviceId);
                 DEVICE_LAST_ACTIVITY.remove(deviceId);
                 updateDeviceOffline(deviceId);
@@ -286,7 +269,7 @@ public final class TCPServer implements CommandLineRunner
         device.setOnLine(json.optInt("onlineStatus", 1));
         
         if(json.has("temperature"))
-            device.setTemperature((float) json.optDouble("temperature", 25.0));
+            device.setTemperature((float) json.optDouble("temperature", 25.));
         if(json.has("humidity"))
             device.setHumidity(json.optInt("humidity", 60));
         if(json.has("lightIntensity"))
@@ -300,7 +283,7 @@ public final class TCPServer implements CommandLineRunner
         if(json.has("faultStatus"))
             device.setFaultStatus(json.optInt("faultStatus", 0));
         if(json.has("powerConsumption"))
-            device.setPowerConsumption((float) json.optDouble("powerConsumption", 0.0));
+            device.setPowerConsumption((float) json.optDouble("powerConsumption", 0.));
         
         if(envMapper.selectDeviceById(deviceId) == null)
             envMapper.insertDevice(device);

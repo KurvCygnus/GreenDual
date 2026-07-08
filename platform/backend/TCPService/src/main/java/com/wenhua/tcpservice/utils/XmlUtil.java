@@ -1,7 +1,5 @@
-package com.wenhua.tcpservice.deep.tool;
+package com.wenhua.tcpservice.utils;
 
-
-import com.wenhua.tcpservice.utils.StringFormatter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,6 +7,8 @@ import java.util.List;
 //xml工具
 public final class XmlUtil
 {
+    private static final String[] EMPTY_STR = new String[0];
+    
     private XmlUtil() { throw new IllegalAccessError("Class \"XmlUtil\" is not meant to be instantized!"); }
     
     //默认直接实现的方法
@@ -25,19 +25,18 @@ public final class XmlUtil
         if(tagName == null || input == null)
             return null;
         
-        String startTag = "<%s>".formatted(tagName);
-        String endTag = "</%s>".formatted(tagName);
+        final var startTag = "<%s>".formatted(tagName);
+        final var endTag = "</%s>".formatted(tagName);
         
-        int startIndex = input.indexOf(startTag);
+        var startIndex = input.indexOf(startTag);
         if(startIndex == -1)
             return null;
         
         startIndex += startTag.length();
-        int endIndex = input.indexOf(endTag, startIndex);
+        final var endIndex = input.indexOf(endTag, startIndex);
         if(endIndex == -1)
             return null;
         
-        //LogUtil.w("\n[][][]"+res+"\n");
         return input.substring(startIndex, endIndex).trim();
     }
     
@@ -51,24 +50,24 @@ public final class XmlUtil
     public static String[] parseTagContents(String tagName, String input)
     {
         if(tagName == null || input == null)
-            return new String[0];
+            return EMPTY_STR;
         
-        String startTag = "<%s>".formatted(tagName);
-        String endTag = "</%s>".formatted(tagName);
-        List<String> contents = new ArrayList<>();
-        int index = 0;
+        final var startTag = "<%s>".formatted(tagName);
+        final var endTag = "</%s>".formatted(tagName);
+        final List<String> contents = new ArrayList<>();
+        var index = 0;
         
         while((index = input.indexOf(startTag, index)) != -1)
         {
             index += startTag.length();
-            int endIndex = input.indexOf(endTag, index);
+            final var endIndex = input.indexOf(endTag, index);
             if(endIndex == -1)
                 break;
             contents.add(input.substring(index, endIndex).trim());
             index = endIndex + endTag.length();
         }
         
-        return contents.toArray(new String[0]);
+        return contents.toArray(EMPTY_STR);
     }
     
     /**
@@ -85,5 +84,4 @@ public final class XmlUtil
         
         return StringFormatter.format("<{}>{}</{}>", tagName, content, tagName);
     }
-    
 }

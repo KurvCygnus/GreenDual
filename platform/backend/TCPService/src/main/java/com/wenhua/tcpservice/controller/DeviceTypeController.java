@@ -13,7 +13,6 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -33,7 +32,7 @@ public final class DeviceTypeController
     {
         try
         {
-            List<DeviceType> types = deviceTypeMapper.selectAll();
+            final var types = deviceTypeMapper.selectAll();
             return Result.success(types);
         }
         catch(Exception e)
@@ -47,10 +46,10 @@ public final class DeviceTypeController
     @PostMapping("/add")
     public Result addDeviceType(@RequestBody DeviceType deviceType, HttpServletRequest request)
     {
-        if(!JwtUtils.isAdmin(request, userMapper::selectUserById)) { return Result.error("权限不足"); }
+        if(!JwtUtils.isAdmin(request, userMapper::selectUserById)) return Result.error("权限不足");
         try
         {
-            DeviceType existing = deviceTypeMapper.selectByType(deviceType.getType());
+            final var existing = deviceTypeMapper.selectByType(deviceType.getType());
             if(existing != null)
                 return Result.error("类型标识已存在");
             deviceType = new DeviceType(
@@ -83,7 +82,7 @@ public final class DeviceTypeController
             return Result.error("权限不足");
         try
         {
-            DeviceType existing = deviceTypeMapper.selectById(deviceType.getId());
+            final var existing = deviceTypeMapper.selectById(deviceType.getId());
             if(existing == null)
                 return Result.error("设备类型不存在");
             deviceTypeMapper.update(deviceType);
@@ -104,11 +103,11 @@ public final class DeviceTypeController
             return Result.error("权限不足");
         try
         {
-            Integer id = (Integer) params.get("id");
-            DeviceType deviceType = deviceTypeMapper.selectById(id);
+            final var id = (Integer) params.get("id");
+            final var deviceType = deviceTypeMapper.selectById(id);
             if(deviceType == null)
                 return Result.error("设备类型不存在");
-            String newStatus = "active".equals(deviceType.getStatus()) ? "inactive" : "active";
+            final var newStatus = "active".equals(deviceType.getStatus()) ? "inactive" : "active";
             deviceTypeMapper.updateStatus(id, newStatus);
             return Result.success("状态更新成功");
         }
@@ -127,7 +126,7 @@ public final class DeviceTypeController
             return Result.error("权限不足");
         try
         {
-            Integer id = (Integer) params.get("id");
+            final var id = (Integer) params.get("id");
             deviceTypeMapper.deleteById(id);
             return Result.success("删除成功");
         }

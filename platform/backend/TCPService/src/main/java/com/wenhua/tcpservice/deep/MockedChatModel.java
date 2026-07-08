@@ -10,24 +10,25 @@ import org.springframework.ai.chat.prompt.Prompt;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 public final class MockedChatModel implements ChatModel
 {
     private static final Map<String, String> MOCK_RESPONSE_MATCHER = FunctionalUtils.buildImmutableMap(
         map ->
         {
-            final String[][] buildLookup =
-                {
-                    { "environment",    "环境",  "analyze"},
-                    { "temperature",    "温度"},
-                    { "humidity",       "湿度"},
-                    { "lightintensity", "光照"},
-                    { "路灯",             "照明",  "亮度"},
-                    { "节能",             "省电",  "能耗"},
-                    { "predict",        "趋势",  "预测"}
+            final var buildLookup =
+                new String[][] {
+                    {"environment", "环境", "analyze"},
+                    {"temperature", "温度"},
+                    {"humidity", "湿度"},
+                    {"lightintensity", "光照"},
+                    {"路灯", "照明", "亮度"},
+                    {"节能", "省电", "能耗"},
+                    {"predict", "趋势", "预测"}
                 };
             
-            final String[] mockResponse =
+            final var mockResponse = new String[]
                 {
                     """
                     📊 **环境状况分析报告**
@@ -120,7 +121,7 @@ public final class MockedChatModel implements ChatModel
                     """
                 };
             
-            for(int index = 0; index < buildLookup.length; index++)
+            for(var index = 0; index < buildLookup.length; index++)
                 for(final var keyword: buildLookup[index])
                     map.put(keyword.toLowerCase(), mockResponse[index]);
         }
@@ -138,7 +139,7 @@ public final class MockedChatModel implements ChatModel
     {
         return MOCK_RESPONSE_MATCHER.entrySet().stream().
             filter(entry -> message.toLowerCase().contains(entry.getKey())).
-            map(Map.Entry::getValue).
+            map(Entry::getValue).
             findFirst().
             orElse("当前回复并未包含调试关键词. 如需全面的测试, 请去`application.properties`中配置`spring.ai.openai.api-key`.");
     }

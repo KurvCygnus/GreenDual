@@ -3,9 +3,6 @@ package com.wenhua.tcpservice.controller;
 import com.wenhua.tcpservice.config.GlobalConfiguration;
 import com.wenhua.tcpservice.mapper.EnvMapper;
 import com.wenhua.tcpservice.pojo.Result;
-import com.wenhua.tcpservice.pojo.campus.EnergyBill;
-import com.wenhua.tcpservice.pojo.campus.TeachingCase;
-import com.wenhua.tcpservice.pojo.dev.Device;
 import com.wenhua.tcpservice.service.campus.EnergyBillService;
 import com.wenhua.tcpservice.service.campus.SmartLightingEngine;
 import com.wenhua.tcpservice.service.campus.TeachingCaseService;
@@ -17,7 +14,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -39,22 +35,20 @@ public final class CampusEnergyController
     {
         try
         {
-            String deviceId = (String) params.get("deviceId");
+            final var deviceId = (String) params.get("deviceId");
             
             if(deviceId != null)
             {
-                Device device = envMapper.selectDeviceById(deviceId);
+                final var device = envMapper.selectDeviceById(deviceId);
                 if(device == null)
-                {
                     return Result.error("设备不存在");
-                }
-                Map<String, Object> result = smartLightingEngine.calculateOptimalBrightness(device);
+                final var result = smartLightingEngine.calculateOptimalBrightness(device);
                 return Result.success(result);
             }
             else
             {
-                List<Device> devices = envMapper.selectAllDevice();
-                Map<String, Object> result = smartLightingEngine.batchOptimize(devices);
+                final var devices = envMapper.selectAllDevice();
+                final var result = smartLightingEngine.batchOptimize(devices);
                 return Result.success(result);
             }
         }
@@ -71,29 +65,21 @@ public final class CampusEnergyController
     {
         try
         {
-            String deviceId = (String) params.get("deviceId");
-            Integer brightness = (Integer) params.get("brightness");
+            final var deviceId = (String) params.get("deviceId");
+            final var brightness = (Integer) params.get("brightness");
             
             if(deviceId == null || brightness == null)
-            {
                 return Result.error("参数错误");
-            }
             
-            Device device = envMapper.selectDeviceById(deviceId);
+            final var device = envMapper.selectDeviceById(deviceId);
             if(device == null)
-            {
                 return Result.error("设备不存在");
-            }
             
             device.setBrightness(brightness);
             if(brightness > 0)
-            {
                 device.setLampStatus(1);
-            }
             else
-            {
                 device.setLampStatus(0);
-            }
             
             envMapper.updateDevice(device);
             
@@ -113,7 +99,7 @@ public final class CampusEnergyController
     {
         try
         {
-            Map<String, Object> stats = smartLightingEngine.getEnergyStatistics(areaId);
+            final var stats = smartLightingEngine.getEnergyStatistics(areaId);
             return Result.success(stats);
         }
         catch(Exception e)
@@ -129,10 +115,10 @@ public final class CampusEnergyController
     {
         try
         {
-            String areaId = (String) params.get("areaId");
-            String billMonth = (String) params.get("billMonth");
+            final var areaId = (String) params.get("areaId");
+            final var billMonth = (String) params.get("billMonth");
             
-            EnergyBill bill = energyBillService.generateMonthlyBill(areaId, billMonth);
+            final var bill = energyBillService.generateMonthlyBill(areaId, billMonth);
             return Result.success(bill);
         }
         catch(Exception e)
@@ -149,7 +135,7 @@ public final class CampusEnergyController
     {
         try
         {
-            List<EnergyBill> bills = energyBillService.getBillHistory(areaId, months);
+            final var bills = energyBillService.getBillHistory(areaId, months);
             return Result.success(bills);
         }
         catch(Exception e)
@@ -165,7 +151,7 @@ public final class CampusEnergyController
     {
         try
         {
-            Map<String, Object> dashboard = energyBillService.getEnergyDashboard(areaId);
+            final var dashboard = energyBillService.getEnergyDashboard(areaId);
             return Result.success(dashboard);
         }
         catch(Exception e)
@@ -181,7 +167,7 @@ public final class CampusEnergyController
     {
         try
         {
-            Map<String, Object> comparison = energyBillService.compareWithBaseline(areaId);
+            final var comparison = energyBillService.compareWithBaseline(areaId);
             return Result.success(comparison);
         }
         catch(Exception e)
@@ -197,21 +183,17 @@ public final class CampusEnergyController
     {
         try
         {
-            String deviceId = (String) params.get("deviceId");
-            String caseType = (String) params.get("caseType");
+            final var deviceId = (String) params.get("deviceId");
+            final var caseType = (String) params.get("caseType");
             
             if(deviceId == null || caseType == null)
-            {
                 return Result.error("参数错误");
-            }
             
-            Device device = envMapper.selectDeviceById(deviceId);
+            final var device = envMapper.selectDeviceById(deviceId);
             if(device == null)
-            {
                 return Result.error("设备不存在");
-            }
             
-            TeachingCase teachingCase = teachingCaseService.createTeachingCase(device, caseType);
+            final var teachingCase = teachingCaseService.createTeachingCase(device, caseType);
             return Result.success(teachingCase);
         }
         catch(Exception e)
@@ -229,12 +211,12 @@ public final class CampusEnergyController
         {
             if(course != null && !course.isEmpty())
             {
-                List<TeachingCase> cases = teachingCaseService.getTeachingCasesByCourse(course);
+                final var cases = teachingCaseService.getTeachingCasesByCourse(course);
                 return Result.success(cases);
             }
             else
             {
-                Map<String, Object> stats = teachingCaseService.getTeachingStatistics();
+                final var stats = teachingCaseService.getTeachingStatistics();
                 return Result.success(stats);
             }
         }
@@ -267,32 +249,28 @@ public final class CampusEnergyController
     {
         try
         {
-            Map<String, Object> overview = new HashMap<>();
+            final Map<String, Object> overview = new HashMap<>();
             
-            Map<String, Object> energyStats = smartLightingEngine.getEnergyStatistics(null);
+            final var energyStats = smartLightingEngine.getEnergyStatistics(null);
             overview.put("energy", energyStats);
             
-            Map<String, Object> dashboard = energyBillService.getEnergyDashboard(null);
+            final var dashboard = energyBillService.getEnergyDashboard(null);
             overview.put("dashboard", dashboard);
             
-            Map<String, Object> teachingStats = teachingCaseService.getTeachingStatistics();
+            final var teachingStats = teachingCaseService.getTeachingStatistics();
             overview.put("teaching", teachingStats);
             
-            List<Device> devices = envMapper.selectAllDevice();
+            final var devices = envMapper.selectAllDevice();
             overview.put("totalDevices", devices.size());
             
-            int onlineDevices = 0;
-            int lampCount = 0;
-            for(Device device: devices)
+            var onlineDevices = 0;
+            var lampCount = 0;
+            for(final var device: devices)
             {
                 if(device.getOnLine() != null && device.getOnLine() == 1)
-                {
                     onlineDevices++;
-                }
                 if("路灯".equals(device.getDeviceType()) || "智慧路灯".equals(device.getDeviceType()))
-                {
                     lampCount++;
-                }
             }
             overview.put("onlineDevices", onlineDevices);
             overview.put("lampCount", lampCount);

@@ -20,7 +20,7 @@ import org.slf4j.helpers.MessageFormatter;
  */
 public final class StringFormatter
 {
-    private StringFormatter() { throw new IllegalAccessError("Utility class"); }
+    private StringFormatter() { throw new IllegalAccessError("Class \"StringFormatter\" is not meant to be instantized!"); }
 
     /**
      * 使用 {@link MessageFormatter#arrayFormat} 格式化字符串.

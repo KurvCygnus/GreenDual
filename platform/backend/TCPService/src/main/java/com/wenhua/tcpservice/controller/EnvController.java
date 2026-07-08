@@ -32,11 +32,11 @@ public final class EnvController
     public Result queryDevices(@RequestBody QueryParameter queryParameter)
     {
         log.debug("接受到了设备查询请求: {}", queryParameter);
-        List<Device> devices = envService.queryDevices(queryParameter);
+        final var devices = envService.queryDevices(queryParameter);
         //还要查询目标数量
-        int i = envMapper.selectDeviceCount(queryParameter);
+        final var i = envMapper.selectDeviceCount(queryParameter);
         log.debug("查询结果为: {}", devices.toString());
-        Result result = Result.success(devices);
+        final var result = Result.success(devices);
         return result.totalPages(i);
     }
     
@@ -45,7 +45,7 @@ public final class EnvController
     public Result addDevice(@RequestBody Device device)
     {
         log.debug("接受到了添加设备请求");
-        boolean b = envService.addDevice(device);
+        final var b = envService.addDevice(device);
         return Result.of(b);
     }
     
@@ -54,7 +54,7 @@ public final class EnvController
     public Result updateDevice(@RequestBody Device device)
     {
         log.debug("接受到了修改设备请求: {}", device.toString());
-        boolean b = envService.updateDevice(device);
+        final var b = envService.updateDevice(device);
         return Result.of(b);
     }
     
@@ -63,7 +63,7 @@ public final class EnvController
     public Result deleteDevice(@RequestBody List<String> ids)
     {
         log.debug("接受到了删除设备请求: {}", ids.toString());
-        boolean b = envService.deleteDevices(ids);
+        final var b = envService.deleteDevices(ids);
         return Result.of(b);
     }
     
@@ -72,25 +72,25 @@ public final class EnvController
     public Result getDeviceStats()
     {
         log.debug("接受到了获取设备统计数据请求");
-        Map<String, Object> stats = new HashMap<>();
+        final Map<String, Object> stats = new HashMap<>();
         
         //获取所有设备
-        List<Device> allDevices = envMapper.selectAllDevice();
+        final var allDevices = envMapper.selectAllDevice();
         
         //计算统计数据
-        int deviceCount = allDevices.size();
+        final var deviceCount = allDevices.size();
         
-        double avgTemperature = allDevices.stream()
+        final var avgTemperature = allDevices.stream()
             .filter(d -> d.getTemperature() != null)
             .mapToDouble(Device::getTemperature)
             .average()
             .orElse(.0);
-        double avgHumidity = allDevices.stream()
+        final var avgHumidity = allDevices.stream()
             .filter(d -> d.getHumidity() != null)
             .mapToInt(Device::getHumidity)
             .average()
             .orElse(.0);
-        double avgLight = allDevices.stream()
+        final var avgLight = allDevices.stream()
             .filter(d -> d.getLightIntensity() != null)
             .mapToInt(Device::getLightIntensity)
             .average()
@@ -109,7 +109,7 @@ public final class EnvController
     public Result getDeviceDetail(@PathVariable String id)
     {
         log.debug("接受到了获取设备详情请求: {}", id);
-        Device device = envMapper.selectDeviceById(id);
+        final var device = envMapper.selectDeviceById(id);
         if(device != null)
             return Result.success(device);
         return Result.error("设备不存在");
@@ -120,9 +120,9 @@ public final class EnvController
     public Result updateDeviceStatus(@RequestBody Map<String, Object> params)
     {
         log.debug("接受到了更新设备状态请求");
-        String id = (String) params.get("id");
-        Integer onLine = (Integer) params.get("onLine");
-        boolean b = envService.updateDeviceStatus(id, onLine);
+        final var id = (String) params.get("id");
+        final var onLine = (Integer) params.get("onLine");
+        final var b = envService.updateDeviceStatus(id, onLine);
         return Result.of(b);
     }
     
@@ -131,9 +131,9 @@ public final class EnvController
     public Result batchUpdateDeviceStatus(@RequestBody Map<String, Object> params)
     {
         log.debug("接受到了批量更新设备状态请求");
-        List<String> ids = (List<String>) params.get("ids");
-        Integer onLine = (Integer) params.get("onLine");
-        boolean b = envService.batchUpdateDeviceStatus(ids, onLine);
+        final var ids = (List<String>) params.get("ids");
+        final var onLine = (Integer) params.get("onLine");
+        final var b = envService.batchUpdateDeviceStatus(ids, onLine);
         return Result.of(b);
     }
 }

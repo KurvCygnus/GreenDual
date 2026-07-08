@@ -1,34 +1,51 @@
 package com.wenhua.tcpservice.service.campus;
 
+import com.wenhua.tcpservice.mapper.CampusEnergyMapper;
 import com.wenhua.tcpservice.mapper.EnvMapper;
 import com.wenhua.tcpservice.pojo.campus.TeachingCase;
 import com.wenhua.tcpservice.pojo.dev.Device;
 import com.wenhua.tcpservice.utils.StringFormatter;
 import jakarta.annotation.Nonnull;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-@Service
-@AllArgsConstructor
-@Slf4j
-public final class TeachingCaseService
+@Service @RequiredArgsConstructor @Slf4j
+public class TeachingCaseService
 {
     private final EnvMapper envMapper;
+    private final CampusEnergyMapper campusEnergyMapper;
 
-    @Nonnull
+    @Value("${electricity.price:0.6}")
+    private double electricityPrice;
+
+    @Value("${lamp.default-power-watt:150}")
+    private double defaultLampPowerWatt;
+
+    @Nonnull @Transactional(rollbackFor = Exception.class)
     public TeachingCase createTeachingCase(@Nonnull Device device, @Nonnull String caseType)
     {
-        String caseName = generateCaseName(device, caseType);
-        String description;
-        String teachingContent;
-        String experimentGuide;
-        String relatedCourse;
+        final var teachingCase = buildTeachingCase(device, caseType);
+        campusEnergyMapper.insertTeachingCase(teachingCase);
+        log.debug("创建教学案例: {}", teachingCase.getCaseName());
+        return teachingCase;
+    }
+
+    @Nonnull
+    private TeachingCase buildTeachingCase(@Nonnull Device device, @Nonnull String caseType)
+    {
+        final var caseName = generateCaseName(device, caseType);
+        final String description;
+        final String teachingContent;
+        final String experimentGuide;
+        final String relatedCourse;
 
         switch(caseType)
         {
@@ -62,24 +79,21 @@ public final class TeachingCaseService
             }
         }
 
-        LocalDateTime now = LocalDateTime.now();
-        String dataPreview = generateDataPreview(device);
-        String analysisResult = generateAnalysisResult(device, caseType);
+        final var now = LocalDateTime.now();
+        final var dataPreview = generateDataPreview(device);
+        final var analysisResult = generateAnalysisResult(device, caseType);
 
-        final TeachingCase teachingCase = new TeachingCase(
+        return new TeachingCase(
             null, caseName, caseType, description,
             device.getId(), device.getName(), "实时设备数据",
             teachingContent, experimentGuide, relatedCourse,
             0, 1, now, now, dataPreview, analysisResult
         );
-        
-        log.debug("创建教学案例: {}", teachingCase.getCaseName());
-        return teachingCase;
     }
     
     private String generateCaseName(Device device, String caseType)
     {
-        String typeName = switch(caseType)
+        final var typeName = switch(caseType)
         {
             case "lighting_control" -> "智能路灯控制";
             case "environment_monitor" -> "环境监测";
@@ -301,7 +315,7 @@ public final class TeachingCaseService
     
     private @NonNull String generateAnalysisResult(Device device, String caseType)
     {
-        final StringBuilder result = new StringBuilder();
+        final var result = new StringBuilder();
         result.append("【数据分析结果】\n\n");
         
         switch(caseType)
@@ -339,20 +353,28 @@ public final class TeachingCaseService
         return 80;
     }
     
+    private double getDevicePowerW(Device device)
+    {
+        if(device.getPowerConsumption() != null && device.getPowerConsumption() > 0)
+            return device.getPowerConsumption();
+        return defaultLampPowerWatt;
+    }
+
     private double calculateMonthlySaving(@NonNull Device device)
     {
-        int brightness = device.getBrightness() != null ? device.getBrightness() : 100;
-        double savingRate = (100 - brightness) / 100.;
-        return 150 * 10 * 30 * savingRate * .6 / 1000;
+        final var brightness = device.getBrightness() != null ? device.getBrightness() : 100;
+        final var powerW = getDevicePowerW(device);
+        final var savingRate = (100 - brightness) / 100.;
+        return powerW * 10 * 30 * savingRate * electricityPrice / 1000;
     }
     
     @Nonnull
     public List<TeachingCase> getTeachingCasesByCourse(@Nonnull String courseName)
     {
         final List<TeachingCase> cases = new ArrayList<>();
-        final List<Device> devices = envMapper.selectAllDevice();
+        final var devices = envMapper.selectAllDevice();
         
-        for(final Device device: devices)
+        for(final var device: devices)
         {
             if(courseName.contains("物联网") || courseName.contains("嵌入式"))
                 cases.add(createTeachingCase(device, "lighting_control"));
@@ -368,14 +390,17 @@ public final class TeachingCaseService
     @Nonnull
     public Map<String, Object> getTeachingStatistics()
     {
-        Map<String, Object> stats = new HashMap<>();
-        
-        List<Device> devices = envMapper.selectAllDevice();
-        
-        stats.put("totalCases", devices.size() * 3);
-        stats.put("lightingCases", devices.size());
-        stats.put("environmentCases", devices.size());
-        stats.put("energyCases", devices.size());
+        final Map<String, Object> stats = new HashMap<>();
+
+        final var totalCases = campusEnergyMapper.selectTotalTeachingCaseCount();
+        final var lightingCases = campusEnergyMapper.selectTeachingCaseCount("lighting_control");
+        final var environmentCases = campusEnergyMapper.selectTeachingCaseCount("environment_monitor");
+        final var energyCases = campusEnergyMapper.selectTeachingCaseCount("energy_saving");
+
+        stats.put("totalCases", totalCases);
+        stats.put("lightingCases", lightingCases);
+        stats.put("environmentCases", environmentCases);
+        stats.put("energyCases", energyCases);
         stats.put(
             "relatedCourses",
             Arrays.asList(
@@ -387,7 +412,7 @@ public final class TeachingCaseService
                 "能源管理"
             )
         );
-        
+
         return stats;
     }
 }

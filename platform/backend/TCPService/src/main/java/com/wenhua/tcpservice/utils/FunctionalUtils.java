@@ -9,7 +9,7 @@ import java.util.function.Consumer;
 
 public final class FunctionalUtils
 {
-    private FunctionalUtils() { throw new IllegalAccessError(); }
+    private FunctionalUtils() { throw new IllegalAccessError("Class \"FunctionalUtils\" is not meant to be instantized!"); }
     
     public static <K, V> @NonNull Map<K, V> buildImmutableMap(@NonNull Consumer<? super Map<K, V>> consumer)
     {

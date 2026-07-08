@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.ChatClient.Builder;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.web.bind.annotation.*;
@@ -28,12 +29,12 @@ public final class AIController
      * </span><br>
      * Spring AI 将 <u>{@link org.springframework.ai.chat.model.ChatModel ChatModel}</u>
      * 设计为单例, 这代表着其是<b>有状态的, 可定制的, 是AI后端的连接池, 因此Spring Bean不提供默认的Bean来注入.</b>
-     * @see AIController#AIController(ChatClient.Builder, ChatMemory)
+     * @see AIController#AIController(Builder, ChatMemory)
      */
     private final ChatClient chatClient;
     private final ChatMemory chatMemory;
     
-    public AIController(ChatClient.@NonNull Builder builder, @NonNull ChatMemory chatMemory)
+    public AIController(@NonNull Builder builder, @NonNull ChatMemory chatMemory)
     {
         this.chatClient = builder.
             defaultSystem(GlobalConfiguration.AI_INITIALIZATION_SYSTEM_INFO).
@@ -56,7 +57,7 @@ public final class AIController
             if(message == null || message.isEmpty())
                 return Result.error("消息不能为空");
             
-            String response = chatClient.prompt().
+            final var response = chatClient.prompt().
                 user(message).
                 advisors(a -> a.param(MessageChatMemoryAdvisor.CHAT_MEMORY_CONVERSATION_ID_KEY, sessionId)).
                 call().
@@ -143,9 +144,9 @@ public final class AIController
         {
             final var sessionId = params.getOrDefault("sessionId", "predict").toString();
             final var predictType = (String) params.getOrDefault("predictType", "综合");
-            final Object hours = params.getOrDefault("hours", 24);
+            final var hours = params.getOrDefault("hours", 24);
             
-            @SuppressWarnings("unchecked") List<Map<String, Object>> historicalData = (List<Map<String, Object>>) params.get("historicalData");
+            @SuppressWarnings("unchecked") final var historicalData = (List<Map<String, Object>>) params.get("historicalData");
             final var historySummary = (historicalData != null) ? historicalData.toString() : "暂无历史数据";
             
             final var response = chatClient.prompt().

@@ -2,6 +2,7 @@ package com.wenhua.tcpservice.mapper;
 
 import com.wenhua.tcpservice.pojo.campus.CampusArea;
 import com.wenhua.tcpservice.pojo.campus.EnergyBill;
+import com.wenhua.tcpservice.pojo.campus.OptimizationRecord;
 import com.wenhua.tcpservice.pojo.campus.TeachingCase;
 import org.apache.ibatis.annotations.*;
 
@@ -62,6 +63,9 @@ public interface CampusEnergyMapper {
     @Select("select count(*) from teaching_case where case_type = #{caseType}")
     int selectTeachingCaseCount(String caseType);
 
+    @Select("select count(*) from teaching_case")
+    int selectTotalTeachingCaseCount();
+
     @Select("select * from teaching_case where id = #{id}")
     TeachingCase selectTeachingCaseById(Integer id);
 
@@ -79,4 +83,9 @@ public interface CampusEnergyMapper {
 
     @Delete("delete from teaching_case where id = #{id}")
     int deleteTeachingCase(Integer id);
+
+    @Insert("insert into optimization_record(area_id, total_devices, adjusted_devices, average_saving_rate, estimated_monthly_saving, status) " +
+            "values(#{areaId}, #{totalDevices}, #{adjustedDevices}, #{averageSavingRate}, #{estimatedMonthlySaving}, 1)")
+    @Options(useGeneratedKeys = true, keyProperty = "id")
+    int insertOptimization(OptimizationRecord record);
 }

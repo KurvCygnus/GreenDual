@@ -1,6 +1,5 @@
 import axios from "axios";
 
-// 从环境变量读取 API 基础地址（vite 替换后为字符串，不会 undefined）
 const api = import.meta.env.VITE_API_BASE_URL || "http://localhost:18081";
 
 // 请求拦截器 - 添加token
