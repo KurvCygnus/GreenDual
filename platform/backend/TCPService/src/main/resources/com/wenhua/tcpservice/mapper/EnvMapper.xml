@@ -21,9 +21,6 @@
             OR name LIKE CONCAT('%', #{match}, '%')
             OR ip LIKE CONCAT('%', #{match}, '%')
             OR deviceType LIKE CONCAT('%', #{match}, '%')
-            OR temperature LIKE CONCAT('%', #{match}, '%')
-            OR humidity LIKE CONCAT('%', #{match}, '%')
-            OR lightIntensity LIKE CONCAT('%', #{match}, '%')
             )
         </if>
 
@@ -60,9 +57,6 @@
             OR name LIKE CONCAT('%', #{match}, '%')
             OR ip LIKE CONCAT('%', #{match}, '%')
             OR deviceType LIKE CONCAT('%', #{match}, '%')
-            OR temperature LIKE CONCAT('%', #{match}, '%')
-            OR humidity LIKE CONCAT('%', #{match}, '%')
-            OR lightIntensity LIKE CONCAT('%', #{match}, '%')
             )
         </if>
     </select>

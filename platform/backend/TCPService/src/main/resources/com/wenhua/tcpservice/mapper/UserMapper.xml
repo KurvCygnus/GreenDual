@@ -17,10 +17,7 @@
         /* 指定查询条件(对应字段必须包含相关字符串) */
         <if test="match != null and match != ''">
             AND (
-            userId LIKE CONCAT('%', #{match}, '%')
-            OR username LIKE CONCAT('%', #{match}, '%')
-            OR password LIKE CONCAT('%', #{match}, '%')
-            OR userPermission LIKE CONCAT('%', #{match}, '%')
+            username LIKE CONCAT('%', #{match}, '%')
             )
         </if>
 
@@ -63,11 +60,7 @@
         <!-- 指定查询条件(对应字段必须包含相关字符串) -->
         <if test="match != null and match != ''">
             AND (
-            userId LIKE CONCAT('%', #{match}, '%')
-            OR username LIKE CONCAT('%', #{match}, '%')
-            OR -- 通常不建议在密码字段上进行 LIKE 查询，因为密码应该是加密的
-            password LIKE CONCAT('%', #{match}, '%')
-            OR userPermission LIKE CONCAT('%', #{match}, '%')
+            username LIKE CONCAT('%', #{match}, '%')
             )
         </if>
 
