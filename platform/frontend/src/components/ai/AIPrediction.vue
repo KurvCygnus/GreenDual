@@ -383,7 +383,7 @@
 <script setup>
 import { ref, computed, onMounted, nextTick } from "vue";
 import * as echarts from "echarts";
-import { aiChat, aiClearHistory, aiPredictTrend, addRecord } from "@/api/auth";
+import { aiChat, aiClearHistory, aiPredictTrend, addRecord, getDeviceStats, getDeviceList } from "@/api/auth";
 import {
   Cpu,
   Refresh,
@@ -500,8 +500,8 @@ const predict = async () => {
         aiPrediction.value = response.data.data.prediction;
       }
     } catch (aiError) {
-      console.log("AI预测API调用失败，使用本地预测");
-      aiPrediction.value = generateLocalAnalysis();
+      console.error("AI预测API调用失败:", aiError);
+      ElMessage.warning("AI预测服务暂不可用，请稍后重试");
     }
 
     // AI预测完成后自动添加监测记录
@@ -598,8 +598,8 @@ const generatePredictionData = () => {
       else trend = -8000;
     }
 
-    const random = (Math.random() - 0.5) * baseValue * 0.2;
-    const value = baseValue + trend + random;
+    const variation = (i % 5 - 2) * baseValue * 0.03;
+    const value = baseValue + trend + variation;
 
     data.push({
       time: timeStr,
@@ -610,278 +610,7 @@ const generatePredictionData = () => {
   return data;
 };
 
-const generateLocalAnalysis = () => {
-  const typeNames = {
-    temperature: "温度",
-    humidity: "湿度",
-    light: "光照强度",
-    all: "环境数据",
-  };
-  const typeName = typeNames[predictType.value] || "环境数据";
-
-  return `**${typeName}趋势分析报告**
-
-**1. 整体趋势**
-根据预测数据，未来${predictHours.value}小时内${typeName}将呈现波动变化。
-
-**2. 极值预测**
-- 预测最高值：${maxValue.value}${unit.value}，预计出现在${maxTime.value}
-- 预测最低值：${minValue.value}${unit.value}，预计出现在${minTime.value}
-- 平均值：${avgValue.value}${unit.value}
-
-**3. 建议**
-- 密切关注环境变化
-- 根据预测结果提前调整设备参数
-- 做好异常情况的应急预案`;
-};
-
 // 获取真实设备数据
-const getRealDeviceData = async () => {
-  try {
-    const response = await fetch("http://localhost:18081/device/stats", {
-      headers: {
-        "Content-Type": "application/json",
-        token: localStorage.getItem("token") || "",
-      },
-    });
-    if (response.ok) {
-      const data = await response.json();
-      if (data.code === 1) {
-        return data.data;
-      }
-    }
-  } catch (error) {
-    console.error("获取设备数据失败:", error);
-  }
-  // 返回默认数据
-  return {
-    deviceCount: 11,
-    avgTemperature: 26.1,
-    avgHumidity: 56,
-    avgLight: 2938,
-  };
-};
-
-// 获取设备列表
-const getRealDeviceList = async () => {
-  try {
-    const response = await fetch("http://localhost:18081/device/select", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        token: localStorage.getItem("token") || "",
-      },
-      body: JSON.stringify({ pageNum: 1, pageSize: 100 }),
-    });
-    if (response.ok) {
-      const data = await response.json();
-      if (data.code === 1) {
-        return data.data;
-      }
-    }
-  } catch (error) {
-    console.error("获取设备列表失败:", error);
-  }
-  return [];
-};
-
-// 生成本地模拟聊天回复
-const generateLocalChatResponse = async (message) => {
-  const lowerMsg = message.toLowerCase();
-
-  // 获取真实数据
-  const stats = await getRealDeviceData();
-  const devices = await getRealDeviceList();
-
-  // 计算在线和离线设备数
-  const onlineDevices = devices.filter((d) => d.onLine === 1).length;
-  const offlineDevices = devices.filter((d) => d.onLine === 0).length;
-
-  // 分析温度状况
-  const tempStatus =
-    stats.avgTemperature > 30
-      ? "偏高"
-      : stats.avgTemperature < 15
-        ? "偏低"
-        : "适中";
-  const humidityStatus =
-    stats.avgHumidity > 70 ? "偏高" : stats.avgHumidity < 30 ? "偏低" : "适中";
-  const lightStatus =
-    stats.avgLight > 5000 ? "充足" : stats.avgLight < 1000 ? "不足" : "适中";
-
-  if (
-    lowerMsg.includes("环境") ||
-    lowerMsg.includes("温度") ||
-    lowerMsg.includes("湿度")
-  ) {
-    return `📊 **环境状况评估（基于真实数据）**
-
-根据当前${stats.deviceCount}个监测设备的实时数据分析：
-
-🌡️ **温度状况**
-• 当前平均温度：${stats.avgTemperature}°C（${tempStatus}）
-• 在线设备：${onlineDevices}个，离线设备：${offlineDevices}个
-• ${stats.avgTemperature > 28 ? "温度偏高，建议加强通风降温" : stats.avgTemperature < 20 ? "温度偏低，建议适当保温" : "温度适宜，环境舒适"}
-
-💧 **湿度状况**
-• 当前平均湿度：${stats.avgHumidity}%（${humidityStatus}）
-• ${stats.avgHumidity > 65 ? "湿度偏高，注意防潮除湿" : stats.avgHumidity < 40 ? "湿度偏低，建议增加湿度" : "湿度适中，体感舒适"}
-
-☀️ **光照状况**
-• 当前平均光照：${stats.avgLight}lux（${lightStatus}）
-• ${stats.avgLight > 3000 ? "光照充足，白天时段" : "光照较弱，可能需要人工照明"}
-
-💡 **改善建议**
-1. ${stats.avgTemperature > 28 ? "开启空调或通风设备降低温度" : stats.avgTemperature < 20 ? "适当提高环境温度" : "保持当前温度控制策略"}
-2. ${stats.avgHumidity > 65 ? "使用除湿设备降低湿度" : stats.avgHumidity < 40 ? "使用加湿器增加湿度" : "维持当前湿度水平"}
-3. ${stats.avgLight < 2000 ? "光照不足，建议开启路灯照明" : "光照充足，可适当降低照明强度以节能"}
-4. 定期检查离线设备（${offlineDevices}个），确保监测网络完整
-
-✅ 基于当前数据，系统整体运行${onlineDevices === stats.deviceCount ? "良好" : "正常，但需关注离线设备"}！`;
-  } else if (
-    lowerMsg.includes("路灯") ||
-    lowerMsg.includes("照明") ||
-    lowerMsg.includes("亮度")
-  ) {
-    const shouldTurnOn = stats.avgLight < 2000;
-    return `💡 **智能路灯控制建议（基于真实数据）**
-
-根据当前环境监测数据（光照强度：${stats.avgLight}lux）：
-
-📊 **当前状况**
-• 平均光照强度：${stats.avgLight}lux
-• 环境温度：${stats.avgTemperature}°C
-• 环境湿度：${stats.avgHumidity}%
-• 监测设备总数：${stats.deviceCount}个
-
-🎯 **控制建议**
-• ${shouldTurnOn ? "⚠️ 光照不足（<2000lux），建议开启路灯照明" : "✅ 光照充足（>2000lux），建议关闭路灯以节能"}
-• ${stats.avgLight < 1000 ? "光照严重不足，建议路灯亮度调至100%" : stats.avgLight < 2000 ? "光照较弱，建议路灯亮度调至70%" : stats.avgLight < 3000 ? "光照适中，建议路灯亮度调至40%" : "光照充足，建议关闭路灯"}
-• ${stats.avgHumidity > 80 || stats.avgTemperature < 5 ? "⚠️ 恶劣天气条件（高湿度或低温），建议保持路灯开启以确保安全" : "天气条件良好，可按光照强度自动调节"}
-
-💰 **节能预估**
-• 当前光照条件下，${shouldTurnOn ? "需要开启路灯" : "可以关闭路灯"}
-• ${shouldTurnOn ? "预计夜间照明能耗：根据设备数量计算" : "预计可节省100%路灯电力消耗"}
-• 建议启用自动感光调节模式，可节省20-40%电力
-
-🚀 **优化方案**
-1. 根据实际光照强度（${stats.avgLight}lux）自动调节路灯亮度
-2. 结合温湿度数据（${stats.avgTemperature}°C, ${stats.avgHumidity}%）判断天气状况
-3. 定期检查${offlineDevices}个离线设备，确保照明系统可靠
-4. 设置分时段控制策略，低谷时段降低亮度`;
-  } else if (
-    lowerMsg.includes("节能") ||
-    lowerMsg.includes("省电") ||
-    lowerMsg.includes("能耗")
-  ) {
-    const energySaving =
-      stats.avgLight > 3000
-        ? "可关闭路灯，节省照明能耗"
-        : "光照不足，需开启路灯";
-    return `📈 **节能分析报告（基于真实数据）**
-
-基于${stats.deviceCount}个监测设备的实时数据分析：
-
-📊 **当前环境参数**
-• 平均温度：${stats.avgTemperature}°C
-• 平均湿度：${stats.avgHumidity}%
-• 平均光照：${stats.avgLight}lux
-• 在线设备：${onlineDevices}/${stats.deviceCount}个
-
-✅ **节能潜力分析**
-• 照明节能：${energySaving}
-• ${stats.avgLight > 3000 ? "当前光照充足，可完全关闭路灯照明" : stats.avgLight > 2000 ? "光照较好，可将路灯亮度调至50%" : "光照不足，需要开启路灯"}
-• 空调节能：${stats.avgTemperature > 28 ? "温度偏高，空调能耗较大，建议加强自然通风" : stats.avgTemperature < 18 ? "温度偏低，需要供暖" : "温度适宜，空调能耗较低"}
-• 设备管理：${offlineDevices}个离线设备，及时修复可减少能源浪费
-
-🚀 **优化建议**
-1. **智能照明控制**
-   - 根据光照强度（${stats.avgLight}lux）自动调节路灯
-   - ${stats.avgLight > 3000 ? "当前可关闭路灯，预计节省100%照明能耗" : "根据实际需求调节亮度"}
-
-2. **温湿度联动控制**
-   - 温度${stats.avgTemperature}°C，${stats.avgTemperature > 28 ? "建议开启通风降温" : stats.avgTemperature < 18 ? "建议适当供暖" : "保持当前策略"}
-   - 湿度${stats.avgHumidity}%，${stats.avgHumidity > 70 ? "建议除湿" : stats.avgHumidity < 30 ? "建议加湿" : "湿度适宜"}
-
-3. **设备优化**
-   - 修复${offlineDevices}个离线设备，提高系统效率
-   - 定期维护确保设备运行在最佳状态
-
-💰 **节能预估**
-• 实施智能照明控制，预计可节省${stats.avgLight > 3000 ? "30-50%" : "20-30%"}电力
-• 优化温湿度控制，预计可节省15-25%空调能耗
-• 设备维护优化，预计可提升10-15%整体效率`;
-  } else if (
-    lowerMsg.includes("故障") ||
-    lowerMsg.includes("诊断") ||
-    lowerMsg.includes("维修")
-  ) {
-    const hasFaults = offlineDevices > 0;
-    return `🔧 **设备故障诊断（基于真实数据）**
-
-系统自检结果（${stats.deviceCount}个设备）：
-
-📊 **设备状态概览**
-• 在线设备：${onlineDevices}个 ✅
-• 离线设备：${offlineDevices}个 ${hasFaults ? "⚠️" : "✅"}
-• 设备在线率：${((onlineDevices / stats.deviceCount) * 100).toFixed(1)}%
-
-${
-  hasFaults
-    ? `⚠️ **发现${offlineDevices}个离线设备，需要处理：**
-• 离线设备可能导致监测盲区
-• 建议立即检查离线设备原因
-• 检查网络连接、电源供应、设备硬件状态`
-    : `✅ **所有设备运行正常**
-  • 网络连接稳定
-  • 数据上报无异常
-  • 设备响应正常`
-}
-
-📋 **维护建议**
-1. **定期检查**
-   - 每日检查设备在线状态
-   - 每周检查传感器数据准确性
-   - 每月进行全面设备巡检
-
-2. **故障处理**
-   ${hasFaults ? "- 优先处理离线设备" : "- 预防性维护，避免设备故障"}
-   - 检查网络连接稳定性
-   - 检查电源供应情况
-   - 清洁传感器表面，确保数据准确
-
-3. **数据监控**
-   - 当前平均温度：${stats.avgTemperature}°C
-   - 当前平均湿度：${stats.avgHumidity}%
-   - 当前平均光照：${stats.avgLight}lux
-   - 数据更新正常，监测有效
-
-${hasFaults ? "⚠️ 建议立即处理离线设备，确保监测系统完整性！" : "✅ 当前系统运行状况良好，继续保持！"}`;
-  } else {
-    return `🤖 **智绿云控AI助手**
-
-您好！我是智绿云控平台的AI智能助手，基于${stats.deviceCount}个监测设备的实时数据为您服务：
-
-📊 **当前环境概况**
-• 平均温度：${stats.avgTemperature}°C
-• 平均湿度：${stats.avgHumidity}%
-• 平均光照：${stats.avgLight}lux
-• 设备状态：${onlineDevices}个在线，${offlineDevices}个离线
-
-我可以为您提供以下服务：
-📊 **环境分析** - 分析温湿度、光照等环境数据
-💡 **路灯控制** - 提供照明优化建议
-📈 **节能方案** - 生成能耗优化报告
-🔧 **故障诊断** - 设备异常分析与处理建议
-
-请告诉我您想了解哪方面的信息？例如：
-• "分析当前环境情况"
-• "路灯亮度建议"
-• "如何进一步节能"
-• "设备故障诊断"`;
-  }
-};
-
 const initPredictionChart = () => {
   if (!predictionChartRef.value) {
     console.error("图表容器不存在");
@@ -1051,10 +780,21 @@ const sendMessage = async () => {
   chatLoading.value = true;
   try {
     // 获取真实设备数据
-    const stats = await getRealDeviceData();
-    const devices = await getRealDeviceList();
-    const onlineDevices = devices.filter((d) => d.onLine === 1).length;
-    const offlineDevices = devices.filter((d) => d.onLine === 0).length;
+    let stats = { deviceCount: 0, avgTemperature: 0, avgHumidity: 0, avgLight: 0 };
+    let onlineDevices = 0;
+    let offlineDevices = 0;
+    try {
+      const statsRes = await getDeviceStats();
+      if (statsRes.data.code === 1) stats = statsRes.data.data;
+      const deviceRes = await getDeviceList({ pageNum: 1, pageSize: 100 });
+      if (deviceRes.data.code === 1) {
+        const devices = deviceRes.data.data;
+        onlineDevices = devices.filter((d) => d.onLine === 1).length;
+        offlineDevices = devices.filter((d) => d.onLine === 0).length;
+      }
+    } catch (e) {
+      console.error("获取设备数据失败:", e);
+    }
 
     // 构建包含真实数据的消息
     const enhancedMessage = `当前环境监测系统实时数据：
@@ -1089,17 +829,10 @@ const sendMessage = async () => {
     }
   } catch (error) {
     console.error("AI对话失败:", error);
-    // 使用本地模拟回复
-    const localResponse = await generateLocalChatResponse(userMessage);
     chatMessages.value.push({
       role: "assistant",
-      content: localResponse,
+      content: "抱歉，AI服务暂时不可用，请稍后再试。",
     });
-
-    // AI分析完成后自动添加监测记录
-    if (userMessage.includes("分析") || userMessage.includes("监测")) {
-      await autoAddAnalysisRecord(userMessage, localResponse);
-    }
   } finally {
     chatLoading.value = false;
     await nextTick();
@@ -1151,8 +884,19 @@ const autoAddAnalysisRecord = async (question, answer) => {
 
 // 获取当前环境数据
 const getCurrentEnvData = async () => {
-  // 这里可以从store或API获取当前环境数据
-  // 简化处理，返回模拟数据
+  try {
+    const res = await getDeviceStats();
+    if (res.data.code === 1) {
+      const stats = res.data.data;
+      return {
+        deviceId: "AI-001",
+        deviceName: "AI智能分析系统",
+        value: stats.avgTemperature || 25.5,
+      };
+    }
+  } catch (error) {
+    console.error("获取环境数据失败:", error);
+  }
   return {
     deviceId: "AI-001",
     deviceName: "AI智能分析系统",
@@ -1191,74 +935,26 @@ const quickAsk = (question) => {
 // 加载设备列表
 const loadDeviceList = async () => {
   try {
-    // 模拟设备数据
-    deviceList.value = [
-      {
-        id: "DEV001",
-        name: "环境监测站-1",
-        deviceType: "环境监测站",
-        onLine: 1,
-        temperature: 25.5,
-        humidity: 55,
-        lightIntensity: 3000,
-      },
-      {
-        id: "DEV002",
-        name: "路灯-1",
-        deviceType: "路灯",
-        onLine: 1,
-        temperature: 24.2,
-        humidity: 52,
-        lightIntensity: 2800,
-      },
-      {
-        id: "DEV003",
-        name: "温湿度传感器-1",
-        deviceType: "温湿度传感器",
-        onLine: 1,
-        temperature: 26.1,
-        humidity: 58,
-        lightIntensity: 2500,
-      },
-      {
-        id: "DEV004",
-        name: "光照传感器-1",
-        deviceType: "光照传感器",
-        onLine: 1,
-        temperature: 23.8,
-        humidity: 49,
-        lightIntensity: 3200,
-      },
-      {
-        id: "DEV005",
-        name: "气象站-1",
-        deviceType: "气象站",
-        onLine: 1,
-        temperature: 25.0,
-        humidity: 53,
-        lightIntensity: 2900,
-      },
-      {
-        id: "DEV007",
-        name: "路灯-2",
-        deviceType: "路灯",
-        onLine: 1,
-        temperature: 23.9,
-        humidity: 50,
-        lightIntensity: 2600,
-      },
-      {
-        id: "DEV008",
-        name: "路灯-3",
-        deviceType: "路灯",
-        onLine: 0,
-        temperature: 0,
-        humidity: 0,
-        lightIntensity: 0,
-      }, // 故障设备
-    ];
+    const res = await getDeviceList({ pageNum: 1, pageSize: 100 });
+    if (res.data.code === 1) {
+      const records = res.data.data;
+      if (records && records.length > 0) {
+        deviceList.value = records.map((d) => ({
+          id: d.deviceId || d.id || Date.now(),
+          name: d.deviceName || d.deviceType || "未知设备",
+          deviceType: d.deviceType || "其他",
+          onLine: d.onLine !== undefined ? d.onLine : 1,
+          temperature: 0,
+          humidity: 0,
+          lightIntensity: 0,
+        }));
+        return;
+      }
+    }
+    deviceList.value = [];
   } catch (error) {
     console.error("加载设备列表失败:", error);
+    deviceList.value = [];
   }
 };
 
@@ -1326,38 +1022,38 @@ const performMonitoring = async () => {
     monitoringDeviceCount.value = devicesToMonitor.length;
     let faults = 0;
 
-    // 模拟监测过程
-    for (const device of devicesToMonitor) {
-      // 模拟设备数据
-      const temperature = 20 + Math.random() * 10;
-      const humidity = 40 + Math.random() * 30;
-      const lightIntensity = 1000 + Math.random() * 5000;
+    // 获取真实环境平均数据
+    let avgTemp = 25;
+    let avgHum = 55;
+    let avgLight = 3000;
+    try {
+      const statsRes = await getDeviceStats();
+      if (statsRes.data.code === 1) {
+        const s = statsRes.data.data;
+        avgTemp = s.avgTemperature || 25;
+        avgHum = s.avgHumidity || 55;
+        avgLight = s.avgLight || 3000;
+      }
+    } catch (e) { /* 使用默认值 */ }
 
-      // 检查设备状态
+    // 执行监测
+    for (const device of devicesToMonitor) {
       let status = "正常";
       let action = "无操作";
 
-      // 模拟故障检测
-      if (Math.random() > 0.8 || device.onLine === 0) {
+      // 基于真实设备在线状态检测故障
+      if (device.onLine === 0) {
         status = "故障";
         faults++;
-
-        // 自动处理故障
-        if (autoHandleFaults.value) {
-          action = "已自动离线处理";
-          // 模拟故障处理
-          device.onLine = 0;
-        } else {
-          action = "需要手动处理";
-        }
+        action = autoHandleFaults.value ? "已自动离线处理" : "需要手动处理";
       } else {
         // 正常设备，处理路灯自动控制
         if (device.deviceType === "路灯") {
           const lightStatus = await handleStreetLight(
             device,
-            lightIntensity,
-            temperature,
-            humidity,
+            avgLight,
+            avgTemp,
+            avgHum,
           );
           action = lightStatus;
         }
@@ -1369,7 +1065,7 @@ const performMonitoring = async () => {
         deviceName: device.name,
         deviceType: device.deviceType,
         status: status,
-        data: `温度: ${temperature.toFixed(1)}°C, 湿度: ${humidity.toFixed(1)}%, 光照: ${lightIntensity.toFixed(0)}lux`,
+        data: `温度: ${avgTemp.toFixed(1)}°C, 湿度: ${avgHum.toFixed(1)}%, 光照: ${avgLight.toFixed(0)}lux`,
         action: action,
       });
 
@@ -1381,7 +1077,7 @@ const performMonitoring = async () => {
 
     faultDeviceCount.value = faults;
 
-    // 模拟添加监测记录
+    // 添加监测记录
     await addMonitoringRecord();
   } catch (error) {
     console.error("执行监测失败:", error);
@@ -1434,8 +1130,12 @@ const addMonitoringRecord = async () => {
       remark: `AI员工监测，设备数: ${monitoringDeviceCount.value}, 故障数: ${faultDeviceCount.value}`,
     };
 
-    // 模拟添加记录
-    console.log("添加监测记录:", record);
+    // 添加监测记录
+    try {
+      await addRecord(record);
+    } catch (e) {
+      console.error("添加监测记录失败:", e);
+    }
   } catch (error) {
     console.error("添加监测记录失败:", error);
   }

@@ -43,7 +43,7 @@
 <script setup>
 import { ref, onMounted, onActivated, watch, computed } from "vue";
 import * as echarts from "echarts";
-import { getDeviceTypeList } from "@/api/auth";
+import { getDeviceTypeList, getRecordList } from "@/api/auth";
 
 const props = defineProps({
   deviceType: {
@@ -57,84 +57,63 @@ const chart = ref(null);
 const chartType = ref("all");
 const deviceType = ref(props.deviceType);
 const deviceTypeList = ref([{ label: "全部设备", value: "all" }]);
+const historicalData = ref([]);
+const loading = ref(false);
 
-// 模拟历史数据，根据设备类型生成不同的数据
-const historicalData = computed(() => {
-  const data = [];
-  const now = new Date();
-
-  // 根据设备类型设置不同的数据范围
-  const getDataRange = () => {
-    switch (deviceType.value) {
-      case "temperature_humidity":
-        return {
-          temperature: { min: 20, max: 30 },
-          humidity: { min: 45, max: 65 },
-          light: { min: 1000, max: 10000 },
-        };
-      case "light":
-        return {
-          temperature: { min: 22, max: 26 },
-          humidity: { min: 50, max: 60 },
-          light: { min: 500, max: 30000 },
-        };
-      case "soil":
-        return {
-          temperature: { min: 15, max: 30 },
-          humidity: { min: 20, max: 90 },
-          light: { min: 1000, max: 15000 },
-        };
-
-      case "wind":
-        return {
-          temperature: { min: 15, max: 35 },
-          humidity: { min: 30, max: 80 },
-          light: { min: 1000, max: 25000 },
-        };
-      case "comprehensive":
-        return {
-          temperature: { min: 18, max: 28 },
-          humidity: { min: 40, max: 70 },
-          light: { min: 3000, max: 20000 },
-        };
-      default:
-        return {
-          temperature: { min: 20, max: 25 },
-          humidity: { min: 45, max: 55 },
-          light: { min: 3000, max: 18000 },
-        };
-    }
-  };
-
-  const range = getDataRange();
-
-  for (let i = 23; i >= 0; i--) {
-    const time = new Date(now);
-    time.setHours(now.getHours() - i);
-    const timeStr = time.getHours().toString().padStart(2, "0") + ":00";
-
-    data.push({
-      time: timeStr,
-      temperature:
-        range.temperature.min +
-        Math.random() * (range.temperature.max - range.temperature.min),
-      humidity:
-        range.humidity.min +
-        Math.random() * (range.humidity.max - range.humidity.min),
-      light:
-        range.light.min + Math.random() * (range.light.max - range.light.min),
+// 获取真实历史数据
+const fetchHistoricalData = async () => {
+  loading.value = true;
+  try {
+    const response = await getRecordList({
+      page: 1,
+      pageSize: 100,
+      dataType: chartType.value === "all" ? "" : chartType.value,
+      dateRange: [],
     });
+    if (response.data.code === 1) {
+      const records = response.data.data || [];
+      // 按时间聚合：取最近24个时间点
+      const now = new Date();
+      const dataMap = {};
+      for (let i = 23; i >= 0; i--) {
+        const time = new Date(now);
+        time.setHours(now.getHours() - i);
+        const key = time.getHours().toString().padStart(2, "0") + ":00";
+        dataMap[key] = { time: key, temperature: null, humidity: null, light: null };
+      }
+      // 将记录映射到时间点
+      records.forEach((r) => {
+        const d = new Date(r.recordTime);
+        const key = d.getHours().toString().padStart(2, "0") + ":00";
+        if (dataMap[key]) {
+          const val = parseFloat(r.value);
+          if (r.dataType === "temperature" && !isNaN(val)) {
+            if (dataMap[key].temperature === null) dataMap[key].temperature = val;
+            else dataMap[key].temperature = (dataMap[key].temperature + val) / 2;
+          } else if (r.dataType === "humidity" && !isNaN(val)) {
+            if (dataMap[key].humidity === null) dataMap[key].humidity = val;
+            else dataMap[key].humidity = (dataMap[key].humidity + val) / 2;
+          } else if (r.dataType === "light" && !isNaN(val)) {
+            if (dataMap[key].light === null) dataMap[key].light = val;
+            else dataMap[key].light = (dataMap[key].light + val) / 2;
+          }
+        }
+      });
+      historicalData.value = Object.values(dataMap);
+    }
+  } catch (error) {
+    console.error("获取历史数据失败", error);
+  } finally {
+    loading.value = false;
   }
-
-  return data;
-});
+};
 
 const handleChartTypeChange = () => {
-  initChart();
+  fetchHistoricalData().then(() => initChart());
 };
 
 const handleDeviceTypeChange = () => {
-  initChart();
+  fetchHistoricalData().then(() => initChart());
 };
 
 // 获取设备类型列表
@@ -306,7 +285,7 @@ const getSeriesData = () => {
     series.push({
       name: "温度",
       type: "line",
-      data: historicalData.value.map((item) => item.temperature.toFixed(1)),
+      data: historicalData.value.map((item) => item.temperature !== null ? Number(item.temperature.toFixed(1)) : null),
       smooth: true,
       lineStyle: {
         color: "#F56C6C",
@@ -390,6 +369,7 @@ const getSeriesData = () => {
 
 onMounted(async () => {
   await fetchDeviceTypes();
+  await fetchHistoricalData();
   initChart();
 
   window.addEventListener("resize", () => {

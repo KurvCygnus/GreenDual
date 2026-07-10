@@ -625,6 +625,7 @@ import {
   Bottom,
 } from "@element-plus/icons-vue";
 import * as echarts from "echarts";
+import { getDeviceStats } from "@/api/auth";
 
 const activeTab = ref("config");
 const cloudFormRef = ref(null);
@@ -808,49 +809,12 @@ const filteredLogs = computed(() => {
   return syncLogs.value.slice(start, start + logPagination.pageSize);
 });
 
-const testConnection = async () => {
-  testing.value = true;
-  try {
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    ElMessage.success("连接测试成功");
-  } catch (error) {
-    ElMessage.error("连接测试失败");
-  } finally {
-    testing.value = false;
-  }
+const testConnection = () => {
+  ElMessage.info("云平台对接功能开发中");
 };
 
-const connectCloud = async () => {
-  if (isConnected.value) {
-    try {
-      await ElMessageBox.confirm("确定要断开云平台连接吗？", "提示", {
-        type: "warning",
-      });
-      isConnected.value = false;
-      dataSync.value = false;
-      stopSync();
-      ElMessage.success("已断开云平台连接");
-    } catch {}
-    return;
-  }
-
-  if (!cloudFormRef.value) return;
-  await cloudFormRef.value.validate(async (valid) => {
-    if (valid) {
-      connecting.value = true;
-      try {
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        isConnected.value = true;
-        dataSync.value = true;
-        ElMessage.success("云平台连接成功");
-        startSync();
-      } catch (error) {
-        ElMessage.error("云平台连接失败");
-      } finally {
-        connecting.value = false;
-      }
-    }
-  });
+const connectCloud = () => {
+  ElMessage.info("云平台对接功能开发中");
 };
 
 const saveConfig = () => {
@@ -910,25 +874,8 @@ const stopSync = () => {
   }
 };
 
-const syncData = async () => {
-  try {
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    syncCount.value++;
-    Math.random() > 0.1 ? syncSuccessCount.value++ : syncFailedCount.value++;
-    const now = new Date().toLocaleString();
-    syncLogs.value.unshift({
-      id: Date.now(),
-      time: now,
-      success: Math.random() > 0.1,
-      type: "自动同步",
-      device: "temp_hum_01",
-      dataCount: Math.floor(Math.random() * 100) + 50,
-      duration: Math.floor(Math.random() * 200) + 50,
-      message: Math.random() > 0.1 ? "同步成功" : "连接超时",
-    });
-  } catch {
-    syncFailedCount.value++;
-  }
+const syncData = () => {
+  ElMessage.info("云平台同步功能开发中");
 };
 
 const addMapping = () => {
@@ -980,11 +927,8 @@ const deleteMapping = (row) => {
     .catch(() => {});
 };
 
-const syncSingleDevice = async (row) => {
-  ElMessage.info(`正在同步设备 ${row.localDevice}...`);
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-  row.lastSync = new Date().toLocaleString();
-  ElMessage.success("同步成功");
+const syncSingleDevice = (row) => {
+  ElMessage.info("云平台对接功能开发中");
 };
 
 const exportLogs = () => {
@@ -1059,14 +1003,21 @@ const toggleAlertRule = (row) => {
 
 const refreshRealtimeData = async () => {
   refreshing.value = true;
-  await new Promise((resolve) => setTimeout(resolve, 800));
-  realtimeData.temperature = (25 + Math.random() * 5).toFixed(1);
-  realtimeData.humidity = Math.floor(60 + Math.random() * 20);
-  realtimeData.light = Math.floor(1000 + Math.random() * 500);
-  realtimeData.pm25 = Math.floor(30 + Math.random() * 30);
-  updateChart();
-  refreshing.value = false;
-  ElMessage.success("数据已刷新");
+  try {
+    const response = await getDeviceStats();
+    if (response.data.code === 1) {
+      const stats = response.data.data;
+      realtimeData.temperature = parseFloat(stats.avgTemperature || 0);
+      realtimeData.humidity = parseInt(stats.avgHumidity || 0);
+      realtimeData.light = parseInt(stats.avgLight || 0);
+      updateChart();
+    }
+  } catch (error) {
+    console.error("获取设备统计数据失败", error);
+    ElMessage.error("获取实时数据失败");
+  } finally {
+    refreshing.value = false;
+  }
 };
 
 const exportRealtimeData = () => {
@@ -1088,12 +1039,9 @@ const initChart = () => {
 
 const updateChart = () => {
   if (!chart) return;
-  const hours = Array.from({ length: 24 }, (_, i) => `${i}:00`);
-  const tempData = hours.map(() => (20 + Math.random() * 15).toFixed(1));
-  const humData = hours.map(() => Math.floor(50 + Math.random() * 40));
   chart.setOption({
     tooltip: { trigger: "axis" },
-    legend: { data: ["温度", "湿度"], bottom: 0 },
+    legend: { data: ["温度", "湿度", "光照"], bottom: 0 },
     grid: {
       left: "3%",
       right: "4%",
@@ -1101,7 +1049,7 @@ const updateChart = () => {
       top: "10%",
       containLabel: true,
     },
-    xAxis: { type: "category", boundaryGap: false, data: hours },
+    xAxis: { type: "category", data: ["当前均值"] },
     yAxis: [
       { type: "value", name: "温度(°C)", position: "left" },
       { type: "value", name: "湿度(%)", position: "right", max: 100 },
@@ -1109,20 +1057,16 @@ const updateChart = () => {
     series: [
       {
         name: "温度",
-        type: "line",
-        smooth: true,
-        data: tempData,
+        type: "bar",
+        data: [realtimeData.temperature],
         itemStyle: { color: "#f56c6c" },
-        areaStyle: { color: "rgba(245, 108, 108, 0.1)" },
       },
       {
         name: "湿度",
-        type: "line",
-        smooth: true,
+        type: "bar",
         yAxisIndex: 1,
-        data: humData,
+        data: [realtimeData.humidity],
         itemStyle: { color: "#409eff" },
-        areaStyle: { color: "rgba(64, 158, 255, 0.1)" },
       },
     ],
   });

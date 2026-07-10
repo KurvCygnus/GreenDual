@@ -681,62 +681,26 @@ const faultVisible = ref(false);
 // 位置
 const locationVisible = ref(false);
 
-// 智能调光统计数据
-const dimmingStats = ref({
-  avgBrightness: 65,
-  energySaved: 1280,
-  autoAdjustCount: 156,
-  optimizationRate: 92.5,
+// 智能调光统计数据 — 从 lampList 实时计算
+const dimmingStats = computed(() => {
+  const onlineLamps = lampList.value.filter((l) => l.onLine && l.lampStatus);
+  const avgBrightness =
+    onlineLamps.length > 0
+      ? Math.round(
+          onlineLamps.reduce((sum, l) => sum + (l.brightness || 0), 0) /
+            onlineLamps.length,
+        )
+      : 0;
+  return {
+    avgBrightness,
+    energySaved: "--",
+    autoAdjustCount: "--",
+    optimizationRate: "--",
+  };
 });
 const dimmingTimeRange = ref("today");
 const dimmingLoading = ref(false);
-const dimmingRecords = ref([
-  {
-    time: "2025-04-03 14:30:25",
-    deviceName: "教学楼A区路灯01",
-    triggerType: "自动",
-    ambientLight: 8500,
-    oldBrightness: 80,
-    newBrightness: 60,
-    energySaved: 0.15,
-  },
-  {
-    time: "2025-04-03 14:28:10",
-    deviceName: "图书馆路灯01",
-    triggerType: "手动",
-    ambientLight: 12000,
-    oldBrightness: 100,
-    newBrightness: 70,
-    energySaved: 0.22,
-  },
-  {
-    time: "2025-04-03 14:25:45",
-    deviceName: "学生宿舍1号楼路灯01",
-    triggerType: "自动",
-    ambientLight: 9200,
-    oldBrightness: 90,
-    newBrightness: 65,
-    energySaved: 0.18,
-  },
-  {
-    time: "2025-04-03 14:22:30",
-    deviceName: "校园主干道路灯01",
-    triggerType: "自动",
-    ambientLight: 7800,
-    oldBrightness: 85,
-    newBrightness: 55,
-    energySaved: 0.2,
-  },
-  {
-    time: "2025-04-03 14:20:15",
-    deviceName: "教学楼B区路灯01",
-    triggerType: "自动",
-    ambientLight: 10500,
-    oldBrightness: 95,
-    newBrightness: 70,
-    energySaved: 0.19,
-  },
-]);
+const dimmingRecords = ref([]);
 
 // 图表相关
 const brightnessChartRef = ref(null);
@@ -864,12 +828,30 @@ const getBrightnessColor = (brightness) => {
   return "#67c23a";
 };
 
+// 从 lampList 计算亮度分布
+const getBrightnessDistribution = () => {
+  const levels = { high: 0, medium: 0, low: 0, min: 0 };
+  lampList.value.forEach((l) => {
+    const b = l.brightness || 0;
+    if (b >= 80) levels.high++;
+    else if (b >= 50) levels.medium++;
+    else if (b >= 30) levels.low++;
+    else levels.min++;
+  });
+  return [
+    { value: levels.high || 0, name: "高亮度(80-100%)", itemStyle: { color: "#f56c6c" } },
+    { value: levels.medium || 0, name: "中亮度(50-80%)", itemStyle: { color: "#e6a23c" } },
+    { value: levels.low || 0, name: "低亮度(30-50%)", itemStyle: { color: "#409eff" } },
+    { value: levels.min || 0, name: "微亮(0-30%)", itemStyle: { color: "#67c23a" } },
+  ];
+};
+
 // 初始化调光图表
 const initDimmingCharts = () => {
   if (currentView.value !== "1-2") return;
 
   nextTick(() => {
-    // 亮度分布饼图
+    // 亮度分布饼图 — 从 lampList 实时计算
     if (brightnessChartRef.value) {
       brightnessChart = echarts.init(brightnessChartRef.value);
       brightnessChart.setOption({
@@ -886,34 +868,13 @@ const initDimmingCharts = () => {
             emphasis: {
               label: { show: true, fontSize: 14, fontWeight: "bold" },
             },
-            data: [
-              {
-                value: 2,
-                name: "高亮度(80-100%)",
-                itemStyle: { color: "#f56c6c" },
-              },
-              {
-                value: 3,
-                name: "中亮度(50-80%)",
-                itemStyle: { color: "#e6a23c" },
-              },
-              {
-                value: 2,
-                name: "低亮度(30-50%)",
-                itemStyle: { color: "#409eff" },
-              },
-              {
-                value: 1,
-                name: "微亮(0-30%)",
-                itemStyle: { color: "#67c23a" },
-              },
-            ],
+            data: getBrightnessDistribution(),
           },
         ],
       });
     }
 
-    // 调光趋势折线图
+    // 调光趋势折线图 — 暂无历史数据，展示空状态
     if (trendChartRef.value) {
       trendChart = echarts.init(trendChartRef.value);
       trendChart.setOption({
@@ -943,7 +904,7 @@ const initDimmingCharts = () => {
           {
             name: "自动调光",
             type: "line",
-            data: [12, 8, 25, 35, 28, 42, 18],
+            data: [0, 0, 0, 0, 0, 0, 0],
             smooth: true,
             itemStyle: { color: "#67c23a" },
             areaStyle: {
@@ -956,7 +917,7 @@ const initDimmingCharts = () => {
           {
             name: "手动调光",
             type: "line",
-            data: [5, 3, 8, 12, 10, 15, 8],
+            data: [0, 0, 0, 0, 0, 0, 0],
             smooth: true,
             itemStyle: { color: "#409eff" },
             areaStyle: {
@@ -1134,6 +1095,30 @@ const batchTurnOff = async () => {
   }
 };
 
+// 一键优化 — 对所有在线路灯执行智能调光
+const optimizeAll = async () => {
+  try {
+    const onlineLampIds = lampList.value.filter((l) => l.onLine).map((l) => l.id);
+    if (onlineLampIds.length === 0) {
+      ElMessage.warning("没有在线的路灯");
+      return;
+    }
+    const response = await smartAdjustApi({
+      deviceIds: onlineLampIds,
+      ambientLight: 5000,
+    });
+    if (response.data.code === 1) {
+      ElMessage.success("一键优化成功");
+      fetchLampList();
+      fetchStats();
+    } else {
+      ElMessage.error(response.data.msg || "一键优化失败");
+    }
+  } catch (error) {
+    ElMessage.error("一键优化失败");
+  }
+};
+
 // 显示智能调光对话框（批量）
 const showSmartAdjust = () => {
   currentLamp.value = null;
@@ -1182,6 +1167,15 @@ const confirmSmartAdjust = async () => {
         ElMessage.success(
           `批量智能调光成功，共调节 ${data.successCount}/${data.totalCount} 盏路灯，亮度 ${data.brightness}%`,
         );
+        dimmingRecords.value.unshift({
+          time: new Date().toLocaleString(),
+          deviceName: "批量调光",
+          triggerType: "自动",
+          ambientLight: smartForm.value.ambientLight,
+          oldBrightness: data.oldBrightness || 0,
+          newBrightness: data.brightness,
+          energySaved: data.energySaved || 0,
+        });
         fetchLampList();
         fetchStats();
         smartAdjustVisible.value = false;
@@ -1199,6 +1193,15 @@ const confirmSmartAdjust = async () => {
         ElMessage.success(
           `智能调光成功，设置亮度为 ${response.data.data.brightness}%`,
         );
+        dimmingRecords.value.unshift({
+          time: new Date().toLocaleString(),
+          deviceName: currentLamp.value?.name || smartForm.value.deviceId,
+          triggerType: "手动",
+          ambientLight: smartForm.value.ambientLight,
+          oldBrightness: currentLamp.value?.brightness || 0,
+          newBrightness: response.data.data.brightness,
+          energySaved: response.data.data.energySaved || 0,
+        });
         fetchLampList();
         smartAdjustVisible.value = false;
       } else {

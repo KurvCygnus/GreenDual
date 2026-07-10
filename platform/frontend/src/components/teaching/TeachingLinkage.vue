@@ -8,7 +8,7 @@
             <el-icon size="28" color="#fff"><School /></el-icon>
           </div>
           <div class="stat-info">
-            <div class="stat-value">12</div>
+            <div class="stat-value">{{ classCount }}</div>
             <div class="stat-label">合作班级</div>
           </div>
         </el-card>
@@ -19,7 +19,7 @@
             <el-icon size="28" color="#fff"><User /></el-icon>
           </div>
           <div class="stat-info">
-            <div class="stat-value">486</div>
+            <div class="stat-value">{{ studentCount }}</div>
             <div class="stat-label">参与学生</div>
           </div>
         </el-card>
@@ -30,7 +30,7 @@
             <el-icon size="28" color="#fff"><Document /></el-icon>
           </div>
           <div class="stat-info">
-            <div class="stat-value">36</div>
+            <div class="stat-value">{{ courseCount }}</div>
             <div class="stat-label">实践课程</div>
           </div>
         </el-card>
@@ -41,7 +41,7 @@
             <el-icon size="28" color="#fff"><Trophy /></el-icon>
           </div>
           <div class="stat-info">
-            <div class="stat-value">8</div>
+            <div class="stat-value">{{ awardCount }}</div>
             <div class="stat-label">获奖项目</div>
           </div>
         </el-card>
@@ -224,8 +224,9 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { ElMessage } from "element-plus";
+import { getTeachingStatistics, getTeachingCases } from "@/api/auth";
 import {
   School,
   User,
@@ -243,53 +244,13 @@ import {
   Microphone,
 } from "@element-plus/icons-vue";
 
-// 教学场景数据
-const scenarios = ref([
-  {
-    id: 1,
-    title: "路灯能耗数据分析",
-    description: "利用节能引擎采集的路灯用电数据，进行能耗分析和节能方案设计",
-    icon: "Sunny",
-    color: "#E6A23C",
-    status: "success",
-    statusText: "进行中",
-    className: "物联网2202班",
-    time: "2024-03-15",
-  },
-  {
-    id: 2,
-    title: "绿植生长环境研究",
-    description: "通过生态引擎监测数据，分析校园绿植生长环境，提出改善建议",
-    icon: "FirstAidKit",
-    color: "#67C23A",
-    status: "primary",
-    statusText: "已发布",
-    className: "环境科学2101班",
-    time: "2024-03-12",
-  },
-  {
-    id: 3,
-    title: "智慧校园系统搭建",
-    description: "学生动手搭建小型环境监测系统，体验双引擎协同工作原理",
-    icon: "Monitor",
-    color: "#409EFF",
-    status: "warning",
-    statusText: "筹备中",
-    className: "计算机2301班",
-    time: "2024-03-20",
-  },
-  {
-    id: 4,
-    title: "AI节能算法实践",
-    description: "学习AI调光算法原理，编写简单的节能控制程序",
-    icon: "Opportunity",
-    color: "#8E44AD",
-    status: "success",
-    statusText: "进行中",
-    className: "人工智能2201班",
-    time: "2024-03-18",
-  },
-]);
+const classCount = ref(0);
+const studentCount = ref(0);
+const courseCount = ref(0);
+const awardCount = ref(0);
+
+// 教学场景数据 — 首次加载时从 API 获取
+const scenarios = ref([]);
 
 // 教学资源
 const resources = ref([
@@ -328,37 +289,8 @@ const notices = ref([
   { id: 4, title: "教学资源库更新12个新案例", time: "2天前", type: "info" },
 ]);
 
-// 课程案例
-const caseList = ref([
-  {
-    id: 1,
-    title: "基于双引擎的校园节能方案",
-    description:
-      "学生通过分析真实监测数据，提出校园照明和绿植养护的综合节能方案",
-    teacher: "张教授",
-    tag: "优秀案例",
-    icon: "TrendCharts",
-    bgColor: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-  },
-  {
-    id: 2,
-    title: "微环境监测与植物生长研究",
-    description: "利用生态引擎数据，研究不同环境条件下校园绿植的生长状况",
-    teacher: "李老师",
-    tag: "创新实践",
-    icon: "FirstAidKit",
-    bgColor: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
-  },
-  {
-    id: 3,
-    title: "AIoT智慧校园系统开发",
-    description: "学生团队开发基于物联网的智慧校园管理系统原型",
-    teacher: "王工程师",
-    tag: "工程实践",
-    icon: "Microphone",
-    bgColor: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-  },
-]);
+// 课程案例 — 从 API 获取
+const caseList = ref([]);
 
 // 添加场景
 const showAddScenario = ref(false);
@@ -397,6 +329,81 @@ const viewScenario = (scenario) => {
 const openResource = (resource) => {
   ElMessage.info(`打开资源：${resource.title}`);
 };
+
+// 从 API 加载统计数据与教学案例
+const fetchTeachingData = async () => {
+  try {
+    const statsRes = await getTeachingStatistics();
+    if (statsRes.data.code === 1) {
+      const stats = statsRes.data.data;
+      courseCount.value = stats.totalCases || 0;
+      classCount.value = (stats.relatedCourses && stats.relatedCourses.length) || 0;
+    }
+  } catch (error) {
+    console.error("获取教学统计失败", error);
+  }
+
+  try {
+    const casesRes = await getTeachingCases();
+    if (casesRes.data.code === 1) {
+      const cases = Array.isArray(casesRes.data.data) ? casesRes.data.data : [];
+      scenarios.value = cases.map((c) => ({
+        id: c.id || Date.now(),
+        title: c.caseName || "",
+        description: c.description || "",
+        icon: getCaseIcon(c.caseType),
+        color: getCaseColor(c.caseType),
+        status: "primary",
+        statusText: "已发布",
+        className: c.relatedCourse || "",
+        time: c.createTime ? c.createTime.split("T")[0] : "",
+      }));
+      caseList.value = cases.slice(0, 3).map((c) => ({
+        id: c.id || Date.now(),
+        title: c.caseName || "",
+        description: c.description || "",
+        teacher: c.deviceName || "教师",
+        tag: caseTypeMap[c.caseType] || "教学案例",
+        icon: getCaseIcon(c.caseType),
+        bgColor: getCaseBgColor(c.caseType),
+      }));
+    }
+  } catch (error) {
+    console.error("获取教学案例失败", error);
+  }
+};
+
+const caseTypeMap = {
+  lighting_control: "照明控制",
+  environment_monitor: "环境监测",
+  energy_saving: "节能案例",
+};
+
+const caseTypeIcons = {
+  lighting_control: "Sunny",
+  environment_monitor: "FirstAidKit",
+  energy_saving: "Opportunity",
+};
+
+const caseTypeColors = {
+  lighting_control: "#E6A23C",
+  environment_monitor: "#67C23A",
+  energy_saving: "#8E44AD",
+};
+
+const caseTypeBgColors = {
+  lighting_control: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+  environment_monitor: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
+  energy_saving: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+};
+
+const getCaseIcon = (type) => caseTypeIcons[type] || "Monitor";
+const getCaseColor = (type) => caseTypeColors[type] || "#409EFF";
+const getCaseBgColor = (type) => caseTypeBgColors[type] || "linear-gradient(135deg, #409EFF 0%, #2c3e50 100%)";
+
+onMounted(() => {
+  fetchTeachingData();
+});
 </script>
 
 <style scoped>

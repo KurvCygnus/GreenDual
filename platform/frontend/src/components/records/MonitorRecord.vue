@@ -352,78 +352,13 @@ const pagination = reactive({
 });
 
 // 统计数据
-const totalRecords = ref(1256);
-const normalRecords = ref(1180);
-const warningRecords = ref(56);
-const abnormalRecords = ref(20);
+const totalRecords = ref(0);
+const normalRecords = ref(0);
+const warningRecords = ref(0);
+const abnormalRecords = ref(0);
 
 // 记录列表
 const recordList = ref([]);
-
-// 生成模拟数据
-const generateRecords = () => {
-  const records = [];
-  const dataTypes = ["temperature", "humidity", "light"];
-  const statuses = ["normal", "warning", "abnormal"];
-  const devices =
-    deviceList.value.length > 0
-      ? deviceList.value
-      : [
-          { id: "ENV001", name: "农田监测点1号" },
-          { id: "ENV002", name: "温室大棚A区" },
-        ];
-
-  for (let i = 0; i < 20; i++) {
-    const device = devices[Math.floor(Math.random() * devices.length)];
-    const dataType = dataTypes[Math.floor(Math.random() * dataTypes.length)];
-    let value, status, remark;
-
-    if (dataType === "temperature") {
-      value = (20 + Math.random() * 15).toFixed(1);
-      if (value > 32) {
-        status = "abnormal";
-        remark = "温度过高";
-      } else if (value > 28) {
-        status = "warning";
-        remark = "温度偏高";
-      } else {
-        status = "normal";
-        remark = "正常";
-      }
-    } else if (dataType === "humidity") {
-      value = Math.floor(40 + Math.random() * 40);
-      if (value > 85) {
-        status = "warning";
-        remark = "湿度过高";
-      } else if (value < 45) {
-        status = "warning";
-        remark = "湿度偏低";
-      } else {
-        status = "normal";
-        remark = "正常";
-      }
-    } else {
-      value = Math.floor(5000 + Math.random() * 15000);
-      status = "normal";
-      remark = "正常";
-    }
-
-    records.push({
-      id: `REC${String(i + 1).padStart(4, "0")}`,
-      deviceId: device.id,
-      deviceName: device.name,
-      recordTime: new Date(
-        Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000,
-      ),
-      dataType,
-      value,
-      status,
-      remark,
-    });
-  }
-
-  return records.sort((a, b) => b.recordTime - a.recordTime);
-};
 
 // 获取设备列表
 const fetchDeviceList = async () => {
@@ -455,7 +390,7 @@ const fetchRecords = async () => {
     }
   } catch (error) {
     console.error("获取记录列表失败", error);
-    recordList.value = generateRecords();
+    ElMessage.error("获取记录列表失败");
   } finally {
     loading.value = false;
   }

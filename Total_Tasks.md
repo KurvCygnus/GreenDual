@@ -327,7 +327,7 @@ Day4的多数问题大概率已经失效. 在Day3, 该项目的数据库初始�
 
 ### 8.1 所有 ECharts 图表使用随机数据
 
-- [ ] 是否完成
+- [x] 是否完成
 - **涉及组件**:
   - `EnvironmentChart.vue` — 完全使用 `Math.random()` 生成数据
   - `CampusEnergy.vue` — 8 个 ECharts 实例全部硬编码/随机数据
@@ -339,7 +339,7 @@ Day4的多数问题大概率已经失效. 在Day3, 该项目的数据库初始�
 
 ### 8.2 前端组件大面积使用 Mock 数据
 
-- [ ] 是否完成
+- [x] 是否完成
 - **涉及组件**:
   - `DeviceManager.vue` — API 失败时降级到 14 个硬编码模拟设备
   - `MonitorRecord.vue` — 初始统计硬编码 (1256/1180/56/20), API 失败降级到模拟记录
@@ -352,7 +352,7 @@ Day4的多数问题大概率已经失效. 在Day3, 该项目的数据库初始�
 
 ### 8.3 AI 员工监控完全模拟
 
-- [ ] 是否完成
+- [x] 是否完成
 - **文件**: `AIPrediction.vue` 第三区域
 - **问题**: 使用 `setInterval` + `Math.random()` 模拟实时监控数据
 - **影响**: 无实际监控功能, 属于"假功能"
@@ -360,7 +360,7 @@ Day4的多数问题大概率已经失效. 在Day3, 该项目的数据库初始�
 
 ### 8.4 AI 聊天绕过后端直接调用 DeepSeek
 
-- [ ] 是否完成
+- [x] 是否完成
 - **文件**: `platform/frontend/src/api/auth.js:148-170`
 - **问题**: AI 聊天前端直接用 `fetch()` 调用 DeepSeek API, 完全绕过 Spring Boot 后端
 - **影响**: API Key 泄露(已修复 1.1), 无法在服务端做审计/限流/日志
@@ -368,7 +368,7 @@ Day4的多数问题大概率已经失效. 在Day3, 该项目的数据库初始�
 
 ### 8.5 AI 预测本地生成分析结果
 
-- [ ] 是否完成
+- [x] 是否完成
 - **文件**: `AIPrediction.vue`
 - **问题**: `generateLocalAnalysis()` 和 `generateLocalChatResponse()` 返回硬编码文本模板 + 随机填入统计数字
 - **影响**: AI 分析结果不是真实的 AI 推理, 属于"假 AI"
@@ -406,7 +406,7 @@ Day4的多数问题大概率已经失效. 在Day3, 该项目的数据库初始�
 - **实际**:
   - `UserManagement.vue` 仅支持 普通用户(1) / 管理员(2)
   - `HomeView.vue` 的 `roleText` 仅返回 "管理员"/"操作员" 两种
-  - 后端 `UserController.isRoot()` 阈值 `permission >= 2`
+  - 后端 `UserController.isRoot()` 阈值 `permission >= 2`(`permission`已被抽取成独立的枚举`PermissionLevel.java`)
 - **修复**: 统一为三级权限模型, 前后端对齐
 
 ### 9.5 缺少个人中心

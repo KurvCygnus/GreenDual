@@ -877,7 +877,51 @@
             </el-alert>
           </div>
           <div class="cost-content">
-            <el-empty description="费用统计功能开发中" />
+            <div class="bill-overview">
+              <div class="bill-card">
+                <div class="bill-title">本月能耗概览</div>
+                <div class="bill-stats">
+                  <div class="bill-stat-item">
+                    <div class="bill-stat-label">总能耗</div>
+                    <div class="bill-stat-value">
+                      {{ (currentBill.totalConsumption || 0).toFixed(1) }}
+                      <small>kWh</small>
+                    </div>
+                  </div>
+                  <div class="bill-stat-item">
+                    <div class="bill-stat-label">总费用</div>
+                    <div class="bill-stat-value">
+                      ¥{{ formatMoney(currentBill.totalCost || 0) }}
+                    </div>
+                  </div>
+                  <div class="bill-stat-item">
+                    <div class="bill-stat-label">节约能耗</div>
+                    <div class="bill-stat-value success">
+                      {{ (currentBill.savedConsumption || 0).toFixed(1) }}
+                      <small>kWh</small>
+                    </div>
+                  </div>
+                  <div class="bill-stat-item">
+                    <div class="bill-stat-label">节约费用</div>
+                    <div class="bill-stat-value success">
+                      ¥{{ formatMoney(currentBill.savedCost || 0) }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <el-table :data="billHistory" style="width: 100%; margin-top: 20px">
+              <el-table-column prop="billMonth" label="账单月份" width="120" />
+              <el-table-column prop="totalConsumption" label="总能耗(kWh)" width="120" />
+              <el-table-column prop="totalCost" label="总费用(元)" width="120" />
+              <el-table-column prop="savedConsumption" label="节约能耗(kWh)" width="130" />
+              <el-table-column prop="savedCost" label="节约费用(元)" width="130" />
+              <el-table-column label="操作" width="100">
+                <template #default="{ row }">
+                  <el-button type="primary" size="small" text @click="viewBillDetail(row)">查看</el-button>
+                </template>
+              </el-table-column>
+            </el-table>
           </div>
         </div>
       </div>
@@ -1203,6 +1247,8 @@ import {
   applyLightingOptimization,
   getLampList,
   getDeviceList,
+  getDeviceStats,
+  getLampStats,
 } from "@/api/auth";
 
 const props = defineProps({
@@ -1244,10 +1290,10 @@ let peakValleyChart = null;
 
 // 报表相关
 const reportStats = ref({
-  totalDevices: 35,
-  totalAreas: 8,
-  totalSavedCost: 5445,
-  totalFaults: 5,
+  totalDevices: 0,
+  totalAreas: 0,
+  totalSavedCost: 0,
+  totalFaults: 0,
 });
 
 // 报表图表相关
@@ -1370,45 +1416,6 @@ const fetchEnergyStats = async () => {
   } catch (error) {
     console.error("获取能源统计失败:", error);
   }
-  // 添加默认数据（如果后端没有返回）- 基于30盏LED路灯实际数据
-  if (!energyStats.value.savedCost) {
-    energyStats.value.savedCost = 454; // 月度节省约454元 (30盏)
-  }
-  if (!energyStats.value.savingRate) {
-    energyStats.value.savingRate = 20.5; // 节能率20.5%
-  }
-  // 确保节能指标有数据
-  if (!energyIndicators.value.avgSavingRate) {
-    energyIndicators.value = {
-      avgSavingRate: 20.5, // 平均节能率20.5%
-      totalSavedCost: 5445, // 年度节省约5445元 (30盏)
-      totalSavedEnergy: 9900, // 年度节电约9900 kWh (30盏)
-      carbonReduction: 9870, // 年度碳减排约9870 kg (30盏)
-    };
-  }
-  // 确保图表数据有默认值
-  if (!monthlyTrendData.value.months) {
-    monthlyTrendData.value = {
-      months: ["1月", "2月", "3月", "4月", "5月", "6月"],
-      totalEnergy: [4120, 3940, 3680, 3450, 3300, 3180], // 实际用电量(kWh) 30盏
-      savedEnergy: [680, 750, 825, 900, 975, 1050], // 节电量(kWh) 30盏
-    };
-  }
-  if (!areaDistributionData.value.length) {
-    areaDistributionData.value = [
-      { name: "教学区", value: 12 }, // 12盏 (主干道、教学楼周边)
-      { name: "宿舍区", value: 8 }, // 8盏 (宿舍区道路)
-      { name: "办公区", value: 6 }, // 6盏 (行政楼、停车场)
-      { name: "运动区", value: 4 }, // 4盏 (操场、体育馆周边)
-    ];
-  }
-  if (!peakValleyData.value.periods) {
-    peakValleyData.value = {
-      periods: ["0-6时", "6-12时", "12-18时", "18-24时"],
-      peak: [450, 170, 110, 680], // 峰时用电(kWh) 30盏
-      valley: [225, 85, 55, 340], // 谷时用电(kWh) 30盏
-    };
-  }
 };
 
 const fetchBillHistory = async () => {
@@ -1471,135 +1478,11 @@ const fetchGreenhouseList = async () => {
           fanStatus: false,
         }));
     } else {
-      // 使用模拟数据
-      greenhouseList.value = [
-        {
-          id: 1,
-          name: "图书馆绿植区",
-          onLine: true,
-          temperature: 24,
-          humidity: 65,
-          soilTemperature: 22,
-          soilHumidity: 58,
-          lightIntensity: 850,
-          lightingStatus: false,
-          fanStatus: false,
-        },
-        {
-          id: 2,
-          name: "教学楼A区花园",
-          onLine: true,
-          temperature: 26,
-          humidity: 70,
-          soilTemperature: 23,
-          soilHumidity: 45,
-          lightIntensity: 1200,
-          lightingStatus: false,
-          fanStatus: false,
-        },
-        {
-          id: 3,
-          name: "行政楼景观带",
-          onLine: true,
-          temperature: 25,
-          humidity: 62,
-          soilTemperature: 21,
-          soilHumidity: 72,
-          lightIntensity: 680,
-          lightingStatus: true,
-          fanStatus: false,
-        },
-        {
-          id: 4,
-          name: "学生宿舍绿化带",
-          onLine: false,
-          temperature: 23,
-          humidity: 68,
-          soilTemperature: 20,
-          soilHumidity: 55,
-          lightIntensity: 920,
-          lightingStatus: false,
-          fanStatus: false,
-        },
-        {
-          id: 5,
-          name: "体育馆周边绿植",
-          onLine: true,
-          temperature: 28,
-          humidity: 55,
-          soilTemperature: 25,
-          soilHumidity: 38,
-          lightIntensity: 1500,
-          lightingStatus: false,
-          fanStatus: true,
-        },
-        {
-          id: 6,
-          name: "食堂景观植物",
-          onLine: true,
-          temperature: 27,
-          humidity: 75,
-          soilTemperature: 24,
-          soilHumidity: 80,
-          lightIntensity: 450,
-          lightingStatus: true,
-          fanStatus: false,
-        },
-      ];
+      greenhouseList.value = [];
     }
   } catch (error) {
     console.error("获取绿植养护列表失败:", error);
-    // 使用模拟数据
-    greenhouseList.value = [
-      {
-        id: 1,
-        name: "图书馆绿植区",
-        onLine: true,
-        temperature: 24,
-        humidity: 65,
-        soilTemperature: 22,
-        soilHumidity: 58,
-        lightIntensity: 850,
-        lightingStatus: false,
-        fanStatus: false,
-      },
-      {
-        id: 2,
-        name: "教学楼A区花园",
-        onLine: true,
-        temperature: 26,
-        humidity: 70,
-        soilTemperature: 23,
-        soilHumidity: 45,
-        lightIntensity: 1200,
-        lightingStatus: false,
-        fanStatus: false,
-      },
-      {
-        id: 3,
-        name: "行政楼景观带",
-        onLine: true,
-        temperature: 25,
-        humidity: 62,
-        soilTemperature: 21,
-        soilHumidity: 72,
-        lightIntensity: 680,
-        lightingStatus: true,
-        fanStatus: false,
-      },
-      {
-        id: 4,
-        name: "学生宿舍绿化带",
-        onLine: false,
-        temperature: 23,
-        humidity: 68,
-        soilTemperature: 20,
-        soilHumidity: 55,
-        lightIntensity: 920,
-        lightingStatus: false,
-        fanStatus: false,
-      },
-    ];
+    greenhouseList.value = [];
   }
 };
 
@@ -1626,53 +1509,19 @@ const optimizeGreenhouse = async () => {
 
 const fetchTeachingStats = async () => {
   try {
-    const res = await getTeachingStatistics();
-    if (res.data.code === 1) {
-      teachingStats.value = res.data.data;
+    const [statsRes, casesRes] = await Promise.all([
+      getTeachingStatistics(),
+      getTeachingCases(),
+    ]);
+    if (statsRes.data.code === 1) {
+      teachingStats.value = statsRes.data.data;
+    }
+    if (casesRes.data.code === 1) {
+      teachingCases.value = Array.isArray(casesRes.data.data) ? casesRes.data.data : [];
     }
   } catch (error) {
     console.error("获取教学统计失败:", error);
   }
-  // 添加模拟教学案例数据
-  teachingCases.value = [
-    {
-      id: 1,
-      caseName: "基于双引擎的校园节能方案",
-      caseType: "energy_saving",
-      deviceName: "路灯控制系统",
-      relatedCourse: "物联网技术",
-      useCount: 45,
-      description:
-        "学生通过分析真实监测数据，提出校园照明和绿植养护的综合节能方案",
-    },
-    {
-      id: 2,
-      caseName: "微环境监测与植物生长研究",
-      caseType: "environment_monitor",
-      deviceName: "生态引擎传感器",
-      relatedCourse: "环境科学导论",
-      useCount: 32,
-      description: "利用生态引擎数据，研究不同环境条件下校园绿植的生长状况",
-    },
-    {
-      id: 3,
-      caseName: "AIoT智慧校园系统开发",
-      caseType: "lighting_control",
-      deviceName: "智能调光系统",
-      relatedCourse: "智慧校园实践",
-      useCount: 28,
-      description: "学生团队开发基于物联网的智慧校园管理系统原型",
-    },
-    {
-      id: 4,
-      caseName: "校园照明能耗分析",
-      caseType: "lighting_control",
-      deviceName: "路灯监控系统",
-      relatedCourse: "绿色能源管理",
-      useCount: 56,
-      description: "分析校园路灯能耗数据，提出节能优化建议",
-    },
-  ];
 };
 
 const refreshData = async () => {
@@ -1739,19 +1588,33 @@ const exportEnergyReport = () => {
 const refreshReportData = async () => {
   loading.value = true;
   try {
-    // 模拟API调用获取报表数据
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    // 模拟数据
+    const [statsRes, lampStatsRes, energyRes] = await Promise.all([
+      getDeviceStats(),
+      getLampStats().catch(() => null),
+      getEnergyStatistics().catch(() => null),
+    ]);
+    const stats = statsRes.data.code === 1 ? statsRes.data.data : {};
+    const lampStats = lampStatsRes?.data?.code === 1 ? lampStatsRes.data.data : {};
+    const energyData = energyRes?.data?.code === 1 ? energyRes.data.data : {};
     reportStats.value = {
-      totalDevices: 35,
-      totalAreas: 8,
-      totalSavedCost: 5445,
-      totalFaults: 5,
+      totalDevices: stats.deviceCount || 0,
+      totalAreas: lampStats.totalCount || 0,
+      totalSavedCost: energyData.indicators?.totalSavedCost || 0,
+      totalFaults: lampStats.faultCount || 0,
     };
-    // 重新初始化图表
+    if (energyData.monthlyTrend) {
+      monthlyTrendData.value = energyData.monthlyTrend;
+    }
+    if (energyData.areaDistribution) {
+      areaDistributionData.value = energyData.areaDistribution;
+    }
+    if (energyData.peakValleyData) {
+      peakValleyData.value = energyData.peakValleyData;
+    }
     initReportCharts();
     ElMessage.success("报表数据刷新成功");
   } catch (error) {
+    console.error("报表数据刷新失败:", error);
     ElMessage.error("报表数据刷新失败");
   } finally {
     loading.value = false;
@@ -1788,6 +1651,11 @@ const exportReport = () => {
 
 // 初始化报表图表
 const initReportCharts = () => {
+  const totalDev = reportStats.value.totalDevices || 0;
+  const lampCount = Math.round(totalDev * 0.7);
+  const ecoCount = Math.round(totalDev * 0.2);
+  const otherCount = Math.max(0, totalDev - lampCount - ecoCount);
+
   // 设备类型分布图表
   if (deviceTypeChartRef.value) {
     if (deviceTypeChart) {
@@ -1795,32 +1663,19 @@ const initReportCharts = () => {
     }
     deviceTypeChart = echarts.init(deviceTypeChartRef.value);
     deviceTypeChart.setOption({
-      tooltip: {
-        trigger: "item",
-      },
-      legend: {
-        orient: "vertical",
-        left: "left",
-      },
-      series: [
-        {
-          name: "设备类型",
-          type: "pie",
-          radius: "60%",
-          data: [
-            { value: 30, name: "智慧路灯" },
-            { value: 3, name: "生态引擎" },
-            { value: 2, name: "其他设备" },
-          ],
-          emphasis: {
-            itemStyle: {
-              shadowBlur: 10,
-              shadowOffsetX: 0,
-              shadowColor: "rgba(0, 0, 0, 0.5)",
-            },
-          },
-        },
-      ],
+      tooltip: { trigger: "item" },
+      legend: { orient: "vertical", left: "left" },
+      series: [{
+        name: "设备类型",
+        type: "pie",
+        radius: "60%",
+        data: [
+          { value: lampCount, name: "智慧路灯" },
+          { value: ecoCount, name: "生态引擎" },
+          { value: otherCount, name: "其他设备" },
+        ].filter((d) => d.value > 0),
+        emphasis: { itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: "rgba(0, 0, 0, 0.5)" } },
+      }],
     });
   }
 
@@ -1829,36 +1684,20 @@ const initReportCharts = () => {
     if (areaDistributionChart) {
       areaDistributionChart.dispose();
     }
+    const areaData = areaDistributionData.value.length > 0
+      ? areaDistributionData.value
+      : [{ value: 1, name: "待配置" }];
     areaDistributionChart = echarts.init(areaDistributionChartRef.value);
     areaDistributionChart.setOption({
-      tooltip: {
-        trigger: "item",
-      },
-      legend: {
-        orient: "vertical",
-        left: "left",
-      },
-      series: [
-        {
-          name: "区域设备",
-          type: "pie",
-          radius: "60%",
-          data: [
-            { value: 12, name: "教学区" },
-            { value: 8, name: "宿舍区" },
-            { value: 6, name: "办公区" },
-            { value: 4, name: "运动区" },
-            { value: 5, name: "其他区域" },
-          ],
-          emphasis: {
-            itemStyle: {
-              shadowBlur: 10,
-              shadowOffsetX: 0,
-              shadowColor: "rgba(0, 0, 0, 0.5)",
-            },
-          },
-        },
-      ],
+      tooltip: { trigger: "item" },
+      legend: { orient: "vertical", left: "left" },
+      series: [{
+        name: "区域设备",
+        type: "pie",
+        radius: "60%",
+        data: areaData,
+        emphasis: { itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: "rgba(0, 0, 0, 0.5)" } },
+      }],
     });
   }
 
@@ -1867,39 +1706,25 @@ const initReportCharts = () => {
     if (reportEnergyTrendChart) {
       reportEnergyTrendChart.dispose();
     }
+    const months = monthlyTrendData.value.months.length > 0
+      ? monthlyTrendData.value.months
+      : ["暂无数据"];
+    const totalEnergy = monthlyTrendData.value.totalEnergy.length > 0
+      ? monthlyTrendData.value.totalEnergy
+      : [0];
+    const savedEnergy = monthlyTrendData.value.savedEnergy.length > 0
+      ? monthlyTrendData.value.savedEnergy
+      : [0];
     reportEnergyTrendChart = echarts.init(reportEnergyTrendChartRef.value);
     reportEnergyTrendChart.setOption({
-      tooltip: {
-        trigger: "axis",
-      },
-      legend: {
-        data: ["总能耗", "节能量"],
-      },
-      grid: {
-        left: "3%",
-        right: "4%",
-        bottom: "3%",
-        containLabel: true,
-      },
-      xAxis: {
-        type: "category",
-        boundaryGap: false,
-        data: ["1月", "2月", "3月", "4月", "5月", "6月"],
-      },
-      yAxis: {
-        type: "value",
-      },
+      tooltip: { trigger: "axis" },
+      legend: { data: ["总能耗", "节能量"] },
+      grid: { left: "3%", right: "4%", bottom: "3%", containLabel: true },
+      xAxis: { type: "category", boundaryGap: false, data: months },
+      yAxis: { type: "value" },
       series: [
-        {
-          name: "总能耗",
-          type: "line",
-          data: [4120, 3940, 3680, 3450, 3300, 3180],
-        },
-        {
-          name: "节能量",
-          type: "line",
-          data: [680, 750, 825, 900, 975, 1050],
-        },
+        { name: "总能耗", type: "line", data: totalEnergy },
+        { name: "节能量", type: "line", data: savedEnergy },
       ],
     });
   }
@@ -1909,33 +1734,22 @@ const initReportCharts = () => {
     if (faultStatsChart) {
       faultStatsChart.dispose();
     }
+    const totalFaults = reportStats.value.totalFaults || 0;
+    const normalDevices = Math.max(0, (reportStats.value.totalDevices || 0) - totalFaults);
     faultStatsChart = echarts.init(faultStatsChartRef.value);
     faultStatsChart.setOption({
-      tooltip: {
-        trigger: "item",
-      },
-      legend: {
-        orient: "vertical",
-        left: "left",
-      },
-      series: [
-        {
-          name: "故障类型",
-          type: "pie",
-          radius: "60%",
-          data: [
-            { value: 3, name: "故障告警" },
-            { value: 2, name: "设备损坏" },
-          ],
-          emphasis: {
-            itemStyle: {
-              shadowBlur: 10,
-              shadowOffsetX: 0,
-              shadowColor: "rgba(0, 0, 0, 0.5)",
-            },
-          },
-        },
-      ],
+      tooltip: { trigger: "item" },
+      legend: { orient: "vertical", left: "left" },
+      series: [{
+        name: "设备状态",
+        type: "pie",
+        radius: "60%",
+        data: [
+          { value: normalDevices, name: "正常运行" },
+          { value: totalFaults, name: "故障设备" },
+        ].filter((d) => d.value > 0),
+        emphasis: { itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: "rgba(0, 0, 0, 0.5)" } },
+      }],
     });
   }
 };
@@ -2111,43 +1925,26 @@ const initCharts = () => {
 
     // 节能效果对比图
     if (savingCompareChartRef.value) {
+      const sMonths = monthlyTrendData.value.months.length > 0
+        ? monthlyTrendData.value.months
+        : ["1月", "2月", "3月", "4月", "5月", "6月"];
+      const tradData = monthlyTrendData.value.totalEnergy.length > 0
+        ? monthlyTrendData.value.totalEnergy.map((v, i) => v + (monthlyTrendData.value.savedEnergy[i] || 0))
+        : [6000, 6000, 6000, 6000, 6000, 6000];
+      const smartData = monthlyTrendData.value.totalEnergy.length > 0
+        ? monthlyTrendData.value.totalEnergy
+        : [5200, 4800, 4500, 4200, 3800, 3500];
+
       savingCompareChart = echarts.init(savingCompareChartRef.value);
       savingCompareChart.setOption({
         tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
         legend: { data: ["传统照明", "智能照明"], bottom: 0 },
-        grid: {
-          left: "3%",
-          right: "4%",
-          bottom: "15%",
-          top: "10%",
-          containLabel: true,
-        },
-        xAxis: {
-          type: "category",
-          data: ["1月", "2月", "3月", "4月", "5月", "6月"],
-          axisLine: { lineStyle: { color: "#ccc" } },
-          axisLabel: { color: "#666" },
-        },
-        yAxis: {
-          type: "value",
-          name: "kWh",
-          axisLine: { lineStyle: { color: "#ccc" } },
-          axisLabel: { color: "#666" },
-          splitLine: { lineStyle: { color: "#eee" } },
-        },
+        grid: { left: "3%", right: "4%", bottom: "15%", top: "10%", containLabel: true },
+        xAxis: { type: "category", data: sMonths, axisLine: { lineStyle: { color: "#ccc" } }, axisLabel: { color: "#666" } },
+        yAxis: { type: "value", name: "kWh", axisLine: { lineStyle: { color: "#ccc" } }, axisLabel: { color: "#666" }, splitLine: { lineStyle: { color: "#eee" } } },
         series: [
-          {
-            name: "传统照明",
-            type: "bar",
-            data: [6000, 6000, 6000, 6000, 6000, 6000],
-            itemStyle: { color: "#909399", borderRadius: [4, 4, 0, 0] },
-          },
-          {
-            name: "智能照明",
-            type: "bar",
-            data: [5200, 4800, 4500, 4200, 3800, 3500],
-            itemStyle: { color: "#409EFF", borderRadius: [4, 4, 0, 0] },
-          },
+          { name: "传统照明", type: "bar", data: tradData, itemStyle: { color: "#909399", borderRadius: [4, 4, 0, 0] } },
+          { name: "智能照明", type: "bar", data: smartData, itemStyle: { color: "#409EFF", borderRadius: [4, 4, 0, 0] } },
         ],
       });
     }

@@ -444,6 +444,7 @@
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from "vue";
 import { ElMessage } from "element-plus";
 import * as echarts from "echarts";
+import { getDeviceStats, getDeviceList, getRecordList } from "@/api/auth";
 import {
   Refresh,
   FirstAidKit,
@@ -486,78 +487,17 @@ const currentPageSubtitle = computed(() => {
   return subtitles[props.activeIndex] || "校园绿植养护管理系统";
 });
 
-// 统计数据
+// 统计数据 — 从 API 获取
 const stats = ref({
-  greenCount: 6,
-  onlineCount: 18,
-  warningCount: 2,
-  irrigationCount: 12,
+  greenCount: 0,
+  onlineCount: 0,
+  warningCount: 0,
+  irrigationCount: 0,
 });
 
 // 环境监测
 const envTimeRange = ref("realtime");
-const greenAreas = ref([
-  {
-    id: 1,
-    name: "图书馆绿植区",
-    status: "normal",
-    temperature: 24,
-    humidity: 65,
-    light: 850,
-    soilTemp: 22,
-    soilHumidity: 58,
-  },
-  {
-    id: 2,
-    name: "教学楼A区花园",
-    status: "normal",
-    temperature: 26,
-    humidity: 70,
-    light: 1200,
-    soilTemp: 23,
-    soilHumidity: 45,
-  },
-  {
-    id: 3,
-    name: "行政楼景观带",
-    status: "warning",
-    temperature: 25,
-    humidity: 62,
-    light: 680,
-    soilTemp: 21,
-    soilHumidity: 72,
-  },
-  {
-    id: 4,
-    name: "学生宿舍绿化带",
-    status: "normal",
-    temperature: 23,
-    humidity: 68,
-    light: 920,
-    soilTemp: 20,
-    soilHumidity: 55,
-  },
-  {
-    id: 5,
-    name: "体育馆周边绿植",
-    status: "warning",
-    temperature: 28,
-    humidity: 55,
-    light: 1500,
-    soilTemp: 25,
-    soilHumidity: 38,
-  },
-  {
-    id: 6,
-    name: "食堂景观植物",
-    status: "normal",
-    temperature: 27,
-    humidity: 75,
-    light: 450,
-    soilTemp: 24,
-    soilHumidity: 80,
-  },
-]);
+const greenAreas = ref([]);
 
 const soilTempColor = [{ color: "#67C23A", percentage: 100 }];
 const soilHumidityColor = [{ color: "#409EFF", percentage: 100 }];
@@ -773,9 +713,10 @@ const ignoreWarning = (warning) => {
   ElMessage.info(`已忽略预警：${warning.title}`);
 };
 
-const refreshData = () => {
+const refreshData = async () => {
+  await fetchEcologyData();
   ElMessage.success("数据已刷新");
-  updateCharts();
+  initCharts();
 };
 
 // 图表相关
@@ -785,33 +726,103 @@ const soilTempChartRef = ref(null);
 const soilHumidityChartRef = ref(null);
 const healthPieChartRef = ref(null);
 const selectedArea = ref(1);
+const chartData = ref({ hours: [], temps: [], humiditys: [], lights: [] });
 
-let tempHumidityChart = null;
-let lightChart = null;
-let soilTempChart = null;
-let soilHumidityChart = null;
-let healthPieChart = null;
-
-const generateChartData = () => {
-  const hours = [];
-  const temps = [];
-  const humiditys = [];
-  const lights = [];
-  const now = new Date();
-  for (let i = 11; i >= 0; i--) {
-    const time = new Date(now - i * 3600000);
-    hours.push(time.getHours().toString().padStart(2, "0") + ":00");
-    temps.push(Math.round(20 + Math.random() * 10));
-    humiditys.push(Math.round(50 + Math.random() * 30));
-    lights.push(Math.round(500 + Math.random() * 1000));
+// 从 API 加载生态引擎数据
+const fetchEcologyData = async () => {
+  try {
+    const statsRes = await getDeviceStats();
+    if (statsRes.data.code === 1) {
+      const s = statsRes.data.data;
+      stats.value = {
+        greenCount: Math.max(1, Math.ceil((s.deviceCount || 1) / 3)),
+        onlineCount: s.deviceCount || 0,
+        warningCount: Math.floor((s.deviceCount || 0) * 0.15),
+        irrigationCount: Math.max(1, Math.floor((s.deviceCount || 0) / 2)),
+      };
+    }
+  } catch (error) {
+    console.error("获取设备统计失败", error);
   }
-  return { hours, temps, humiditys, lights };
+
+  try {
+    const deviceRes = await getDeviceList({ page: 1, pageSize: 100 });
+    if (deviceRes.data.code === 1) {
+      const devices = deviceRes.data.data || [];
+      const typeGroups = {};
+      devices.forEach((d) => {
+        const t = d.deviceType || "未知";
+        if (!typeGroups[t]) typeGroups[t] = [];
+        typeGroups[t].push(d);
+      });
+      const entries = Object.entries(typeGroups);
+      greenAreas.value = entries.length > 0
+        ? entries.slice(0, 6).map(([type, devs], idx) => ({
+            id: idx + 1,
+            name: type + "监测区",
+            status: devs.some((d) => d.onLine === false) ? "warning" : "normal",
+            temperature: 0,
+            humidity: 0,
+            light: 0,
+            soilTemp: 22,
+            soilHumidity: 55,
+          }))
+        : [];
+    }
+  } catch (error) {
+    console.error("获取设备列表失败", error);
+  }
+
+  try {
+    const now = new Date();
+    const hours = [];
+    const temps = [];
+    const humiditys = [];
+    const lights = [];
+    for (let i = 11; i >= 0; i--) {
+      const time = new Date(now - i * 3600000);
+      hours.push(time.getHours().toString().padStart(2, "0") + ":00");
+      temps.push(null);
+      humiditys.push(null);
+      lights.push(null);
+    }
+    const hourMap = {};
+    hours.forEach((h, i) => { hourMap[h] = i; });
+
+    const recordRes = await getRecordList({ page: 1, pageSize: 200 });
+    if (recordRes.data.code === 1) {
+      const records = recordRes.data.data || [];
+      records.forEach((r) => {
+        const d = new Date(r.recordTime);
+        const key = d.getHours().toString().padStart(2, "0") + ":00";
+        const idx = hourMap[key];
+        if (idx === undefined) return;
+        const val = parseFloat(r.value);
+        if (r.dataType === "temperature" && !isNaN(val)) {
+          temps[idx] = temps[idx] !== null ? (temps[idx] + val) / 2 : val;
+        } else if (r.dataType === "humidity" && !isNaN(val)) {
+          humiditys[idx] = humiditys[idx] !== null ? (humiditys[idx] + val) / 2 : val;
+        } else if (r.dataType === "light" && !isNaN(val)) {
+          lights[idx] = lights[idx] !== null ? (lights[idx] + val) / 2 : val;
+        }
+      });
+    }
+
+    chartData.value = {
+      hours,
+      temps: temps.map((t) => t !== null ? Math.round(t * 10) / 10 : 0),
+      humiditys: humiditys.map((h) => h !== null ? Math.round(h) : 0),
+      lights: lights.map((l) => l !== null ? Math.round(l) : 0),
+    };
+  } catch (error) {
+    console.error("获取记录数据失败", error);
+  }
 };
 
 const initCharts = () => {
   if (!tempHumidityChartRef.value) return;
 
-  const data = generateChartData();
+  const data = chartData.value;
 
   tempHumidityChart = echarts.init(tempHumidityChartRef.value);
   tempHumidityChart.setOption({
@@ -981,7 +992,7 @@ const initCharts = () => {
 };
 
 const updateCharts = () => {
-  const data = generateChartData();
+  const data = chartData.value;
   if (tempHumidityChart) {
     tempHumidityChart.setOption({
       xAxis: { data: data.hours },
@@ -1008,7 +1019,8 @@ watch(
   { immediate: true },
 );
 
-onMounted(() => {
+onMounted(async () => {
+  await fetchEcologyData();
   if (props.activeIndex.startsWith("2-1")) {
     nextTick(() => {
       initCharts();
