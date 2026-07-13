@@ -223,6 +223,9 @@ const handleLogin = async () => {
     if (response.data.code === 1) {
       localStorage.setItem("token", response.data.data.token);
       localStorage.setItem("username", response.data.data.name);
+      localStorage.setItem("name", response.data.data.name);
+      localStorage.setItem("roleId", response.data.data.roleId);
+      localStorage.setItem("userId", response.data.data.userId);
 
       ElMessage.success("登录成功");
       router.push("/home");

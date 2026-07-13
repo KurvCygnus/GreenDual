@@ -2,6 +2,7 @@ package com.wenhua.tcpservice.controller;
 
 import com.wenhua.tcpservice.config.GlobalConfiguration;
 import com.wenhua.tcpservice.mapper.UserMapper;
+import com.wenhua.tcpservice.pojo.PermissionLevel;
 import com.wenhua.tcpservice.pojo.QueryParameter;
 import com.wenhua.tcpservice.pojo.Result;
 import com.wenhua.tcpservice.pojo.User;
@@ -117,8 +118,8 @@ public final class UserController
         {
             final Map<String, Object> stats = new HashMap<>();
             stats.put("total", userMapper.countAll());
-            stats.put("admin", userMapper.countByPermission(2));
-            stats.put("normal", userMapper.countByPermission(1));
+            stats.put("admin", userMapper.countByPermission(PermissionLevel.ADMIN.getLevel()));
+            stats.put("normal", userMapper.countByPermission(PermissionLevel.OBSERVER.getLevel()));
             return Result.success(stats);
         }
         catch(Exception e)

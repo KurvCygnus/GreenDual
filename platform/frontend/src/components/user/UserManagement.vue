@@ -18,8 +18,9 @@
             clearable
             style="width: 150px"
           >
-            <el-option label="普通用户" :value="1" />
-            <el-option label="管理员" :value="2" />
+            <el-option label="观察员" :value="1" />
+            <el-option label="运维工程师" :value="2" />
+            <el-option label="系统管理员" :value="3" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -36,7 +37,7 @@
 
     <!-- 用户统计 -->
     <el-row :gutter="20" class="stats-row">
-      <el-col :span="8">
+      <el-col :span="6">
         <el-card class="stat-card" shadow="hover">
           <div class="stat-content">
             <el-icon size="36" color="#409eff"><User /></el-icon>
@@ -47,24 +48,35 @@
           </div>
         </el-card>
       </el-col>
-      <el-col :span="8">
+      <el-col :span="6">
         <el-card class="stat-card" shadow="hover">
           <div class="stat-content">
             <el-icon size="36" color="#67c23a"><UserFilled /></el-icon>
             <div class="stat-info">
-              <div class="stat-value">{{ adminCount }}</div>
-              <div class="stat-label">管理员</div>
+              <div class="stat-value">{{ observerCount }}</div>
+              <div class="stat-label">观察员</div>
             </div>
           </div>
         </el-card>
       </el-col>
-      <el-col :span="8">
+      <el-col :span="6">
         <el-card class="stat-card" shadow="hover">
           <div class="stat-content">
             <el-icon size="36" color="#e6a23c"><User /></el-icon>
             <div class="stat-info">
-              <div class="stat-value">{{ normalCount }}</div>
-              <div class="stat-label">普通用户</div>
+              <div class="stat-value">{{ operatorCount }}</div>
+              <div class="stat-label">运维工程师</div>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :span="6">
+        <el-card class="stat-card" shadow="hover">
+          <div class="stat-content">
+            <el-icon size="36" color="#f56c6c"><UserFilled /></el-icon>
+            <div class="stat-info">
+              <div class="stat-value">{{ adminLevelCount }}</div>
+              <div class="stat-label">系统管理员</div>
             </div>
           </div>
         </el-card>
@@ -98,9 +110,9 @@
         <el-table-column prop="userPermission" label="权限" width="120">
           <template #default="scope">
             <el-tag
-              :type="scope.row.userPermission === 2 ? 'danger' : 'primary'"
+              :type="permissionTagType(scope.row.userPermission)"
             >
-              {{ scope.row.userPermission === 2 ? "管理员" : "普通用户" }}
+              {{ permissionName(scope.row.userPermission) }}
             </el-tag>
           </template>
         </el-table-column>
@@ -185,8 +197,9 @@
         </el-form-item>
         <el-form-item label="权限" prop="userPermission">
           <el-select v-model="userForm.userPermission" style="width: 100%">
-            <el-option label="普通用户" :value="1" />
-            <el-option label="管理员" :value="2" />
+            <el-option label="观察员" :value="1" />
+            <el-option label="运维工程师" :value="2" />
+            <el-option label="系统管理员" :value="3" />
           </el-select>
         </el-form-item>
       </el-form>
@@ -276,12 +289,27 @@ const userList = ref([]);
 
 // 统计数据
 const totalUsers = computed(() => userList.value.length);
-const adminCount = computed(
-  () => userList.value.filter((u) => u.userPermission === 2).length,
-);
-const normalCount = computed(
+const observerCount = computed(
   () => userList.value.filter((u) => u.userPermission === 1).length,
 );
+const operatorCount = computed(
+  () => userList.value.filter((u) => u.userPermission === 2).length,
+);
+const adminLevelCount = computed(
+  () => userList.value.filter((u) => u.userPermission === 3).length,
+);
+
+// 权限名称映射
+const permissionName = (level) => {
+  const map = { 1: "观察员", 2: "运维工程师", 3: "系统管理员" };
+  return map[level] || "未知";
+};
+
+// 权限标签类型映射
+const permissionTagType = (level) => {
+  const map = { 1: "info", 2: "warning", 3: "danger" };
+  return map[level] || "info";
+};
 
 // 用户表单
 const userForm = reactive({

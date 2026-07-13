@@ -58,4 +58,37 @@ public interface MonitorRecordMapper {
 
     @Select("SELECT * FROM monitor_record WHERE id = #{id}")
     MonitorRecord selectById(@Param("id") Integer id);
+
+    @Select("<script>" +
+            "SELECT * FROM monitor_record WHERE status IN ('warning', 'abnormal') " +
+            "<if test='deviceId != null and deviceId != \"\"'>" +
+            "AND device_id = #{deviceId} " +
+            "</if>" +
+            "<if test='dataType != null and dataType != \"\"'>" +
+            "AND data_type = #{dataType} " +
+            "</if>" +
+            "<if test='status != null and status != \"\"'>" +
+            "AND status = #{status} " +
+            "</if>" +
+            "ORDER BY record_time DESC " +
+            "LIMIT #{offset}, #{pageSize}" +
+            "</script>")
+    List<MonitorRecord> selectWarningRecords(Map<String, Object> params);
+
+    @Select("<script>" +
+            "SELECT COUNT(*) FROM monitor_record WHERE status IN ('warning', 'abnormal') " +
+            "<if test='deviceId != null and deviceId != \"\"'>" +
+            "AND device_id = #{deviceId} " +
+            "</if>" +
+            "<if test='dataType != null and dataType != \"\"'>" +
+            "AND data_type = #{dataType} " +
+            "</if>" +
+            "<if test='status != null and status != \"\"'>" +
+            "AND status = #{status} " +
+            "</if>" +
+            "</script>")
+    int countWarningRecords(Map<String, Object> params);
+
+    @Update("UPDATE monitor_record SET status = #{status}, remark = #{remark} WHERE id = #{id}")
+    void updateStatus(@Param("id") Integer id, @Param("status") String status, @Param("remark") String remark);
 }

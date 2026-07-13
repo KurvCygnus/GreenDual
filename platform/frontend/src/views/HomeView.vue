@@ -144,10 +144,10 @@
         </el-menu>
 
         <div class="user-info" v-if="!isCollapse">
-          <el-avatar :size="48" :icon="UserFilled" class="user-avatar" />
-          <div class="user-detail">
+          <el-avatar :size="48" :icon="UserFilled" class="user-avatar clickable" @click="openProfile" />
+          <div class="user-detail clickable" @click="openProfile">
             <span class="username">{{ username }}</span>
-            <el-tag size="small" type="info" effect="light" class="role-tag">{{
+            <el-tag size="small" :type="roleTagType" effect="light" class="role-tag">{{
               roleText
             }}</el-tag>
           </div>
@@ -406,6 +406,9 @@
         >
       </template>
     </el-dialog>
+
+    <!-- 个人中心 -->
+    <UserProfile v-model="showProfile" />
   </div>
 </template>
 
@@ -440,6 +443,8 @@ import UserManagement from "../components/user/UserManagement.vue";
 import CampusEnergy from "../components/campus/CampusEnergy.vue";
 import TeachingLinkage from "../components/teaching/TeachingLinkage.vue";
 import EcologyEngine from "../components/ecology/EcologyEngine.vue";
+import DashboardView from "../components/dashboard/DashboardView.vue";
+import UserProfile from "../components/user/UserProfile.vue";
 import {
   getDeviceStats,
   getDeviceList,
@@ -455,10 +460,11 @@ const router = useRouter();
 const activeIndex = ref("0");
 const searchKeyword = ref("");
 const viewMode = ref("card");
-const username = ref(localStorage.getItem("name") || "管理员");
+const username = ref(localStorage.getItem("username") || "管理员");
 const roleId = ref(parseInt(localStorage.getItem("roleId")) || 1);
 const isCollapse = ref(false);
 const isMobile = ref(false);
+const showProfile = ref(false);
 
 // 检测移动端
 const checkMobile = () => {
@@ -470,7 +476,13 @@ const checkMobile = () => {
 
 // 计算属性
 const roleText = computed(() => {
-  return roleId.value === 1 ? "管理员" : "操作员";
+  const map = { 1: "观察员", 2: "运维工程师", 3: "系统管理员" };
+  return map[roleId.value] || "未知";
+});
+
+const roleTagType = computed(() => {
+  const map = { 1: "info", 2: "warning", 3: "danger" };
+  return map[roleId.value] || "info";
 });
 
 const currentTitle = computed(() => {
@@ -500,7 +512,7 @@ const currentTitle = computed(() => {
 
 const currentComponent = computed(() => {
   const components = {
-    0: CampusEnergy,
+    0: DashboardView,
     1: LampManager,
     "1-1": LampManager,
     "1-2": LampManager,
@@ -604,6 +616,10 @@ const handleSelect = (index) => {
 
 const toggleCollapse = () => {
   isCollapse.value = !isCollapse.value;
+};
+
+const openProfile = () => {
+  showProfile.value = true;
 };
 
 const logout = () => {
@@ -939,6 +955,10 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.clickable {
+  cursor: pointer;
 }
 
 .logout-btn:hover {

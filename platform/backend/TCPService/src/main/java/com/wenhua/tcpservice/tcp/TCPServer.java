@@ -2,8 +2,11 @@ package com.wenhua.tcpservice.tcp;
 
 import com.wenhua.tcpservice.config.GlobalConfiguration;
 import com.wenhua.tcpservice.mapper.EnvMapper;
+import com.wenhua.tcpservice.mapper.MonitorRecordMapper;
+import com.wenhua.tcpservice.pojo.MonitorRecord;
 import com.wenhua.tcpservice.pojo.dev.Device;
 import com.wenhua.tcpservice.utils.StringFormatter;
+import com.wenhua.tcpservice.websocket.WebSocketSessionManager;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.PreDestroy;
 import lombok.NonNull;
@@ -19,6 +22,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy;
@@ -28,6 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public final class TCPServer implements CommandLineRunner
 {
     private final EnvMapper envMapper;
+    private final MonitorRecordMapper monitorRecordMapper;
 
     private static final Map<String, Socket> DEVICE_SOCKETS = new ConcurrentHashMap<>();
     private static final Map<String, PrintWriter> DEVICE_WRITERS = new ConcurrentHashMap<>();
@@ -60,6 +65,7 @@ public final class TCPServer implements CommandLineRunner
      */
     public TCPServer(
         @NonNull EnvMapper envMapper,
+        @NonNull MonitorRecordMapper monitorRecordMapper,
         @Value("${tcp.thread.pool.core-size}") int coreSize,
         @Value("${tcp.thread.pool.max-size}") int maxSize,
         @Value("${tcp.thread.pool.keep-alive}") int keepAlive,
@@ -67,6 +73,7 @@ public final class TCPServer implements CommandLineRunner
     )
     {
         this.envMapper = envMapper;
+        this.monitorRecordMapper = monitorRecordMapper;
         this.executorService = new ThreadPoolExecutor(
             coreSize,
             maxSize,
@@ -289,7 +296,39 @@ public final class TCPServer implements CommandLineRunner
             envMapper.insertDevice(device);
         else
             envMapper.updateDevice(device);
-        
+
+        // 写入监测记录
+        final var now = LocalDateTime.now();
+        final var deviceName = device.getName() != null ? device.getName() : deviceId;
+        if(json.has("temperature"))
+            monitorRecordMapper.insertRecord(new MonitorRecord(
+                null, deviceId, deviceName, now, "temperature",
+                json.optDouble("temperature", 25.), "normal", null, null
+            ));
+        if(json.has("humidity"))
+            monitorRecordMapper.insertRecord(new MonitorRecord(
+                null, deviceId, deviceName, now, "humidity",
+                (double) json.optInt("humidity", 60), "normal", null, null
+            ));
+        if(json.has("lightIntensity"))
+            monitorRecordMapper.insertRecord(new MonitorRecord(
+                null, deviceId, deviceName, now, "lightIntensity",
+                (double) json.optInt("lightIntensity", 10000), "normal", null, null
+            ));
+
+        // 通过 WebSocket 广播实时数据
+        final var broadcastJson = new JSONObject();
+        broadcastJson.put("type", "deviceReport");
+        broadcastJson.put("deviceId", deviceId);
+        broadcastJson.put("deviceName", deviceName);
+        broadcastJson.put("timestamp", now.toString());
+        if(json.has("temperature")) broadcastJson.put("temperature", json.optDouble("temperature", 25.));
+        if(json.has("humidity")) broadcastJson.put("humidity", json.optInt("humidity", 60));
+        if(json.has("lightIntensity")) broadcastJson.put("lightIntensity", json.optInt("lightIntensity", 10000));
+        if(json.has("lampStatus")) broadcastJson.put("lampStatus", json.optInt("lampStatus", 0));
+        if(json.has("brightness")) broadcastJson.put("brightness", json.optInt("brightness", 80));
+        WebSocketSessionManager.broadcast(broadcastJson.toString());
+
         log.debug(
             "设备数据更新: {}, 温度: {}, 湿度: {}, 光照: {}, 路灯状态: {}, 亮度: {}",
             deviceId,

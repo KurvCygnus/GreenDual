@@ -5,6 +5,7 @@ import com.wenhua.tcpservice.mapper.MonitorRecordMapper;
 import com.wenhua.tcpservice.mapper.UserMapper;
 import com.wenhua.tcpservice.pojo.MonitorRecord;
 import com.wenhua.tcpservice.pojo.Result;
+import com.wenhua.tcpservice.service.AnalysisService;
 import com.wenhua.tcpservice.utils.JwtUtils;
 import com.wenhua.tcpservice.utils.StringFormatter;
 import io.swagger.v3.oas.annotations.Operation;
@@ -29,7 +30,8 @@ public final class MonitorRecordController
 {
     private MonitorRecordMapper monitorRecordMapper;
     private UserMapper userMapper;
-    
+    private AnalysisService analysisService;
+
     @Operation(summary = "获取监测记录列表")
     @PostMapping("/list")
     public Result getRecordList(@RequestBody Map<String, Object> params, HttpServletRequest request)
@@ -168,6 +170,79 @@ public final class MonitorRecordController
         {
             log.error("添加记录失败: {}", e.getMessage());
             return Result.error(StringFormatter.format("添加记录失败: {}", e.getMessage()));
+        }
+    }
+
+    @Operation(summary = "告警记录列表")
+    @PostMapping("/warning/list")
+    public Result getWarningList(@RequestBody Map<String, Object> params, HttpServletRequest request)
+    {
+        try
+        {
+            final var page = params.get("page") != null ? (Integer) params.get("page") : 1;
+            final var pageSize = params.get("pageSize") != null ? (Integer) params.get("pageSize") : 10;
+            final var deviceId = (String) params.get("deviceId");
+            final var dataType = (String) params.get("dataType");
+            final var status = (String) params.get("status");
+
+            final Map<String, Object> queryParams = new HashMap<>();
+            queryParams.put("deviceId", deviceId);
+            queryParams.put("dataType", dataType);
+            queryParams.put("status", status);
+            queryParams.put("offset", (page - 1) * pageSize);
+            queryParams.put("pageSize", pageSize);
+
+            final var records = monitorRecordMapper.selectWarningRecords(queryParams);
+            final var total = monitorRecordMapper.countWarningRecords(queryParams);
+
+            return Result.success(records).totalPages(total);
+        }
+        catch(Exception e)
+        {
+            log.error("获取告警记录失败: {}", e.getMessage());
+            return Result.error("获取告警记录失败");
+        }
+    }
+
+    @Operation(summary = "处理告警")
+    @PostMapping("/warning/handle")
+    public Result handleWarning(@RequestBody Map<String, Object> params, HttpServletRequest request)
+    {
+        try
+        {
+            final var id = (Integer) params.get("id");
+            final var remark = (String) params.get("remark");
+
+            if(id == null)
+                return Result.error("参数错误: id 不能为空");
+
+            final var record = monitorRecordMapper.selectById(id);
+            if(record == null)
+                return Result.error("记录不存在");
+
+            monitorRecordMapper.updateStatus(id, "normal", remark != null ? remark : "已处理");
+            return Result.success("告警已处理");
+        }
+        catch(Exception e)
+        {
+            log.error("处理告警失败: {}", e.getMessage());
+            return Result.error("处理告警失败");
+        }
+    }
+
+    @Operation(summary = "自动标记异常记录")
+    @PostMapping("/warning/auto-flag")
+    public Result autoFlagWarnings(HttpServletRequest request)
+    {
+        try
+        {
+            final var count = analysisService.autoFlagAnomalies();
+            return Result.success(StringFormatter.format("自动标记了 {} 条异常记录", count));
+        }
+        catch(Exception e)
+        {
+            log.error("自动标记异常失败: {}", e.getMessage());
+            return Result.error("自动标记异常失败");
         }
     }
 }

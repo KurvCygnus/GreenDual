@@ -42,6 +42,20 @@
             <el-option label="光照" value="light" />
           </el-select>
         </el-form-item>
+        <el-form-item label="状态">
+          <el-select
+            v-model="filterForm.status"
+            placeholder="全部"
+            clearable
+            style="width: 130px"
+            @change="handleSearch"
+          >
+            <el-option label="全部" value="" />
+            <el-option label="正常" value="normal" />
+            <el-option label="预警" value="warning" />
+            <el-option label="异常" value="abnormal" />
+          </el-select>
+        </el-form-item>
         <el-form-item>
           <el-button type="primary" :icon="Search" @click="handleSearch"
             >查询</el-button
@@ -107,9 +121,14 @@
       <template #header>
         <div class="card-header">
           <span>监测记录列表</span>
-          <el-button type="primary" :icon="Plus" @click="showAddDialog"
-            >添加记录</el-button
-          >
+          <div style="display: flex; gap: 8px">
+            <el-button type="warning" :icon="Warning" @click="triggerAutoFlag" :loading="autoFlagLoading">
+              自动标记异常
+            </el-button>
+            <el-button type="primary" :icon="Plus" @click="showAddDialog"
+              >添加记录</el-button
+            >
+          </div>
         </div>
       </template>
       <el-table
@@ -118,6 +137,7 @@
         v-loading="loading"
         border
         stripe
+        :row-class-name="getRowClass"
       >
         <el-table-column type="index" label="序号" width="60" />
         <el-table-column prop="deviceName" label="设备名称" width="150" />
@@ -150,13 +170,20 @@
           </template>
         </el-table-column>
         <el-table-column prop="remark" label="备注" />
-        <el-table-column label="操作" width="150" fixed="right">
+        <el-table-column label="操作" width="200" fixed="right">
           <template #default="scope">
             <el-button
               type="primary"
               size="small"
               @click="viewDetail(scope.row)"
               >详情</el-button
+            >
+            <el-button
+              v-if="scope.row.status === 'warning' || scope.row.status === 'abnormal'"
+              type="warning"
+              size="small"
+              @click="handleAlarm(scope.row)"
+              >处理</el-button
             >
             <el-button
               type="danger"
@@ -284,6 +311,33 @@
         >
       </template>
     </el-dialog>
+
+    <!-- 处理告警对话框 -->
+    <el-dialog v-model="handleDialogVisible" title="处理告警" width="450px">
+      <el-form :model="handleForm" label-width="80px">
+        <el-form-item label="设备">
+          <span>{{ handleForm.deviceName }}</span>
+        </el-form-item>
+        <el-form-item label="数据类型">
+          <span>{{ getDataTypeName(handleForm.dataType) }}</span>
+        </el-form-item>
+        <el-form-item label="数值">
+          <span>{{ handleForm.value }} {{ getUnit(handleForm.dataType) }}</span>
+        </el-form-item>
+        <el-form-item label="处理备注" prop="remark">
+          <el-input
+            v-model="handleForm.remark"
+            type="textarea"
+            :rows="4"
+            placeholder="请输入处理备注（可选）"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="handleDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="submitHandle" :loading="handleLoading">确认处理</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -306,6 +360,9 @@ import {
   getRecordStats,
   deleteRecord as deleteRecordApi,
   addRecord as addRecordApi,
+  getWarningList,
+  handleWarning as handleWarningApi,
+  autoFlagWarnings as autoFlagWarningsApi,
 } from "@/api/auth";
 
 const loading = ref(false);
@@ -314,6 +371,18 @@ const currentRecord = ref({});
 const addDialogVisible = ref(false);
 const addLoading = ref(false);
 const addFormRef = ref(null);
+const handleDialogVisible = ref(false);
+const handleLoading = ref(false);
+const autoFlagLoading = ref(false);
+
+// 处理告警表单
+const handleForm = reactive({
+  id: null,
+  deviceName: "",
+  dataType: "",
+  value: 0,
+  remark: "",
+});
 
 // 添加表单
 const addForm = reactive({
@@ -342,6 +411,7 @@ const filterForm = reactive({
   deviceId: "",
   dateRange: [],
   dataType: "",
+  status: "",
 });
 
 // 分页
@@ -383,7 +453,15 @@ const fetchRecords = async () => {
       dataType: filterForm.dataType,
       dateRange: filterForm.dateRange,
     };
-    const response = await getRecordList(params);
+
+    let response;
+    if (filterForm.status && filterForm.status !== "") {
+      params.status = filterForm.status;
+      response = await getWarningList(params);
+    } else {
+      response = await getRecordList(params);
+    }
+
     if (response.data.code === 1) {
       recordList.value = response.data.data || [];
       pagination.total = response.data.totalPages || 0;
@@ -461,6 +539,7 @@ const handleReset = () => {
   filterForm.deviceId = "";
   filterForm.dateRange = [];
   filterForm.dataType = "";
+  filterForm.status = "";
   pagination.currentPage = 1;
   fetchRecords();
 };
@@ -577,6 +656,66 @@ onMounted(() => {
   fetchRecords();
   fetchStats();
 });
+
+// 表格行样式
+const getRowClass = ({ row }) => {
+  if (row.status === "abnormal") return "row-abnormal";
+  if (row.status === "warning") return "row-warning";
+  return "";
+};
+
+// 告警处理
+const handleAlarm = (record) => {
+  handleForm.id = record.id;
+  handleForm.deviceName = record.deviceName;
+  handleForm.dataType = record.dataType;
+  handleForm.value = record.value;
+  handleForm.remark = "";
+  handleDialogVisible.value = true;
+};
+
+const submitHandle = async () => {
+  handleLoading.value = true;
+  try {
+    const response = await handleWarningApi({
+      id: handleForm.id,
+      remark: handleForm.remark || "已处理",
+    });
+    if (response.data.code === 1) {
+      ElMessage.success("告警已处理");
+      handleDialogVisible.value = false;
+      fetchRecords();
+      fetchStats();
+    } else {
+      ElMessage.error(response.data.msg || "处理失败");
+    }
+  } catch (error) {
+    ElMessage.error("处理告警失败");
+    console.error(error);
+  } finally {
+    handleLoading.value = false;
+  }
+};
+
+// 自动标记异常
+const triggerAutoFlag = async () => {
+  autoFlagLoading.value = true;
+  try {
+    const response = await autoFlagWarningsApi();
+    if (response.data.code === 1) {
+      ElMessage.success(response.data.data || "自动标记完成");
+      fetchRecords();
+      fetchStats();
+    } else {
+      ElMessage.error(response.data.msg || "自动标记失败");
+    }
+  } catch (error) {
+    ElMessage.error("自动标记异常失败");
+    console.error(error);
+  } finally {
+    autoFlagLoading.value = false;
+  }
+};
 </script>
 
 <style scoped>

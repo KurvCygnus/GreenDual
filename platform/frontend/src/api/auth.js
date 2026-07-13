@@ -119,6 +119,20 @@ export function addRecord(record) {
   return axios.post(api + "/user/record/add", record);
 }
 
+// ========== 告警管理API ==========
+
+export function getWarningList(params) {
+  return axios.post(api + "/user/record/warning/list", params);
+}
+
+export function handleWarning(params) {
+  return axios.post(api + "/user/record/warning/handle", params);
+}
+
+export function autoFlagWarnings() {
+  return axios.post(api + "/user/record/warning/auto-flag");
+}
+
 // ========== 用户管理API ==========
 
 export function getUserList(params) {

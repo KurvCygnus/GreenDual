@@ -1,8 +1,8 @@
--- ============================================================
--- 智慧环境监测系统 · 数据库架构初始化脚本
--- 数据库: light (对应 application.properties: jdbc:mysql://localhost:3306/light)
--- 字符集: utf8mb4 · 引擎: InnoDB
--- ============================================================
+-- *==============================================================================
+-- * 智慧环境监测系统 · 数据库架构初始化脚本
+-- * 数据库: light (对应 application.properties: jdbc:mysql://localhost:3306/light)
+-- * 字符集: utf8mb4 · 引擎: InnoDB
+-- *==============================================================================
 
 CREATE DATABASE IF NOT EXISTS light
     DEFAULT CHARACTER SET utf8mb4
@@ -10,9 +10,9 @@ CREATE DATABASE IF NOT EXISTS light
 
 USE light;
 
--- ============================================================
--- 1. 用户表
--- ============================================================
+-- *============================================================
+-- * 1. 用户表
+-- *============================================================
 CREATE TABLE IF NOT EXISTS user (
     userId          INT             PRIMARY KEY AUTO_INCREMENT  COMMENT '用户ID',
     username        VARCHAR(50)     NOT NULL UNIQUE             COMMENT '用户名',
@@ -22,9 +22,9 @@ CREATE TABLE IF NOT EXISTS user (
     last_login_time DATETIME                                    COMMENT '最后登录时间'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
 
--- ============================================================
--- 2. 设备表（TCP 设备 + 路灯共用）
--- ============================================================
+-- *============================================================
+-- * 2. 设备表（TCP 设备 + 路灯共用）
+-- *============================================================
 CREATE TABLE IF NOT EXISTS device (
     id                VARCHAR(50)   PRIMARY KEY             COMMENT '设备ID',
     name              VARCHAR(100)  NOT NULL                COMMENT '设备名称',
@@ -47,9 +47,9 @@ CREATE TABLE IF NOT EXISTS device (
     faultStatus       INT           DEFAULT 0               COMMENT '故障状态: 0-正常, 1-故障'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='设备表';
 
--- ============================================================
--- 3. 设备类型表
--- ============================================================
+-- *============================================================
+-- * 3. 设备类型表
+-- *============================================================
 CREATE TABLE IF NOT EXISTS device_type (
     id            INT           PRIMARY KEY AUTO_INCREMENT  COMMENT '类型ID',
     name          VARCHAR(100)                              COMMENT '类型名称',
@@ -63,9 +63,9 @@ CREATE TABLE IF NOT EXISTS device_type (
     updated_at    DATETIME                                  COMMENT '更新时间'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='设备类型表';
 
--- ============================================================
--- 4. 监测记录表
--- ============================================================
+-- *============================================================
+-- * 4. 监测记录表
+-- *============================================================
 CREATE TABLE IF NOT EXISTS monitor_record (
     id          INT           PRIMARY KEY AUTO_INCREMENT  COMMENT '记录ID',
     device_id   VARCHAR(50)                               COMMENT '设备ID',
@@ -78,9 +78,9 @@ CREATE TABLE IF NOT EXISTS monitor_record (
     created_at  DATETIME                                  COMMENT '创建时间'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='监测记录表';
 
--- ============================================================
--- 5. 维修日志表
--- ============================================================
+-- *============================================================
+-- * 5. 维修日志表
+-- *============================================================
 CREATE TABLE IF NOT EXISTS MaintenanceLog (
     id        INT           PRIMARY KEY AUTO_INCREMENT  COMMENT '日志ID',
     time      DATETIME                                  COMMENT '记录时间',
@@ -89,9 +89,9 @@ CREATE TABLE IF NOT EXISTS MaintenanceLog (
     userId    INT                                       COMMENT '操作用户ID'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='维修日志表';
 
--- ============================================================
--- 6. AI 员工表
--- ============================================================
+-- *============================================================
+-- * 6. AI 员工表
+-- *============================================================
 CREATE TABLE IF NOT EXISTS ai_employee (
     ai_id            BIGINT        PRIMARY KEY AUTO_INCREMENT  COMMENT 'AI员工ID',
     name             VARCHAR(100)                              COMMENT '名称',
@@ -103,9 +103,9 @@ CREATE TABLE IF NOT EXISTS ai_employee (
     is_working       INT           DEFAULT 0                   COMMENT '是否工作中: 0-否, 1-是'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='AI员工表';
 
--- ============================================================
--- 7. AI 行动记录表
--- ============================================================
+-- *============================================================
+-- * 7. AI 行动记录表
+-- *============================================================
 CREATE TABLE IF NOT EXISTS ai_action_log (
     action_id          BIGINT        PRIMARY KEY AUTO_INCREMENT  COMMENT '行动ID',
     ai_id              BIGINT                                   COMMENT 'AI员工ID',
@@ -113,9 +113,9 @@ CREATE TABLE IF NOT EXISTS ai_action_log (
     action_time        DATETIME                                 COMMENT '行动时间'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='AI行动记录表';
 
--- ============================================================
--- 8. 校园区域表
--- ============================================================
+-- *============================================================
+-- * 8. 校园区域表
+-- *============================================================
 CREATE TABLE IF NOT EXISTS campus_area (
     id                         INT           PRIMARY KEY AUTO_INCREMENT  COMMENT '区域ID',
     area_name                  VARCHAR(100)  NOT NULL                    COMMENT '区域名称',
@@ -134,9 +134,9 @@ CREATE TABLE IF NOT EXISTS campus_area (
     saving_rate                DECIMAL(5,2)  DEFAULT 0                   COMMENT '节能率(%)'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='校园区域表';
 
--- ============================================================
--- 9. 能耗账单表
--- ============================================================
+-- *============================================================
+-- * 9. 能耗账单表
+-- *============================================================
 CREATE TABLE IF NOT EXISTS energy_bill (
     id                        INT           PRIMARY KEY AUTO_INCREMENT  COMMENT '账单ID',
     area_id                   INT                                       COMMENT '区域ID',
@@ -159,24 +159,24 @@ CREATE TABLE IF NOT EXISTS energy_bill (
     INDEX idx_bill_month (bill_month)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='能耗账单表';
 
--- ============================================================
--- 10. 照明优化记录表
--- ============================================================
+-- *============================================================
+-- * 10. 照明优化记录表
+-- *============================================================
 CREATE TABLE IF NOT EXISTS optimization_record (
-    id                      INT           PRIMARY KEY AUTO_INCREMENT  COMMENT '记录ID',
-    area_id                 INT                                       COMMENT '区域ID',
-    total_devices           INT           DEFAULT 0                   COMMENT '总设备数',
-    adjusted_devices        INT           DEFAULT 0                   COMMENT '已调优设备数',
-    average_saving_rate     DECIMAL(5,2)  DEFAULT 0                   COMMENT '平均节能率(%)',
-    estimated_monthly_saving DECIMAL(10,2) DEFAULT 0                  COMMENT '预计月度节省(元)',
-    status                  INT           DEFAULT 1                   COMMENT '状态',
-    create_time             DATETIME      DEFAULT CURRENT_TIMESTAMP   COMMENT '创建时间',
+    id                       INT           PRIMARY KEY AUTO_INCREMENT  COMMENT '记录ID',
+    area_id                  INT                                       COMMENT '区域ID',
+    total_devices            INT           DEFAULT 0                   COMMENT '总设备数',
+    adjusted_devices         INT           DEFAULT 0                   COMMENT '已调优设备数',
+    average_saving_rate      DECIMAL(5,2)  DEFAULT 0                   COMMENT '平均节能率(%)',
+    estimated_monthly_saving DECIMAL(10,2) DEFAULT 0                   COMMENT '预计月度节省(元)',
+    status                   INT           DEFAULT 1                   COMMENT '状态',
+    create_time              DATETIME      DEFAULT CURRENT_TIMESTAMP   COMMENT '创建时间',
     INDEX idx_area_id (area_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='照明优化记录表';
 
--- ============================================================
--- 11. 教学案例表
--- ============================================================
+-- *============================================================
+-- * 11. 教学案例表
+-- *============================================================
 CREATE TABLE IF NOT EXISTS teaching_case (
     id                INT           PRIMARY KEY AUTO_INCREMENT  COMMENT '案例ID',
     case_name         VARCHAR(200)  NOT NULL                    COMMENT '案例名称',
@@ -192,7 +192,7 @@ CREATE TABLE IF NOT EXISTS teaching_case (
     status            INT           DEFAULT 1                   COMMENT '状态: 1-启用, 0-禁用',
     create_time       DATETIME      DEFAULT CURRENT_TIMESTAMP   COMMENT '创建时间',
     update_time       DATETIME      DEFAULT CURRENT_TIMESTAMP
-                                      ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+                                    ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     data_preview      TEXT                                      COMMENT '数据预览(JSON)',
     analysis_result   TEXT                                      COMMENT '分析结果',
     INDEX idx_case_type (case_type),
