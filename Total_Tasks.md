@@ -3,6 +3,8 @@
 > 基于 [设计文档](资料/智绿云控%20-%20AI%20协同的环境监测与智能节能管控平台.docx) 与前后端实际代码的差距分析 + 代码本身的健壮性/安全问题汇总。
 > 共 15 天任务, 按优先级排列。
 
+*目前进度: [点我](#第十一天前端性能问题)*
+
 ---
 
 ## 第一天：P0 安全漏洞 — 密钥与硬编码凭据
@@ -443,34 +445,45 @@ Day4的多数问题大概率已经失效. 在Day3, 该项目的数据库初始�
 
 ### 10.2 UserManagement 删除接口字段不一致
 
-- [ ] 是否完成
+- [x] 是否完成
 - **文件**: `platform/frontend/src/components/user/UserManagement.vue`
 - **问题**: API 调用 `deleteUserApi(user.userId)` 但删除按钮禁用条件为 `scope.row.userId === 1` — 实际后端可能接收 `id` 而非 `userId`
 - **影响**: 删除操作可能发送错误字段名导致 400/404
 - **修复**: 统一字段名为 `id` 或 `userId`, 与后端对齐
+- **实际核查**: 经代码验证, 整个删除链路字段名完全一致 — 前端发送 `{ userId }` → `User.java` 使用 `@JsonProperty("userId")` 反序列化 → `UserMapper.java` 执行 `WHERE userId=#{userId}`, 不存在 mismatch，该问题已在 Day1-Day9 的修复中解决
 
 ### 10.3 AIPrediction 混用 Axios 和 Raw Fetch
 
-- [ ] 是否完成
+- [x] 是否完成
 - **文件**: `AIPrediction.vue`
 - **问题**: 部分请求使用 `axios` 实例(带 token), 部分使用原生 `fetch("http://localhost:18081/...")`(不带 token 且硬编码 URL)
 - **影响**: 某些请求无认证头被后端拦截, 硬编码 URL 导致部署环境切换失败
 - **修复**: 统一使用 Axios 实例, 移除所有原生 fetch 调用
+- **实际核查**: 经代码验证, `AIPrediction.vue` 当前零个 `fetch()` 调用、零个 `generateLocalAnalysis()`、零个硬编码 `localhost:18081` 地址, 全部 API 请求已通过 `auth.js` 的 axios 实例统一管理, 该问题已在 Day1-Day9 的修复中解决
 
 ### 10.4 无全局错误边界
 
-- [ ] 是否完成
+- [x] 是否完成
 - **问题**: 前端无任何 ErrorBoundary 或 `app.config.errorHandler` 配置
 - **影响**: 组件渲染异常导致白屏, 无降级 UI
 - **修复**: 添加全局错误处理 + 组件级错误边界
+- **实现**:
+  - `main.js`: 添加 `app.config.errorHandler` 捕获 Vue 渲染错误 + `window.addEventListener('error', ...)` 捕获运行时错误 + `window.addEventListener('unhandledrejection', ...)` 捕获未处理 Promise 异常
+  - `router/index.js`: 添加 `router.onError()` 捕获路由懒加载失败等错误
 
 ### 10.5 CampusEnergy.vue 冗余代码
 
-- [ ] 是否完成
-- **文件**: `platform/frontend/src/components/campus/CampusEnergy.vue` (2990 行)
-- **问题**: 超大组件, 存在重复的费用统计区域(~100 行冗余), 职责不单一
+- [x] 是否完成
+- **文件**: `platform/frontend/src/components/campus/CampusEnergy.vue`
+- **问题**: 超大组件(2990 行), 存在重复的费用统计区域(~100 行冗余), 职责不单一
 - **影响**: 维护困难, 容易引入 Bug
 - **修复**: 拆分为多个子组件, 删除冗余代码
+- **实现**:
+  - 提取 `BillOverview.vue` — 4 格统计卡片组件(总能耗/总费用/节约能耗/节约费用), 替换 3 处重复模板
+  - 提取 `BillHistoryTable.vue` — 账单历史表格组件, 替换 3 处重复表格模板
+  - 提取 `downloadCSV()` 共享工具函数, 重构 `exportEnergyReport`/`exportReport`
+  - 修复 `getTeachingCases()` 导入缺失 Bug
+  - 删除约 150 行重复模板 + 50 行废弃 CSS + 冗余 JS 代码
 
 ---
 

@@ -15,12 +15,12 @@
 
 项目默认连接 `localhost:3306/light` 数据库。
 
-```sql
+```mysql
 -- 创建数据库
 CREATE DATABASE IF NOT EXISTS `light` DEFAULT CHARACTER SET utf8mb4;
 
 -- 导入表结构
-source init_user.sql;
+-- source init_user.sql;
 ```
 
 连接参数可通过环境变量覆盖：

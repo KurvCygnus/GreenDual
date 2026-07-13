@@ -51,4 +51,13 @@ router.beforeEach((to, from, next) => {
   next();
 });
 
+// 全局后置守卫 — 路由加载错误处理
+router.onError((error) => {
+  console.error("[路由错误]", error);
+  ElMessage.error({
+    message: "页面加载失败，请刷新后重试",
+    duration: 5000,
+  });
+});
+
 export default router;

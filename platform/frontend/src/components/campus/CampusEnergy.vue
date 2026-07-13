@@ -312,110 +312,39 @@
             </el-alert>
           </div>
 
-          <div class="bill-overview">
-            <div class="bill-card">
-              <div class="bill-title">本月能耗概览</div>
-              <div class="bill-stats">
-                <div class="bill-stat-item">
-                  <div class="bill-stat-label">总能耗</div>
-                  <div class="bill-stat-value">
-                    {{ (currentBill.totalConsumption || 0).toFixed(1) }}
-                    <small>kWh</small>
-                  </div>
-                </div>
-                <div class="bill-stat-item">
-                  <div class="bill-stat-label">总费用</div>
-                  <div class="bill-stat-value">
-                    ¥{{ formatMoney(currentBill.totalCost || 0) }}
-                  </div>
-                </div>
-                <div class="bill-stat-item">
-                  <div class="bill-stat-label">节约能耗</div>
-                  <div class="bill-stat-value success">
-                    {{ (currentBill.savedConsumption || 0).toFixed(1) }}
-                    <small>kWh</small>
-                  </div>
-                </div>
-                <div class="bill-stat-item">
-                  <div class="bill-stat-label">节约费用</div>
-                  <div class="bill-stat-value success">
-                    ¥{{ formatMoney(currentBill.savedCost || 0) }}
-                  </div>
-                </div>
-              </div>
-            </div>
+          <BillOverview
+            :total-consumption="currentBill.totalConsumption || 0"
+            :total-cost="currentBill.totalCost || 0"
+            :saved-consumption="currentBill.savedConsumption || 0"
+            :saved-cost="currentBill.savedCost || 0"
+          />
 
-            <div class="bill-card">
-              <div class="bill-title">浪费分析与优化建议</div>
-              <div class="bill-analysis">
-                <div class="analysis-item">
-                  <el-icon color="#E6A23C"><Warning /></el-icon>
-                  <span>{{
-                    currentBill.wasteAnalysis ||
-                    "整体能源利用效率良好，未发现明显浪费现象。"
-                  }}</span>
-                </div>
-                <el-divider />
-                <div class="analysis-item">
-                  <el-icon color="#67C23A"><CircleCheck /></el-icon>
-                  <span>{{
-                    currentBill.optimizationSuggestions ||
-                    "建议继续优化照明策略，进一步提升节能效果。"
-                  }}</span>
-                </div>
+          <div class="bill-card analysis-card">
+            <div class="bill-title">浪费分析与优化建议</div>
+            <div class="bill-analysis">
+              <div class="analysis-item">
+                <el-icon color="#E6A23C"><Warning /></el-icon>
+                <span>{{
+                  currentBill.wasteAnalysis ||
+                  "整体能源利用效率良好，未发现明显浪费现象。"
+                }}</span>
+              </div>
+              <el-divider />
+              <div class="analysis-item">
+                <el-icon color="#67C23A"><CircleCheck /></el-icon>
+                <span>{{
+                  currentBill.optimizationSuggestions ||
+                  "建议继续优化照明策略，进一步提升节能效果。"
+                }}</span>
               </div>
             </div>
           </div>
 
-          <el-table :data="billHistory" style="width: 100%; margin-top: 20px">
-            <el-table-column prop="billMonth" label="账单月份" width="120" />
-            <el-table-column
-              prop="totalConsumption"
-              label="总能耗(kWh)"
-              width="120"
-            >
-              <template #default="scope">
-                {{ (scope.row.totalConsumption || 0).toFixed(1) }}
-              </template>
-            </el-table-column>
-            <el-table-column prop="totalCost" label="总费用(元)" width="120">
-              <template #default="scope">
-                ¥{{ formatMoney(scope.row.totalCost || 0) }}
-              </template>
-            </el-table-column>
-            <el-table-column
-              prop="savedConsumption"
-              label="节约能耗(kWh)"
-              width="130"
-            >
-              <template #default="scope">
-                <span style="color: #67c23a">{{
-                  (scope.row.savedConsumption || 0).toFixed(1)
-                }}</span>
-              </template>
-            </el-table-column>
-            <el-table-column prop="savedCost" label="节约费用(元)" width="120">
-              <template #default="scope">
-                <span style="color: #67c23a"
-                  >¥{{ formatMoney(scope.row.savedCost || 0) }}</span
-                >
-              </template>
-            </el-table-column>
-            <el-table-column prop="savingRate" label="节能率(%)" width="100">
-              <template #default="scope">
-                <el-tag :type="getSavingTagType(scope.row.savingRate)">
-                  {{ (scope.row.savingRate || 0).toFixed(1) }}%
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column label="操作" width="100">
-              <template #default="scope">
-                <el-button size="small" @click="viewBillDetail(scope.row)"
-                  >详情</el-button
-                >
-              </template>
-            </el-table-column>
-          </el-table>
+          <BillHistoryTable
+            :bill-history="billHistory"
+            :show-saving-rate="true"
+            @detail="viewBillDetail"
+          />
         </div>
 
         <div class="section-card">
@@ -557,110 +486,39 @@
             </el-alert>
           </div>
 
-          <div class="bill-overview">
-            <div class="bill-card">
-              <div class="bill-title">本月账单概览</div>
-              <div class="bill-stats">
-                <div class="bill-stat-item">
-                  <div class="bill-stat-label">总能耗</div>
-                  <div class="bill-stat-value">
-                    {{ (currentBill.totalConsumption || 0).toFixed(1) }}
-                    <small>kWh</small>
-                  </div>
-                </div>
-                <div class="bill-stat-item">
-                  <div class="bill-stat-label">总费用</div>
-                  <div class="bill-stat-value">
-                    ¥{{ formatMoney(currentBill.totalCost || 0) }}
-                  </div>
-                </div>
-                <div class="bill-stat-item">
-                  <div class="bill-stat-label">节约能耗</div>
-                  <div class="bill-stat-value success">
-                    {{ (currentBill.savedConsumption || 0).toFixed(1) }}
-                    <small>kWh</small>
-                  </div>
-                </div>
-                <div class="bill-stat-item">
-                  <div class="bill-stat-label">节约费用</div>
-                  <div class="bill-stat-value success">
-                    ¥{{ formatMoney(currentBill.savedCost || 0) }}
-                  </div>
-                </div>
-              </div>
-            </div>
+          <BillOverview
+            :total-consumption="currentBill.totalConsumption || 0"
+            :total-cost="currentBill.totalCost || 0"
+            :saved-consumption="currentBill.savedConsumption || 0"
+            :saved-cost="currentBill.savedCost || 0"
+          />
 
-            <div class="bill-card">
-              <div class="bill-title">浪费分析与优化建议</div>
-              <div class="bill-analysis">
-                <div class="analysis-item">
-                  <el-icon color="#E6A23C"><Warning /></el-icon>
-                  <span>{{
-                    currentBill.wasteAnalysis ||
-                    "整体能源利用效率良好，未发现明显浪费现象。"
-                  }}</span>
-                </div>
-                <el-divider />
-                <div class="analysis-item">
-                  <el-icon color="#67C23A"><CircleCheck /></el-icon>
-                  <span>{{
-                    currentBill.optimizationSuggestions ||
-                    "建议继续优化照明策略，进一步提升节能效果。"
-                  }}</span>
-                </div>
+          <div class="bill-card analysis-card">
+            <div class="bill-title">浪费分析与优化建议</div>
+            <div class="bill-analysis">
+              <div class="analysis-item">
+                <el-icon color="#E6A23C"><Warning /></el-icon>
+                <span>{{
+                  currentBill.wasteAnalysis ||
+                  "整体能源利用效率良好，未发现明显浪费现象。"
+                }}</span>
+              </div>
+              <el-divider />
+              <div class="analysis-item">
+                <el-icon color="#67C23A"><CircleCheck /></el-icon>
+                <span>{{
+                  currentBill.optimizationSuggestions ||
+                  "建议继续优化照明策略，进一步提升节能效果。"
+                }}</span>
               </div>
             </div>
           </div>
 
-          <el-table :data="billHistory" style="width: 100%; margin-top: 20px">
-            <el-table-column prop="billMonth" label="账单月份" width="120" />
-            <el-table-column
-              prop="totalConsumption"
-              label="总能耗(kWh)"
-              width="120"
-            >
-              <template #default="scope">
-                {{ (scope.row.totalConsumption || 0).toFixed(1) }}
-              </template>
-            </el-table-column>
-            <el-table-column prop="totalCost" label="总费用(元)" width="120">
-              <template #default="scope">
-                ¥{{ formatMoney(scope.row.totalCost || 0) }}
-              </template>
-            </el-table-column>
-            <el-table-column
-              prop="savedConsumption"
-              label="节约能耗(kWh)"
-              width="130"
-            >
-              <template #default="scope">
-                <span style="color: #67c23a">{{
-                  (scope.row.savedConsumption || 0).toFixed(1)
-                }}</span>
-              </template>
-            </el-table-column>
-            <el-table-column prop="savedCost" label="节约费用(元)" width="120">
-              <template #default="scope">
-                <span style="color: #67c23a"
-                  >¥{{ formatMoney(scope.row.savedCost || 0) }}</span
-                >
-              </template>
-            </el-table-column>
-            <el-table-column prop="savingRate" label="节能率(%)" width="100">
-              <template #default="scope">
-                <el-tag :type="getSavingTagType(scope.row.savingRate)">
-                  {{ (scope.row.savingRate || 0).toFixed(1) }}%
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column label="操作" width="100">
-              <template #default="scope">
-                <el-button size="small" @click="viewBillDetail(scope.row)"
-                  >详情</el-button
-                >
-              </template>
-            </el-table-column>
-          </el-table>
+          <BillHistoryTable
+            :bill-history="billHistory"
+            :show-saving-rate="true"
+            @detail="viewBillDetail"
+          />
         </div>
       </div>
     </template>
@@ -877,51 +735,17 @@
             </el-alert>
           </div>
           <div class="cost-content">
-            <div class="bill-overview">
-              <div class="bill-card">
-                <div class="bill-title">本月能耗概览</div>
-                <div class="bill-stats">
-                  <div class="bill-stat-item">
-                    <div class="bill-stat-label">总能耗</div>
-                    <div class="bill-stat-value">
-                      {{ (currentBill.totalConsumption || 0).toFixed(1) }}
-                      <small>kWh</small>
-                    </div>
-                  </div>
-                  <div class="bill-stat-item">
-                    <div class="bill-stat-label">总费用</div>
-                    <div class="bill-stat-value">
-                      ¥{{ formatMoney(currentBill.totalCost || 0) }}
-                    </div>
-                  </div>
-                  <div class="bill-stat-item">
-                    <div class="bill-stat-label">节约能耗</div>
-                    <div class="bill-stat-value success">
-                      {{ (currentBill.savedConsumption || 0).toFixed(1) }}
-                      <small>kWh</small>
-                    </div>
-                  </div>
-                  <div class="bill-stat-item">
-                    <div class="bill-stat-label">节约费用</div>
-                    <div class="bill-stat-value success">
-                      ¥{{ formatMoney(currentBill.savedCost || 0) }}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <el-table :data="billHistory" style="width: 100%; margin-top: 20px">
-              <el-table-column prop="billMonth" label="账单月份" width="120" />
-              <el-table-column prop="totalConsumption" label="总能耗(kWh)" width="120" />
-              <el-table-column prop="totalCost" label="总费用(元)" width="120" />
-              <el-table-column prop="savedConsumption" label="节约能耗(kWh)" width="130" />
-              <el-table-column prop="savedCost" label="节约费用(元)" width="130" />
-              <el-table-column label="操作" width="100">
-                <template #default="{ row }">
-                  <el-button type="primary" size="small" text @click="viewBillDetail(row)">查看</el-button>
-                </template>
-              </el-table-column>
-            </el-table>
+            <BillOverview
+              :total-consumption="currentBill.totalConsumption || 0"
+              :total-cost="currentBill.totalCost || 0"
+              :saved-consumption="currentBill.savedConsumption || 0"
+              :saved-cost="currentBill.savedCost || 0"
+            />
+            <BillHistoryTable
+              :bill-history="billHistory"
+              :show-saving-rate="false"
+              @detail="viewBillDetail"
+            />
           </div>
         </div>
       </div>
@@ -1243,6 +1067,7 @@ import {
   getBillHistory,
   createBill,
   getTeachingStatistics,
+  getTeachingCases,
   optimizeLighting,
   applyLightingOptimization,
   getLampList,
@@ -1250,6 +1075,9 @@ import {
   getDeviceStats,
   getLampStats,
 } from "@/api/auth";
+
+import BillOverview from "./BillOverview.vue";
+import BillHistoryTable from "./BillHistoryTable.vue";
 
 const props = defineProps({
   activeIndex: {
@@ -1356,12 +1184,6 @@ const getBrightnessTagType = (brightness) => {
   if (brightness < 50) return "success";
   if (brightness < 80) return "warning";
   return "danger";
-};
-
-const getSavingTagType = (rate) => {
-  if (rate >= 30) return "success";
-  if (rate >= 15) return "warning";
-  return "info";
 };
 
 const getCaseTypeTag = (type) => {
@@ -1584,6 +1406,21 @@ const exportEnergyReport = () => {
   ElMessage.success("能耗分析报告导出成功");
 };
 
+// 共享 CSV 下载工具
+const downloadCSV = (data, filename) => {
+  const csvContent = Object.entries(data)
+    .map(([key, value]) => `${key},${value}`)
+    .join("\n");
+
+  const blob = new Blob(["﻿" + csvContent], {
+    type: "text/csv;charset=utf-8;",
+  });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
+};
+
 // 刷新报表数据
 const refreshReportData = async () => {
   loading.value = true;
@@ -1623,7 +1460,6 @@ const refreshReportData = async () => {
 
 // 导出报表
 const exportReport = () => {
-  // 生成报告数据
   const reportData = {
     统计日期: new Date().toLocaleString(),
     总设备数: reportStats.value.totalDevices,
@@ -1631,21 +1467,7 @@ const exportReport = () => {
     累计节省费用: "¥" + formatMoney(reportStats.value.totalSavedCost),
     故障设备数: reportStats.value.totalFaults,
   };
-
-  // 创建CSV内容
-  const csvContent = Object.entries(reportData)
-    .map(([key, value]) => `${key},${value}`)
-    .join("\n");
-
-  // 下载文件
-  const blob = new Blob(["\ufeff" + csvContent], {
-    type: "text/csv;charset=utf-8;",
-  });
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = `数据报表_${new Date().toISOString().split("T")[0]}.csv`;
-  link.click();
-
+  downloadCSV(reportData, `数据报表_${new Date().toISOString().split("T")[0]}.csv`);
   ElMessage.success("报表导出成功");
 };
 
@@ -2430,13 +2252,6 @@ onUnmounted(() => {
   color: #909399;
 }
 
-.bill-overview {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  margin-bottom: 20px;
-}
-
 .bill-card {
   border: 1px solid #ebeef5;
   border-radius: 8px;
@@ -2450,37 +2265,6 @@ onUnmounted(() => {
   margin-bottom: 16px;
   padding-bottom: 12px;
   border-bottom: 1px solid #ebeef5;
-}
-
-.bill-stats {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-.bill-stat-item {
-  text-align: center;
-}
-
-.bill-stat-label {
-  font-size: 13px;
-  color: #909399;
-  margin-bottom: 8px;
-}
-
-.bill-stat-value {
-  font-size: 24px;
-  font-weight: 600;
-  color: #303133;
-}
-
-.bill-stat-value.success {
-  color: #67c23a;
-}
-
-.bill-stat-value small {
-  font-size: 14px;
-  color: #909399;
 }
 
 .bill-analysis {
@@ -2636,10 +2420,6 @@ onUnmounted(() => {
 
   .lamp-grid {
     grid-template-columns: repeat(2, 1fr);
-  }
-
-  .bill-overview {
-    grid-template-columns: 1fr;
   }
 
   .analysis-charts .el-col {
