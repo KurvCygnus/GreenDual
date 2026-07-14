@@ -457,6 +457,12 @@ import {
   CircleCheck,
 } from "@element-plus/icons-vue";
 
+let tempHumidityChart = null;
+let lightChart = null;
+let soilTempChart = null;
+let soilHumidityChart = null;
+let healthPieChart = null;
+
 const props = defineProps({
   activeIndex: {
     type: String,
@@ -1019,6 +1025,14 @@ watch(
   { immediate: true },
 );
 
+const resizeHandler = () => {
+  tempHumidityChart?.resize();
+  lightChart?.resize();
+  soilTempChart?.resize();
+  soilHumidityChart?.resize();
+  healthPieChart?.resize();
+};
+
 onMounted(async () => {
   await fetchEcologyData();
   if (props.activeIndex.startsWith("2-1")) {
@@ -1026,13 +1040,7 @@ onMounted(async () => {
       initCharts();
     });
   }
-  window.addEventListener("resize", () => {
-    tempHumidityChart?.resize();
-    lightChart?.resize();
-    soilTempChart?.resize();
-    soilHumidityChart?.resize();
-    healthPieChart?.resize();
-  });
+  window.addEventListener("resize", resizeHandler);
 });
 
 onUnmounted(() => {
@@ -1041,7 +1049,7 @@ onUnmounted(() => {
   soilTempChart?.dispose();
   soilHumidityChart?.dispose();
   healthPieChart?.dispose();
-  window.removeEventListener("resize", () => {});
+  window.removeEventListener("resize", resizeHandler);
 });
 </script>
 

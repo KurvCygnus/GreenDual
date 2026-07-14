@@ -616,7 +616,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, nextTick, watch } from "vue";
+import { ref, onMounted, onUnmounted, computed, nextTick, watch } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import * as echarts from "echarts";
 import {
@@ -1257,6 +1257,12 @@ onMounted(() => {
       initDimmingCharts();
     }, 100);
   }
+});
+
+onUnmounted(() => {
+  brightnessChart?.dispose();
+  trendChart?.dispose();
+  window.removeEventListener("resize", handleResize);
 });
 </script>
 

@@ -381,7 +381,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick } from "vue";
+import { ref, computed, onMounted, onUnmounted, nextTick } from "vue";
 import * as echarts from "echarts";
 import { aiChat, aiClearHistory, aiPredictTrend, addRecord, getDeviceStats, getDeviceList } from "@/api/auth";
 import {
@@ -611,7 +611,7 @@ const generatePredictionData = () => {
 };
 
 // 获取真实设备数据
-const initPredictionChart = () => {
+const initPredictionChart = (retryCount = 0) => {
   if (!predictionChartRef.value) {
     console.error("图表容器不存在");
     return;
@@ -622,10 +622,14 @@ const initPredictionChart = () => {
   console.log("图表容器尺寸:", container.clientWidth, container.clientHeight);
 
   if (container.clientWidth === 0 || container.clientHeight === 0) {
+    if (retryCount >= 10) {
+      console.warn("图表容器尺寸为0，已达最大重试次数，停止重试");
+      return;
+    }
     console.warn("图表容器尺寸为0，延迟初始化");
     // 延迟100ms后重试
     setTimeout(() => {
-      initPredictionChart();
+      initPredictionChart(retryCount + 1);
     }, 100);
     return;
   }
@@ -1176,16 +1180,28 @@ const formatAnalysis = (content) => {
   return md.render(content);
 };
 
+// 窗口 resize 时自适应图表
+const resizeHandler = () => {
+  predictionChart.value?.resize();
+};
+
 onMounted(() => {
-  window.addEventListener("resize", () => {
-    predictionChart.value?.resize();
-  });
+  window.addEventListener("resize", resizeHandler);
 
   chatMessages.value.push({
     role: "assistant",
     content:
       "您好！我是环境监测AI助手。我可以帮您分析环境数据、预测趋势、诊断设备故障等。请问有什么可以帮助您的？",
   });
+});
+
+onUnmounted(() => {
+  if (monitoringTimer.value) {
+    clearInterval(monitoringTimer.value);
+    monitoringTimer.value = null;
+  }
+  predictionChart.value?.dispose();
+  window.removeEventListener("resize", resizeHandler);
 });
 </script>
 

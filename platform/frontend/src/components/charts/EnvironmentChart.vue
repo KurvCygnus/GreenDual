@@ -41,7 +41,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onActivated, watch, computed } from "vue";
+import { ref, onMounted, onActivated, onUnmounted, watch, computed } from "vue";
 import * as echarts from "echarts";
 import { getDeviceTypeList, getRecordList } from "@/api/auth";
 
@@ -367,20 +367,27 @@ const getSeriesData = () => {
   return series;
 };
 
+const resizeHandler = () => {
+  chart.value?.resize();
+};
+
 onMounted(async () => {
   await fetchDeviceTypes();
   await fetchHistoricalData();
   initChart();
 
-  window.addEventListener("resize", () => {
-    chart.value?.resize();
-  });
+  window.addEventListener("resize", resizeHandler);
 });
 
 onActivated(() => {
   if (chart.value) {
     chart.value.resize();
   }
+});
+
+onUnmounted(() => {
+  chart.value?.dispose();
+  window.removeEventListener("resize", resizeHandler);
 });
 </script>
 

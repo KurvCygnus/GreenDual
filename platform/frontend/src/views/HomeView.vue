@@ -413,7 +413,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, onUnmounted, defineAsyncComponent } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import {
@@ -433,18 +433,16 @@ import {
   Expand,
 } from "@element-plus/icons-vue";
 
-import EnvironmentChart from "../components/charts/EnvironmentChart.vue";
-import AIPrediction from "../components/ai/AIPrediction.vue";
-import DeviceManager from "../components/devices/DeviceManager.vue";
-import LampManager from "../components/lamp/LampManager.vue";
-import CloudPlatform from "../components/cloud/CloudPlatform.vue";
-import MonitorRecord from "../components/records/MonitorRecord.vue";
-import UserManagement from "../components/user/UserManagement.vue";
-import CampusEnergy from "../components/campus/CampusEnergy.vue";
-import TeachingLinkage from "../components/teaching/TeachingLinkage.vue";
-import EcologyEngine from "../components/ecology/EcologyEngine.vue";
-import DashboardView from "../components/dashboard/DashboardView.vue";
-import UserProfile from "../components/user/UserProfile.vue";
+const DashboardView = defineAsyncComponent(() => import("../components/dashboard/DashboardView.vue"));
+const LampManager = defineAsyncComponent(() => import("../components/lamp/LampManager.vue"));
+const EcologyEngine = defineAsyncComponent(() => import("../components/ecology/EcologyEngine.vue"));
+const AIPrediction = defineAsyncComponent(() => import("../components/ai/AIPrediction.vue"));
+const CampusEnergy = defineAsyncComponent(() => import("../components/campus/CampusEnergy.vue"));
+const TeachingLinkage = defineAsyncComponent(() => import("../components/teaching/TeachingLinkage.vue"));
+const DeviceManager = defineAsyncComponent(() => import("../components/devices/DeviceManager.vue"));
+const UserManagement = defineAsyncComponent(() => import("../components/user/UserManagement.vue"));
+const MonitorRecord = defineAsyncComponent(() => import("../components/records/MonitorRecord.vue"));
+const UserProfile = defineAsyncComponent(() => import("../components/user/UserProfile.vue"));
 import {
   getDeviceStats,
   getDeviceList,
@@ -803,6 +801,10 @@ onMounted(async () => {
   window.addEventListener("resize", checkMobile);
   await fetchDeviceTypes();
   await refreshData();
+});
+
+onUnmounted(() => {
+  window.removeEventListener("resize", checkMobile);
 });
 </script>
 
